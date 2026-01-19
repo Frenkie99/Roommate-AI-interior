@@ -1,0 +1,105 @@
+/**
+ * 全局样式文件
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply box-border;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply font-sans antialiased bg-neutral-950 text-white;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply relative px-8 py-4 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-semibold rounded-2xl 
+           hover:from-primary-500 hover:to-primary-600 transition-all duration-300 
+           shadow-lg hover:shadow-glow hover:scale-[1.02] active:scale-[0.98]
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100;
+  }
+  
+  .btn-secondary {
+    @apply px-6 py-3 bg-white/10 backdrop-blur-sm text-white font-medium rounded-xl 
+           border border-white/20 hover:bg-white/20 transition-all duration-300;
+  }
+  
+  .btn-ghost {
+    @apply px-4 py-2 text-neutral-400 hover:text-white transition-colors duration-200;
+  }
+  
+  .card-glass {
+    @apply bg-white/5 backdrop-blur-xl rounded-3xl border border-white/10 
+           shadow-luxury transition-all duration-300 hover:border-white/20;
+  }
+  
+  .card-dark {
+    @apply bg-neutral-900/80 backdrop-blur-xl rounded-3xl border border-neutral-800 
+           shadow-soft transition-all duration-300;
+  }
+  
+  .input-luxury {
+    @apply w-full px-5 py-4 bg-neutral-900/50 border border-neutral-700 rounded-xl 
+           text-white placeholder-neutral-500
+           focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500
+           transition-all duration-300;
+  }
+  
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-400 via-pink-400 to-primary-400;
+  }
+  
+  .text-gradient-gold {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-accent-gold via-yellow-300 to-accent-gold;
+  }
+  
+  .section-title {
+    @apply font-display text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight;
+  }
+  
+  .glow-effect {
+    @apply relative;
+  }
+  
+  .glow-effect::before {
+    content: '';
+    @apply absolute -inset-1 bg-gradient-to-r from-primary-600 to-pink-600 rounded-3xl blur-xl opacity-25;
+  }
+}
+
+@layer utilities {
+  .animation-delay-200 {
+    animation-delay: 200ms;
+  }
+  
+  .animation-delay-400 {
+    animation-delay: 400ms;
+  }
+  
+  .bg-grid {
+    background-image: 
+      linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+  }
+  
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255,255,255,0.1) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+}
