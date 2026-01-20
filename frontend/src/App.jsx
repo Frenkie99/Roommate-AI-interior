@@ -1,19 +1,15 @@
 import { Routes, Route } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
-import Layout from './components/Layout';
-import HomePage from './pages/HomePage';
-import EditorPage from './pages/EditorPage';
+import LandingPage from './pages/LandingPage';
+import PlaygroundPage from './pages/PlaygroundPage';
+import HistoryPage from './pages/HistoryPage';
 
 function App() {
   return (
-    <AnimatePresence mode="wait">
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<HomePage />} />
-          <Route path="editor" element={<EditorPage />} />
-        </Route>
-      </Routes>
-    </AnimatePresence>
+    <Routes>
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/playground" element={<PlaygroundPage />} />
+      <Route path="/history" element={<HistoryPage />} />
+    </Routes>
   );
 }
 

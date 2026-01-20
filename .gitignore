@@ -30,6 +30,19 @@ Thumbs.db
 *.log
 logs/
 
-# 上传和输出文件（可选择性忽略）
-# input/
-# output/
+# 上传和输出文件
+input/
+output/
+
+# 模型文件
+sam3-model/
+
+# 临时测试文件
+backend/test_*.py
+backend/download_*.py
+backend/fix_*.py
+backend/setup_*.py
+backend/sam3_*.py
+
+# 参考文件
+frontend/just for reference/

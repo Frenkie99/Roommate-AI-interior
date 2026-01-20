@@ -1,274 +1,268 @@
 """
-Prompt 构建工具 - 提示词工程核心模块 v2.0
+Prompt 构建工具 - 提示词工程核心模块 v4.0 (Gemini 3 / Nano Banana 专用)
 负责构建高质量的装修效果图生成提示词
 
-优化原则（基于Prompt Engineering最佳实践）：
-1. 权重优先 - 核心意图置于Prompt前部，确保模型优先理解
-2. 结构锁定 - 使用权重语法强调空间结构不可变
-3. 光影耦合 - 每种风格配备专属光照预设
-4. Token高效 - 剔除同义词冗余，每词贡献唯一语义
-5. 正负协同 - 正向提示词与负向提示词成对输出
+设计原则（针对 Gemini 3 多模态模型优化）：
+1. 指令优先 (Instruction-Based) - 使用完整句子定义物理约束
+2. 否定语义集成 (Integrated Negation) - 在正向指令中包含否定逻辑
+3. 物理锚点定义 (Physical Anchoring) - 明确定义不可变量
+4. 无需负向提示词 - Gemini 原生不支持 negative prompt
 """
 
-from typing import Optional, Dict, List, Tuple
+from typing import Optional, Dict, List
 from dataclasses import dataclass
 
 
 # ============================================================================
-# 权重配置
-# 用于强调关键提示词的重要性
+# 结构约束指令库 v4.0 - 描述性指令模式
+# 使用自然语言指令而非标签+权重
 # ============================================================================
 
-@dataclass
-class PromptWeight:
-    """提示词权重配置"""
-    CRITICAL = 1.5      # 关键约束（如结构保持）
-    HIGH = 1.3          # 高优先级（如核心风格）
-    MEDIUM = 1.1        # 中等优先级
-    NORMAL = 1.0        # 默认权重
-
-
-def apply_weight(text: str, weight: float = 1.0) -> str:
-    """
-    应用权重到提示词
-    支持 Stable Diffusion 的 (text:weight) 语法
-    """
-    if weight == 1.0:
-        return text
-    return f"({text}:{weight})"
-
-
-# ============================================================================
-# 结构识别与遵循提示词（带权重）
-# 确保AI理解并保持原始房间结构 - 这是最关键的约束
-# ============================================================================
-
-STRUCTURE_PRESERVATION_PROMPTS = {
-    "core": apply_weight("keep exact same room structure", PromptWeight.CRITICAL),
-    "walls": apply_weight("maintain original wall positions and angles", PromptWeight.CRITICAL),
-    "windows": apply_weight("preserve window locations sizes and shapes", PromptWeight.HIGH),
-    "doors": apply_weight("keep door positions unchanged", PromptWeight.HIGH),
-    "perspective": apply_weight("same camera angle and viewpoint", PromptWeight.HIGH),
-    "proportions": "maintain spatial proportions and ceiling height",
+STRUCTURE_CONSTRAINTS = {
+    # A. 建筑骨架层 (Architectural Skeleton)
+    "skeleton": "The architectural skeleton and structural layout must remain strictly unchanged.",
+    "walls": "Do not add, remove, or shift any load-bearing walls or partitions.",
+    "openings": "Maintain the exact coordinates, shapes, and dimensions of all window apertures and door openings.",
+    "boundaries": "Ensure the intersection lines between walls, floor, and ceiling are fixed as per the original image.",
+    "height": "Preserve the original floor-to-ceiling height without any structural modification.",
+    # B. 摄影与透视层 (Perspective & Optics)
+    "viewpoint": "Lock the camera at the original eye-level viewpoint and maintain identical vanishing points.",
+    "perspective": "Apply strict linear perspective; all vertical and horizontal architectural lines must be perfectly straight.",
 }
 
-# 简化版结构提示（用于Token受限场景）
-STRUCTURE_COMPACT = apply_weight(
-    "keep exact room layout, same walls windows doors perspective", 
-    PromptWeight.CRITICAL
-)
+# 完整结构约束模板（推荐用于复杂毛坯图）
+STRUCTURE_TEMPLATE_FULL = """CRITICAL STRUCTURAL CONSTRAINTS:
+1. The original wall positions, room geometry, and window apertures are fixed and must not be altered.
+2. Maintain the exact floor plan and ceiling height.
+3. The camera perspective, focal length, and vanishing points must remain 100% consistent with the input image.
+4. Do not perform any structural remodeling; focus solely on surface materials, lighting, and furniture."""
+
+# 紧凑版结构约束（用于 Token 受限场景）
+STRUCTURE_TEMPLATE_COMPACT = "Keep all walls, windows, doors, and ceiling height exactly as shown. Do not add or remove any architectural elements."
 
 
 # ============================================================================
-# 装修风格提示词库
-# 每个风格包含：核心特征、材质、色彩、家具、氛围
+# 装修风格提示词库 v2.0 (Gemini 3 Optimized)
+# 每个风格包含：设计逻辑、核心、材质、色彩、家具、光照、细节
 # ============================================================================
 
 STYLE_PROMPTS: Dict[str, Dict] = {
-    "modern_minimalist": {
-        "name": "现代简约",
-        "core": apply_weight("modern minimalist interior", PromptWeight.HIGH),
-        "materials": "glass, polished concrete, smooth surfaces",
-        "colors": "white, gray, beige, black accents",
-        "furniture": "clean-lined furniture, low-profile sofa, geometric shapes",
-        "lighting": "recessed LED lighting, natural daylight, soft ambient glow",
-        "details": "hidden storage, potted plants, minimal decor"
-    },
-    "scandinavian": {
-        "name": "北欧风格",
-        "core": apply_weight("scandinavian nordic interior", PromptWeight.HIGH),
-        "materials": "light oak wood, wool textiles, linen, rattan",
-        "colors": "white walls, light wood, soft pastels, muted blue",
-        "furniture": "danish modern furniture, organic curves, functional design",
-        "lighting": "large windows, bright diffused daylight, warm pendant lights",
-        "details": "sheepskin throws, candles, indoor plants, woven baskets"
+    "modern_luxury": {
+        "name": "现代轻奢",
+        "logic": "强调材质的对比（哑光 vs 亮光）与精致的金属点缀",
+        "core": "(sophisticated modern luxury interior:1.3)",
+        "materials": "calacatta marble, brushed brass accents, leather upholstery, glossy finishes, velvet texture",
+        "colors": "warm greige, champagne gold, ivory white, deep navy contrast, metallic highlights",
+        "furniture": "italian designer furniture, tufted sofa, sleek metal legs, marble coffee table",
+        "lighting": "ambient linear LED strips, crystal chandelier, warm accent lighting, layered illumination",
+        "details": "art deco elements, gold rimmed decor, geometric carpets, high-end finishing"
     },
     "chinese_modern": {
         "name": "新中式",
-        "core": apply_weight("modern chinese oriental interior", PromptWeight.HIGH),
-        "materials": "dark walnut, bamboo, silk fabric, lacquered wood",
-        "colors": "deep red, black, gold accents, jade green, ivory",
-        "furniture": "ming-style chairs, low tea table, screen dividers, symmetrical",
-        "lighting": "paper lantern glow, warm ambient light, accent spotlights",
-        "details": "calligraphy art, porcelain vases, bonsai, traditional patterns"
+        "logic": "去除传统繁复，强调对称性、留白与深色木作的质感",
+        "core": "(contemporary chinese zen interior:1.3)",
+        "materials": "dark walnut wood, natural silk, brass details, ink-wash painting textures, stone",
+        "colors": "dark wood tones, off-white background, cinnabar red accents, jade green, gold",
+        "furniture": "ming-style minimalist chairs, symmetrical layout, round-backed armchairs, solid wood console",
+        "lighting": "soft diffused lantern effect, hidden strip lighting, warm atmosphere, focused spotlights on art",
+        "details": "bonsai pine, calligraphy art, porcelain vases, circular moon gate motifs, symmetry"
     },
-    "light_luxury": {
-        "name": "轻奢风格",
-        "core": apply_weight("light luxury elegant interior", PromptWeight.HIGH),
-        "materials": "marble, velvet, brass, leather, crystal",
-        "colors": "champagne gold, dusty pink, navy blue, cream white",
-        "furniture": "tufted sofa, designer pieces, sculptural furniture",
-        "lighting": "crystal chandelier, golden wall sconces, dramatic highlights",
-        "details": "metallic accents, art deco elements, fresh flowers"
+    "american_transitional": {
+        "name": "美式风格",
+        "logic": "强调线条感（护墙板）和体量感大的舒适家具",
+        "core": "(modern american transitional interior:1.3)",
+        "materials": "wainscoting wall panels, dark oak flooring, linen fabric, brass hardware, crown molding",
+        "colors": "warm neutral tones, navy blue, sage green, cream white, antique brass",
+        "furniture": "large comfortable fabric sofa, leather armchairs, solid wood coffee table, shaker style cabinets",
+        "lighting": "warm floor lamps, wall sconces, brass pendant lights, cozy inviting atmosphere",
+        "details": "decorative pillows, area rugs, framed artworks, fireplace mantel, books"
     },
-    "japanese_wood": {
-        "name": "日式原木",
-        "core": apply_weight("japanese wabi-sabi interior", PromptWeight.HIGH),
-        "materials": "hinoki wood, cedar, tatami, shoji paper, stone",
-        "colors": "warm wood tones, off-white, beige, earth tones",
-        "furniture": "low furniture, floor seating, built-in storage, futon",
-        "lighting": "soft diffused natural light, paper lanterns, warm indirect glow",
-        "details": "sliding shoji doors, ikebana arrangement, ceramic pottery"
+    "european_neoclassical": {
+        "name": "欧式风格",
+        "logic": "侧重于石膏线条、鱼骨拼地板和优雅的比例",
+        "core": "(neoclassical european interior:1.3)",
+        "materials": "intricate wall moldings (boiserie), herringbone wood floor, marble fireplace, plaster relief",
+        "colors": "creamy white, beige, pastel tones, gold leaf accents, light grey",
+        "furniture": "curved elegant furniture, velvet upholstery, carved wood details, cabriole legs",
+        "lighting": "crystal chandelier, natural window light, bright and airy, romantic glow",
+        "details": "ornate mirrors, oil paintings, floral arrangements, crown molding details, curtains"
     },
-    "industrial": {
+    "industrial_loft": {
         "name": "工业风",
-        "core": apply_weight("industrial loft interior", PromptWeight.HIGH),
-        "materials": "exposed brick, raw concrete, metal pipes, reclaimed wood",
-        "colors": "gray, rust orange, black, dark brown, metallic",
-        "furniture": "metal frame furniture, leather sofa, industrial shelving",
-        "lighting": "edison bulbs, exposed track lighting, hard directional light",
-        "details": "exposed ductwork, vintage signage, large factory windows"
+        "logic": "暴露的结构美学，引入微水泥等现代材质，减少脏旧感",
+        "core": "(modern industrial loft interior:1.3)",
+        "materials": "exposed concrete walls, micro-cement floor, black steel, red brick, distressed leather",
+        "colors": "cement gray, matte black, rust orange, dark wood, metallic silver",
+        "furniture": "iron frame furniture, chesterfield leather sofa, raw wood tables, open shelving",
+        "lighting": "edison bulbs, track lighting, cold daylight, dramatic shadows, metal pendant lights",
+        "details": "exposed ductwork, pipes, vintage factory decor, large metal windows, concrete texture"
     },
-    "american_country": {
-        "name": "美式田园",
-        "core": apply_weight("american farmhouse country interior", PromptWeight.HIGH),
-        "materials": "distressed wood, cotton fabric, painted furniture, ceramic",
-        "colors": "warm white, sage green, dusty blue, butter yellow",
-        "furniture": "overstuffed sofa, farmhouse table, windsor chairs",
-        "lighting": "warm golden sunlight, rustic lanterns, soft lamplight",
-        "details": "floral patterns, gingham, mason jars, quilts"
+    "natural_wood": {
+        "name": "原木风",
+        "logic": "现代极简与自然的结合，强调大面积浅色木饰面",
+        "core": "(warm minimalist natural wood interior:1.3)",
+        "materials": "light ash wood, matte micro-cement, cotton linen, rattan, travertine stone",
+        "colors": "warm white, beige, light wood tones, cream, earth tones",
+        "furniture": "curved wooden furniture, boucle sofa, low profile designs, organic shapes",
+        "lighting": "soft sunlight, warm ambient glow, paper lamps, natural atmosphere",
+        "details": "dried flowers, ceramic vases, minimal decor, sheer curtains, wood grain texture"
     },
-    "french_romantic": {
-        "name": "法式浪漫",
-        "core": apply_weight("french provincial romantic interior", PromptWeight.HIGH),
-        "materials": "ornate moldings, gilded frames, toile fabric, marble",
-        "colors": "blush pink, lavender, cream white, powder blue, gold",
-        "furniture": "louis xvi chairs, tufted upholstery, antique mirrors",
-        "lighting": "crystal chandelier, soft romantic glow, candlelight ambiance",
-        "details": "fresh roses, ornate frames, lace curtains"
+    "japanese_traditional": {
+        "name": "日式",
+        "logic": "严格遵循传统日式元素，如榻榻米、障子门，强调低矮重心",
+        "core": "(authentic japanese ryokan style interior:1.3)",
+        "materials": "tatami mats, shoji screens (rice paper), cedar wood (sugi), bamboo, clay walls",
+        "colors": "natural wood color, straw yellow, matcha green, white, charcoal gray",
+        "furniture": "low wooden tables (chabudai), floor cushions (zabuton), futon, built-in storage",
+        "lighting": "diffused soft light, andon lamps, natural daylight filtering through paper, zen atmosphere",
+        "details": "ikebana flower arrangement, hanging scrolls, sliding doors, tea set, minimalism"
     },
-    "mediterranean": {
-        "name": "地中海风格",
-        "core": apply_weight("mediterranean coastal interior", PromptWeight.HIGH),
-        "materials": "terracotta tiles, wrought iron, stucco walls, ceramic",
-        "colors": "ocean blue, turquoise, white, terracotta, olive green",
-        "furniture": "rustic wood furniture, arched details, mosaic patterns",
-        "lighting": "bright mediterranean sunlight, warm golden hour glow",
-        "details": "potted herbs, blue pottery, arched doorways"
+    "bohemian": {
+        "name": "波西米亚",
+        "logic": "繁复的纹理叠加、植物、编织物和自由奔放的色彩",
+        "core": "(eclectic bohemian chic interior:1.3)",
+        "materials": "macrame, rattan, persian rugs, velvet, layered textiles, natural wood",
+        "colors": "terracotta, emerald green, mustard yellow, warm earth tones, vibrant patterns",
+        "furniture": "peacock chairs, low sofas, poufs, vintage wooden pieces, hanging chairs",
+        "lighting": "fairy lights, warm bulb string lights, moroccan lanterns, cozy warm glow",
+        "details": "many indoor plants, woven wall hangings, ethnic patterns, cluttercore aesthetic, baskets"
+    },
+    "bauhaus": {
+        "name": "包豪斯",
+        "logic": "形式追随功能，使用钢管家具、三原色点缀和几何抽象感",
+        "core": "(bauhaus modernist interior:1.3)",
+        "materials": "tubular steel (chrome), glass, plywood, leather, smooth plaster",
+        "colors": "white background, black lines, primary colors accents (red, yellow, blue)",
+        "furniture": "tubular steel chairs (cantilever), functional modular furniture, geometric forms",
+        "lighting": "spherical glass lamps, adjustable metal desk lamps, bright distinct lighting",
+        "details": "geometric abstract art, clean lines, lack of ornamentation, industrial precision, grid layout"
+    },
+    "modern_minimalist": {
+        "name": "现代简约",
+        "logic": "少即是多，利用留白（Negative Space）和隐藏式设计",
+        "core": "(ultra-modern minimalist interior:1.3)",
+        "materials": "matte white surfaces, self-leveling cement, glass, anodized aluminum",
+        "colors": "monochromatic white, cool gray, black contrasts, neutral palette",
+        "furniture": "blocky geometric furniture, hidden handle cabinets, sharp lines, suspended furniture",
+        "lighting": "linear recessed lights, hidden light troughs, cool natural light, shadowless illumination",
+        "details": "decluttered space, hidden storage, negative space, no visible wires, architectural purity"
     },
 }
 
-
 # ============================================================================
-# 房间类型提示词库
-# 针对不同功能空间的专业描述
+# 房间类型提示词库 v2.0 (Gemini 3 Spatial Edition)
+# 每个房间包含：空间逻辑、核心、硬装、家具、软装
 # ============================================================================
 
 ROOM_TYPE_PROMPTS: Dict[str, Dict] = {
     "living_room": {
         "name": "客厅",
-        "space": apply_weight("spacious living room", PromptWeight.HIGH),
-        "furniture": "sofa set, coffee table, TV console, armchairs",
-        "features": "area rug, window treatments, focal wall"
+        "logic": "强调视觉重心（通常是电视墙或景观窗）与围合感的平衡",
+        "core": "(spacious open-plan living room with balanced layout:1.3)",
+        "hardscape": "Ceiling: suspended gypsum ceiling with hidden cove lighting, modern track lights. Walls: textured feature wall (TV background), neutral painted side walls.",
+        "furniture": "Layout: L-shaped modular sofa arrangement, low-profile marble coffee table, single lounge chair. Items: slim media console, side tables.",
+        "softscape": "large geometric area rug defining the seating zone, floor-to-ceiling sheer curtains, minimal abstract art, indoor potted tree"
     },
     "bedroom": {
         "name": "卧室",
-        "space": apply_weight("cozy bedroom", PromptWeight.HIGH),
-        "furniture": "bed with headboard, nightstands, wardrobe",
-        "features": "soft bedding, window curtains, accent wall"
+        "logic": "强调舒适性与私密性，避免视线直冲床头",
+        "core": "(cozy and serene bedroom sanctuary:1.3)",
+        "hardscape": "Ceiling: flat clean ceiling with soft perimeter lighting. Walls: upholstered or wood-paneled headboard wall, warm neutral wall paint.",
+        "furniture": "Layout: double bed centered against the main wall. Items: symmetrical nightstands, floating wall shelves, sliding door wardrobe to save space.",
+        "softscape": "layered high-thread-count bedding, blackout curtains, soft bedside pendant lights, plush bedside rug"
     },
     "master_bedroom": {
         "name": "主卧",
-        "space": apply_weight("luxurious master bedroom suite", PromptWeight.HIGH),
-        "furniture": "king bed, nightstands, seating area, vanity",
-        "features": "walk-in closet, chandelier, large windows"
+        "logic": "强调套房感和功能分区（睡眠区+休闲区/梳妆区）",
+        "core": "(luxurious master bedroom suite with functional zoning:1.3)",
+        "hardscape": "Ceiling: intricate multi-level ceiling design, central statement chandelier. Walls: decorative molding (wainscoting) or wallpaper, bookmatched stone accents.",
+        "furniture": "Layout: King-size bed with bench at foot, separate seating corner with armchairs. Items: vanity dresser, walk-in closet visibility.",
+        "softscape": "premium velvet bedding, double-layer drapery, architectural wall sconces, art gallery wall, fresh flowers"
     },
     "kitchen": {
         "name": "厨房",
-        "space": apply_weight("modern kitchen", PromptWeight.HIGH),
-        "furniture": "cabinetry, kitchen island, bar stools",
-        "features": "countertops, backsplash, range hood, pendant lights"
+        "logic": "强调洗-切-炒动线和材质的高级感（反光与哑光的对比）",
+        "core": "(modern gourmet kitchen with ergonomic workflow:1.3)",
+        "hardscape": "Ceiling: moisture-resistant smooth ceiling, recessed downlights. Walls: marble or ceramic tile backsplash, easy-clean surfaces.",
+        "furniture": "Layout: U-shaped or galley layout with central kitchen island (if space permits). Items: sleek handle-less cabinetry, integrated appliances (fridge, oven), bar stools.",
+        "softscape": "under-cabinet LED strip lighting, designer faucet, organized countertop accessories, fruit bowl"
     },
     "dining_room": {
         "name": "餐厅",
-        "space": apply_weight("elegant dining room", PromptWeight.HIGH),
-        "furniture": "dining table, upholstered chairs, sideboard",
-        "features": "chandelier, centerpiece, wall art"
+        "logic": "强调聚餐氛围，灯光必须压低并聚焦于桌面",
+        "core": "(elegant formal dining room atmosphere:1.3)",
+        "hardscape": "Ceiling: decorative ceiling medallion or defined dining zone ceiling. Walls: textured wallpaper or wood veneer buffet wall.",
+        "furniture": "Layout: large dining table centered under light. Items: upholstered dining chairs, sideboard console for storage, wine display cabinet.",
+        "softscape": "low-hanging statement pendant light (focus on table), table centerpiece (vase/candles), wall art mirror to expand space"
     },
     "bathroom": {
         "name": "卫生间",
-        "space": apply_weight("modern spa bathroom", PromptWeight.HIGH),
-        "furniture": "vanity cabinet, mirror, storage",
-        "features": "rainfall shower, elegant fixtures, tile work"
+        "logic": "强调干湿分离（Wet/Dry separation）和洁净感",
+        "core": "(modern spa-like bathroom retreat:1.3)",
+        "hardscape": "Ceiling: waterproof ceiling with ventilation shadow gaps. Walls: floor-to-ceiling large format porcelain tiles, shower niche.",
+        "furniture": "Layout: floating vanity unit (wall-mounted). Items: frameless glass shower enclosure, freestanding bathtub (optional), smart toilet.",
+        "softscape": "backlit smart mirror, chrome or matte black fixtures, rolled clean towels, ambient waterproof lighting"
     },
     "study": {
         "name": "书房",
-        "space": apply_weight("home office study room", PromptWeight.HIGH),
-        "furniture": "executive desk, ergonomic chair, bookshelves",
-        "features": "task lighting, built-in shelving, window view"
+        "logic": "强调专注度，收纳系统要像展示柜一样有设计感",
+        "core": "(productive home office and creative studio:1.3)",
+        "hardscape": "Ceiling: acoustic treatment or simple flat ceiling. Walls: built-in floor-to-ceiling bookshelves, sound-absorbing felt panels.",
+        "furniture": "Layout: desk facing the window or room center. Items: large executive desk, ergonomic office chair, reading nook armchair.",
+        "softscape": "professional desk lamp, organized books, cable management, blinds for light control"
     },
     "kids_room": {
         "name": "儿童房",
-        "space": apply_weight("playful children bedroom", PromptWeight.HIGH),
-        "furniture": "child bed, toy storage, desk area",
-        "features": "colorful accents, creative wall art, soft rugs"
+        "logic": "强调安全性、趣味性和可成长性（留出活动空间）",
+        "core": "(playful and imaginative children's room:1.3)",
+        "hardscape": "Ceiling: creative lighting (cloud/star shape) or colorful paint. Walls: half-wall paint, chalkboard wall or washable wallpaper.",
+        "furniture": "Layout: zoned for sleep and play. Items: bunk bed or house-frame bed, low-height storage bins, study desk.",
+        "softscape": "soft non-slip play rug, colorful scatter cushions, whimsical wall decals, warm night light"
     },
     "balcony": {
         "name": "阳台",
-        "space": apply_weight("outdoor balcony terrace", PromptWeight.HIGH),
-        "furniture": "outdoor seating, planters, small table",
-        "features": "potted plants, string lights, outdoor rug"
+        "logic": "强调室内空间的延伸，模糊室内外界限",
+        "core": "(relaxing outdoor balcony garden oasis:1.3)",
+        "hardscape": "Ceiling: wooden slat ceiling or weather-resistant paint. Walls: vertical garden wall or outdoor screen.",
+        "furniture": "Layout: corner seating arrangement. Items: weather-resistant rattan chairs, small round coffee table.",
+        "softscape": "potted plants varying in height, string lights, outdoor waterproof rug, glass railing visualization"
     },
     "entrance": {
         "name": "玄关",
-        "space": apply_weight("welcoming entryway foyer", PromptWeight.HIGH),
-        "furniture": "console table, shoe cabinet, coat hooks",
-        "features": "mirror, pendant light, decorative accents"
+        "logic": "第一印象，强调收纳的隐蔽性和照明的仪式感",
+        "core": "(welcoming entryway foyer with smart storage:1.3)",
+        "hardscape": "Ceiling: recessed spotlight focusing on decor. Walls: full-length mirror, decorative wall hooks or paneling.",
+        "furniture": "Layout: clear passage width. Items: slim console table, built-in shoe cabinet (floor-to-ceiling).",
+        "softscape": "decorative tray for keys, sculptural vase, warm entry light, durable runner rug"
     },
 }
 
 
 # ============================================================================
-# 图片质量与渲染提示词（针对2025+模型优化）
+# 图片质量提示词 v4.0
+# 使用建筑摄影词汇实现照片级真实
 # ============================================================================
 
 QUALITY_PROMPTS = {
-    # 基础真实感（替代过时的4K/high resolution）
-    "realism": "photographic realism, hyper-realistic textures, true-to-life materials",
-    # 专业相机参数（更具体的描述）
-    "camera": "shot on Canon EOS R5, 16mm wide angle lens, f/8 aperture, ISO 100",
-    # 构图与视角
-    "composition": "professional architectural photography, perfect composition, eye-level view",
-    # 渲染质量
-    "render": "octane render, ray traced global illumination, physically based rendering",
-}
-
-# ============================================================================
-# 负向提示词（增强结构保护）
-# ============================================================================
-
-NEGATIVE_PROMPTS = {
-    # 结构变形限制（新增！关键改进）
-    "structure": apply_weight(
-        "changing floor plan, moving windows, altered ceiling height, different room layout, modified wall positions, changed door locations",
-        PromptWeight.CRITICAL
-    ),
-    # 质量问题
-    "quality": "low quality, blurry, pixelated, grainy, jpeg artifacts, noise",
-    # 透视变形
-    "distortion": "distorted perspective, warped walls, bent lines, impossible architecture, fisheye distortion",
-    # 风格排除
-    "style": "cartoon, anime, illustration, painting, sketch, 3d render, cgi, artificial looking",
-    # 内容排除
-    "content": "watermark, signature, text, logo, human, person, people, animals, pets",
-    # 生成错误
-    "errors": "duplicate objects, floating furniture, disconnected elements, merged objects",
+    "realism": "photorealistic architecture photography, ultra-detailed textures, highly realistic",
+    "camera": "shot on Canon EOS R5, 16mm f/8, depth of field",
+    "composition": "professional architectural photography, eye-level view, straight-on shot",
+    "lighting": "natural lighting, cinematic lighting, 8k resolution",
 }
 
 
 # ============================================================================
-# 提示词构建函数（优化版 v2.0）
-# 基于Prompt Engineering最佳实践重构
+# 提示词构建函数 v4.0 - Gemini 3 描述性指令模式
+# 无需负向提示词，使用自然语言指令
 # ============================================================================
 
 @dataclass
 class PromptResult:
-    """提示词构建结果，包含正向和负向提示词"""
-    positive: str
-    negative: str
+    """提示词构建结果（v4.0 仅包含 prompt，无 negative_prompt）"""
+    prompt: str
     
     def to_dict(self) -> Dict[str, str]:
-        return {"prompt": self.positive, "negative_prompt": self.negative}
+        return {"prompt": self.prompt}
 
 
 def build_prompt(
@@ -276,215 +270,172 @@ def build_prompt(
     room_type: Optional[str] = None,
     custom_prompt: Optional[str] = None,
     preserve_structure: bool = True,
-    quality_level: str = "high",
     compact_mode: bool = False
 ) -> str:
     """
-    构建完整的装修效果图生成提示词（优化版）
+    构建完整的装修效果图生成提示词 v4.0 (Gemini 3 优化版)
     
-    优化策略：
-    1. 核心意图前置 - 房间类型和风格放在最前，确保模型优先理解
-    2. 结构约束紧随 - 紧跟核心意图，确保布局不偏移
-    3. 细节填充 - 材质、色彩、家具等细节
-    4. 质量收尾 - 渲染和相机参数放在最后
+    设计原则：
+    1. 角色设定 - 以专业建筑可视化引擎的身份执行
+    2. 任务定义 - 明确说明是将毛坯房装修为某种风格
+    3. 结构约束 - 使用描述性指令锁定建筑骨架
+    4. 风格细节 - 包含材质、色彩、家具、光照、软装
+    5. 房间细节 - 包含硬装、家具布局、软装
     
     Args:
         style: 装修风格ID
         room_type: 房间类型ID
         custom_prompt: 用户自定义提示词
         preserve_structure: 是否强调保持原始结构
-        quality_level: 质量级别 (high/medium/low)
         compact_mode: 紧凑模式，用于Token受限场景
     
     Returns:
         优化后的完整提示词
     """
     
-    # ===== 第1层：核心意图 (Core Intent) - 权重最高 =====
-    core_parts = []
+    prompt_parts = []
     
-    # 房间类型（如果有）
-    if room_type and room_type in ROOM_TYPE_PROMPTS:
-        room_info = ROOM_TYPE_PROMPTS[room_type]
-        core_parts.append(room_info["space"])
+    # ===== 角色与任务定义 =====
+    style_name = STYLE_PROMPTS.get(style, {}).get("name", style)
+    room_name = ROOM_TYPE_PROMPTS.get(room_type, {}).get("name", room_type) if room_type else "room"
     
-    # 装修风格核心
-    if style in STYLE_PROMPTS:
-        style_info = STYLE_PROMPTS[style]
-        core_parts.append(style_info["core"])
+    prompt_parts.append(f"Act as a professional architectural visualization engine.")
+    prompt_parts.append(f"Task: Renovate the provided raw {room_name} into a {style_name} interior.")
     
-    # ===== 第2层：结构约束 (Structure Constraints) - 紧随其后 =====
-    structure_parts = []
+    # ===== 结构约束（最高优先级）=====
     if preserve_structure:
         if compact_mode:
-            structure_parts.append(STRUCTURE_COMPACT)
+            prompt_parts.append(STRUCTURE_TEMPLATE_COMPACT)
         else:
-            structure_parts.append(STRUCTURE_PRESERVATION_PROMPTS["core"])
-            structure_parts.append(STRUCTURE_PRESERVATION_PROMPTS["walls"])
-            structure_parts.append(STRUCTURE_PRESERVATION_PROMPTS["perspective"])
+            prompt_parts.append(STRUCTURE_TEMPLATE_FULL)
     
-    # ===== 第3层：风格细节 (Style Details) =====
-    detail_parts = []
+    # ===== 风格细节 =====
     if style in STYLE_PROMPTS:
         style_info = STYLE_PROMPTS[style]
-        detail_parts.append(style_info["materials"])
-        detail_parts.append(style_info["colors"])
-        detail_parts.append(style_info["furniture"])
-        # 添加风格专属光照
-        detail_parts.append(style_info["lighting"])
+        prompt_parts.append(f"STYLE SPECIFICATIONS:")
+        prompt_parts.append(f"Core aesthetic: {style_info['core']}")
+        prompt_parts.append(f"Materials: {style_info['materials']}")
+        prompt_parts.append(f"Color palette: {style_info['colors']}")
+        prompt_parts.append(f"Furniture: {style_info['furniture']}")
+        prompt_parts.append(f"Lighting: {style_info['lighting']}")
+        prompt_parts.append(f"Details: {style_info['details']}")
     
-    # 房间家具和特征
+    # ===== 房间细节 =====
     if room_type and room_type in ROOM_TYPE_PROMPTS:
         room_info = ROOM_TYPE_PROMPTS[room_type]
-        detail_parts.append(room_info["furniture"])
-        detail_parts.append(room_info["features"])
+        prompt_parts.append(f"ROOM SPECIFICATIONS:")
+        prompt_parts.append(f"Space type: {room_info['core']}")
+        prompt_parts.append(f"Hardscape: {room_info['hardscape']}")
+        prompt_parts.append(f"Furniture layout: {room_info['furniture']}")
+        prompt_parts.append(f"Soft furnishings: {room_info['softscape']}")
     
-    # 风格装饰细节
-    if style in STYLE_PROMPTS:
-        detail_parts.append(STYLE_PROMPTS[style]["details"])
+    # ===== 质量要求 =====
+    prompt_parts.append(f"QUALITY REQUIREMENTS:")
+    prompt_parts.append(f"{QUALITY_PROMPTS['realism']}, {QUALITY_PROMPTS['composition']}, {QUALITY_PROMPTS['lighting']}")
     
-    # ===== 第4层：质量与渲染 (Quality & Rendering) =====
-    quality_parts = []
-    if quality_level == "high":
-        quality_parts.append(QUALITY_PROMPTS["realism"])
-        quality_parts.append(QUALITY_PROMPTS["camera"])
-        quality_parts.append(QUALITY_PROMPTS["composition"])
-        quality_parts.append(QUALITY_PROMPTS["render"])
-    elif quality_level == "medium":
-        quality_parts.append(QUALITY_PROMPTS["realism"])
-        quality_parts.append(QUALITY_PROMPTS["composition"])
-    else:
-        quality_parts.append("professional interior photo")
-    
-    # ===== 第5层：用户自定义 (Custom) =====
-    custom_parts = []
+    # ===== 用户自定义 =====
     if custom_prompt:
-        # 清理用户输入，移除可能破坏结构的特殊字符
-        cleaned_prompt = custom_prompt.replace("(", "").replace(")", "").replace(":", " ")
-        custom_parts.append(cleaned_prompt)
+        prompt_parts.append(f"ADDITIONAL REQUIREMENTS: {custom_prompt}")
     
-    # ===== 按权重顺序组合 =====
-    all_parts = core_parts + structure_parts + detail_parts + quality_parts + custom_parts
-    
-    # 过滤空值并组合
-    filtered_parts = [p.strip() for p in all_parts if p and p.strip()]
-    full_prompt = ", ".join(filtered_parts)
-    
-    # 清理多余空格
-    full_prompt = " ".join(full_prompt.split())
+    # 组合为完整提示词
+    full_prompt = "\n".join(prompt_parts)
     
     return full_prompt
 
 
-def build_prompt_pair(
+def build_prompt_simple(
+    style: str,
+    room_type: Optional[str] = None,
+    custom_prompt: Optional[str] = None
+) -> str:
+    """
+    构建简化版提示词（用于 Token 受限场景）
+    
+    Args:
+        style: 装修风格ID
+        room_type: 房间类型ID
+        custom_prompt: 用户自定义提示词
+    
+    Returns:
+        简化版提示词
+    """
+    parts = []
+    
+    # 风格核心
+    if style in STYLE_PROMPTS:
+        parts.append(STYLE_PROMPTS[style]["core"])
+        parts.append(STYLE_PROMPTS[style]["materials"])
+        parts.append(STYLE_PROMPTS[style]["furniture"])
+    
+    # 房间核心
+    if room_type and room_type in ROOM_TYPE_PROMPTS:
+        parts.append(ROOM_TYPE_PROMPTS[room_type]["core"])
+    
+    # 结构约束（紧凑版）
+    parts.append(STRUCTURE_TEMPLATE_COMPACT)
+    
+    # 质量
+    parts.append(QUALITY_PROMPTS["realism"])
+    
+    # 用户自定义
+    if custom_prompt:
+        parts.append(custom_prompt)
+    
+    return ", ".join(parts)
+
+
+def build_prompt_result(
     style: str,
     room_type: Optional[str] = None,
     custom_prompt: Optional[str] = None,
     preserve_structure: bool = True,
-    quality_level: str = "high"
+    compact_mode: bool = False
 ) -> PromptResult:
     """
-    构建正向和负向提示词对（推荐使用）
-    
-    在实际生产环境中，正负提示词必须成对传递给推理API。
-    此函数确保两者协同工作。
+    构建提示词结果对象（推荐使用）- v4.0
     
     Args:
         style: 装修风格ID
         room_type: 房间类型ID
         custom_prompt: 用户自定义提示词
         preserve_structure: 是否强调保持原始结构
-        quality_level: 质量级别
+        compact_mode: 紧凑模式
     
     Returns:
-        PromptResult 包含正向和负向提示词
+        PromptResult 对象
     """
-    positive = build_prompt(
+    prompt = build_prompt(
         style=style,
         room_type=room_type,
         custom_prompt=custom_prompt,
         preserve_structure=preserve_structure,
-        quality_level=quality_level
+        compact_mode=compact_mode
     )
     
-    negative = get_negative_prompt(include_structure=preserve_structure)
-    
-    return PromptResult(positive=positive, negative=negative)
-
-
-def get_negative_prompt(include_structure: bool = True) -> str:
-    """
-    获取负面提示词，避免生成不需要的内容
-    
-    Args:
-        include_structure: 是否包含结构保护的负向提示词
-    
-    Returns:
-        负面提示词字符串
-    """
-    negative_parts = []
-    
-    # 结构保护放在最前面（如果需要）
-    if include_structure:
-        negative_parts.append(NEGATIVE_PROMPTS["structure"])
-    
-    # 其他负向提示词
-    negative_parts.append(NEGATIVE_PROMPTS["quality"])
-    negative_parts.append(NEGATIVE_PROMPTS["distortion"])
-    negative_parts.append(NEGATIVE_PROMPTS["style"])
-    negative_parts.append(NEGATIVE_PROMPTS["content"])
-    negative_parts.append(NEGATIVE_PROMPTS["errors"])
-    
-    return ", ".join(negative_parts)
+    return PromptResult(prompt=prompt)
 
 
 def get_style_info(style: str) -> Optional[Dict]:
-    """
-    获取指定风格的详细信息
-    
-    Args:
-        style: 风格ID
-    
-    Returns:
-        风格信息字典，如果不存在则返回None
-    """
+    """获取指定风格的详细信息"""
     return STYLE_PROMPTS.get(style)
 
 
 def get_room_info(room_type: str) -> Optional[Dict]:
-    """
-    获取指定房间类型的详细信息
-    
-    Args:
-        room_type: 房间类型ID
-    
-    Returns:
-        房间信息字典，如果不存在则返回None
-    """
+    """获取指定房间类型的详细信息"""
     return ROOM_TYPE_PROMPTS.get(room_type)
 
 
 def list_available_styles() -> List[Dict]:
-    """
-    获取所有可用的装修风格列表
-    
-    Returns:
-        风格列表
-    """
+    """获取所有可用的装修风格列表"""
     return [
-        {"id": style_id, "name": info["name"], "core": info["core"]}
+        {"id": style_id, "name": info["name"], "core": info["core"], "logic": info.get("logic", "")}
         for style_id, info in STYLE_PROMPTS.items()
     ]
 
 
 def list_available_room_types() -> List[Dict]:
-    """
-    获取所有可用的房间类型列表
-    
-    Returns:
-        房间类型列表
-    """
+    """获取所有可用的房间类型列表"""
     return [
-        {"id": room_id, "name": info["name"], "space": info["space"]}
+        {"id": room_id, "name": info["name"], "core": info["core"], "logic": info.get("logic", "")}
         for room_id, info in ROOM_TYPE_PROMPTS.items()
     ]

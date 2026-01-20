@@ -56,13 +56,29 @@ class NanoBananaClient:
     """Grsai Nano Banana API 客户端"""
     
     def __init__(self):
-        self.api_key = os.getenv("GRSAI_API_KEY")
-        # 支持海外和国内直连两个地址
-        self.api_url = os.getenv("GRSAI_API_URL", "https://grsai.dakka.com.cn")
+        # 延迟获取环境变量，确保main.py已加载
+        self._api_key = None
+        self._api_url = None
         self.client = httpx.AsyncClient(timeout=180.0)
+    
+    @property
+    def api_key(self) -> str:
+        """动态获取API Key"""
+        if self._api_key is None:
+            self._api_key = os.getenv("GRSAI_API_KEY")
+        return self._api_key
+    
+    @property
+    def api_url(self) -> str:
+        """动态获取API URL"""
+        if self._api_url is None:
+            self._api_url = os.getenv("GRSAI_API_URL", "https://grsai.dakka.com.cn")
+        return self._api_url
     
     def _get_headers(self) -> dict:
         """获取请求头"""
+        if not self.api_key:
+            raise ValueError("GRSAI_API_KEY not set in environment")
         return {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.api_key}"

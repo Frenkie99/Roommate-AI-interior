@@ -1,63 +1,105 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Sparkles, Menu, X } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { Menu, X, Globe } from 'lucide-react';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [lang, setLang] = useState('zh');
+  const location = useLocation();
+
+  const toggleLang = () => {
+    setLang(lang === 'zh' ? 'en' : 'zh');
+  };
+
+  const isActive = (path) => location.pathname === path;
+
+  const t = {
+    home: lang === 'zh' ? '首页' : 'Home',
+    newDesign: lang === 'zh' ? '新建设计' : 'New Design',
+    history: lang === 'zh' ? '历史记录' : 'History',
+    pricing: lang === 'zh' ? '定价' : 'Pricing',
+    login: lang === 'zh' ? '登录' : 'Log In',
+    signup: lang === 'zh' ? '注册' : 'Sign Up',
+  };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-20 items-center justify-between">
-          {/* Logo */}
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/70 backdrop-blur-xl border-b border-warm-gold/10 h-[84px]">
+      <div className="w-full h-full px-4 flex items-center justify-between">
+        {/* Logo */}
+        <div className="flex items-center pl-2 flex-1">
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-primary-500 to-pink-500 rounded-xl blur-lg opacity-50 group-hover:opacity-75 transition-opacity" />
-              <div className="relative bg-gradient-to-r from-primary-600 to-pink-600 p-2.5 rounded-xl">
-                <Sparkles className="w-6 h-6 text-white" />
-              </div>
-            </div>
-            <div>
-              <span className="text-xl font-bold text-white">AI 智装</span>
-              <span className="hidden sm:inline text-sm text-neutral-400 ml-2">Design Studio</span>
-            </div>
+            <img src="/assets/logo/导航栏logo-抠图.png" alt="Roommate" className="h-14" />
           </Link>
+        </div>
 
-          {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-neutral-300 hover:text-white transition-colors">功能特色</a>
-            <a href="#styles" className="text-neutral-300 hover:text-white transition-colors">装修风格</a>
-            <Link to="/editor" className="text-neutral-300 hover:text-white transition-colors">局部编辑</Link>
-            <Link to="/#generator" className="btn-primary text-sm py-3 px-6">
-              开始设计
-            </Link>
-          </div>
-
-          {/* Mobile Menu Button */}
-          <button 
-            className="md:hidden p-2 text-neutral-400 hover:text-white"
-            onClick={() => setIsOpen(!isOpen)}
+        {/* Desktop Nav */}
+        <div className="hidden md:flex items-center justify-center gap-10 flex-1">
+          <Link 
+            to="/" 
+            className={`text-sm font-medium transition-colors ${isActive('/') ? 'text-warm-gold' : 'text-charcoal/80 hover:text-warm-gold'}`}
           >
-            {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {t.home}
+          </Link>
+          <Link 
+            to="/playground" 
+            className={`text-sm font-medium transition-colors ${isActive('/playground') ? 'text-warm-gold' : 'text-charcoal/80 hover:text-warm-gold'}`}
+          >
+            {t.newDesign}
+          </Link>
+          <Link 
+            to="/history" 
+            className={`text-sm font-medium transition-colors ${isActive('/history') ? 'text-warm-gold' : 'text-charcoal/80 hover:text-warm-gold'}`}
+          >
+            {t.history}
+          </Link>
+          <a 
+            href="#pricing" 
+            className="text-sm font-medium transition-colors text-charcoal/80 hover:text-warm-gold"
+          >
+            {t.pricing}
+          </a>
+        </div>
+
+        {/* Right Actions */}
+        <div className="hidden md:flex items-center justify-end gap-5 pr-4 flex-1">
+          <a href="#" className="text-sm font-medium text-charcoal/80 hover:text-warm-gold transition-colors">
+            {t.login}
+          </a>
+          <a href="#" className="gold-gradient text-white px-6 py-2.5 rounded-sm text-sm font-medium hover:opacity-90 transition-opacity">
+            {t.signup}
+          </a>
+          <button 
+            onClick={toggleLang}
+            className="text-sm font-medium text-charcoal/80 hover:text-warm-gold transition-colors flex items-center gap-1.5 border border-warm-gold/30 px-3 py-2 rounded-sm"
+          >
+            <Globe className="w-4 h-4" />
+            <span>{lang === 'zh' ? '中文' : 'EN'}</span>
           </button>
         </div>
+
+        {/* Mobile Menu Button */}
+        <button 
+          className="md:hidden p-2 text-charcoal hover:text-warm-gold"
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
       </div>
 
       {/* Mobile Menu */}
       {isOpen && (
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="md:hidden bg-neutral-900/95 backdrop-blur-xl border-t border-neutral-800"
-        >
+        <div className="md:hidden bg-white/95 backdrop-blur-xl border-t border-warm-gold/10">
           <div className="px-4 py-6 space-y-4">
-            <a href="#features" className="block text-neutral-300 hover:text-white py-2">功能特色</a>
-            <a href="#styles" className="block text-neutral-300 hover:text-white py-2">装修风格</a>
-            <a href="#pricing" className="block text-neutral-300 hover:text-white py-2">价格方案</a>
-            <button className="btn-primary w-full text-sm py-3">开始设计</button>
+            <Link to="/" className="block text-charcoal/80 hover:text-warm-gold py-2" onClick={() => setIsOpen(false)}>{t.home}</Link>
+            <Link to="/playground" className="block text-charcoal/80 hover:text-warm-gold py-2" onClick={() => setIsOpen(false)}>{t.newDesign}</Link>
+            <Link to="/history" className="block text-charcoal/80 hover:text-warm-gold py-2" onClick={() => setIsOpen(false)}>{t.history}</Link>
+            <a href="#pricing" className="block text-charcoal/80 hover:text-warm-gold py-2" onClick={() => setIsOpen(false)}>{t.pricing}</a>
+            <div className="pt-4 border-t border-warm-gold/10 space-y-3">
+              <a href="#" className="block text-charcoal/80 hover:text-warm-gold py-2">{t.login}</a>
+              <a href="#" className="block gold-gradient text-white text-center py-3 rounded-sm">{t.signup}</a>
+            </div>
           </div>
-        </motion.div>
+        </div>
       )}
     </nav>
   );
