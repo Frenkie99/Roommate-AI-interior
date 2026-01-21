@@ -21,6 +21,7 @@ class GeminiModel(str, Enum):
     """支持的模型列表"""
     GEMINI_3_PRO_IMAGE = "gemini-3-pro-image-preview"  # 支持 1K/2K/4K
     GEMINI_25_FLASH_IMAGE = "gemini-2.5-flash-image"   # 快速生成，固定 1K
+    NANO_BANANA_2 = "nano-banana-2"  # DMXAPI 文档中的备选模型
 
 
 class AspectRatio(str, Enum):
@@ -102,7 +103,7 @@ class DMXAPIClient:
         self,
         prompt: str,
         reference_image: Optional[bytes] = None,
-        model: str = GeminiModel.GEMINI_3_PRO_IMAGE,  # 使用 gemini-3-pro-image-preview
+        model: str = GeminiModel.NANO_BANANA_2,  # 使用 nano-banana-2 模型
         aspect_ratio: str = AspectRatio.RATIO_4_3,
         image_size: str = ImageSize.SIZE_1K
     ) -> dict:

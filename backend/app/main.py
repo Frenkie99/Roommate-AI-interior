@@ -33,11 +33,11 @@ else:
     print(f"[WARN] .env not found at: {env_path}")
 
 # 验证关键环境变量
-dmxapi_key = os.getenv('DMXAPI_KEY')
-if dmxapi_key:
-    print(f"[INFO] DMXAPI Key: {dmxapi_key[:15]}...")
+api_key = os.getenv('GRSAI_API_KEY')
+if api_key:
+    print(f"[INFO] GRSAI API Key: {api_key[:10]}...")
 else:
-    print("[WARN] DMXAPI_KEY not set!")
+    print("[WARN] GRSAI_API_KEY not set!")
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
