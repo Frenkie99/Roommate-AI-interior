@@ -6,7 +6,7 @@ import asyncio
 
 API_KEY = "sk-5Cd5C9UJNSYfblvr375057376f6746Eb9b3818D27b3e00A3"
 BASE_URL = "https://api.apiyi.com"
-MODEL = "gemini-3-pro-image-preview"
+MODEL = "gemini-2.5-flash-image"
 
 async def test_text_to_image():
     """测试文生图"""

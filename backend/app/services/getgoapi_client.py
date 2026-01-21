@@ -312,9 +312,9 @@ class GetGoAPIClient:
         await self.client.aclose()
 
 
-# 模型优先级配置（只使用 gemini-3-pro-image-preview）
+# 模型优先级配置
 DEFAULT_MODEL_PRIORITY = [
-    GetGoModel.GEMINI_3_PRO_IMAGE,
+    GetGoModel.GEMINI_25_FLASH_IMAGE,  # 使用 flash 版本
 ]
 
 # 全局客户端实例
