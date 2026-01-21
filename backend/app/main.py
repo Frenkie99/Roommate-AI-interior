@@ -33,17 +33,22 @@ else:
     print(f"[WARN] .env not found at: {env_path}")
 
 # 验证关键环境变量
-api_key = os.getenv('GRSAI_API_KEY')
-if api_key:
-    print(f"[INFO] API Key: {api_key[:10]}...")
+dmxapi_key = os.getenv('DMXAPI_KEY')
+if dmxapi_key:
+    print(f"[INFO] DMXAPI Key: {dmxapi_key[:15]}...")
 else:
-    print("[ERROR] GRSAI_API_KEY not set!")
+    print("[WARN] DMXAPI_KEY not set!")
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.routes import image
 from app.routes import segment
+
+# 输出目录
+OUTPUT_DIR = Path(__file__).parent.parent.parent / "output"
+OUTPUT_DIR.mkdir(exist_ok=True)
 
 app = FastAPI(
     title="AI 装修效果图生成器",
@@ -63,6 +68,9 @@ app.add_middleware(
 # 注册路由
 app.include_router(image.router, prefix="/api/v1", tags=["image"])
 app.include_router(segment.router, tags=["segment"])
+
+# 静态文件服务 - 用于访问生成的图片
+app.mount("/output", StaticFiles(directory=str(OUTPUT_DIR)), name="output")
 
 
 @app.get("/")
