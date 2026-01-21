@@ -10,7 +10,7 @@ from datetime import datetime
 from fastapi import APIRouter, File, UploadFile, Form, HTTPException
 from fastapi.responses import JSONResponse
 
-from app.services.nano_banana import nano_banana_client, NanoBananaModel, AspectRatio, ImageSize, DEFAULT_MODEL_PRIORITY
+from app.services.getgoapi_client import getgoapi_client, GetGoModel, AspectRatio, ImageSize, DEFAULT_MODEL_PRIORITY
 from app.services.image_processor import image_processor
 from app.utils.prompt_builder import build_prompt
 
@@ -61,15 +61,23 @@ async def generate_renovation_image(
     # 3. 构建提示词
     prompt = build_prompt(style, room_type, custom_prompt)
     
-    # 4. 将图片转换为Base64
-    image_base64 = nano_banana_client.image_to_base64(processed_image)
+    # 4. 映射宽高比
+    ratio_map = {
+        "auto": "4:3",
+        "1:1": "1:1",
+        "16:9": "16:9",
+        "9:16": "9:16",
+        "4:3": "4:3",
+        "3:4": "3:4",
+    }
+    mapped_ratio = ratio_map.get(aspect_ratio, "4:3")
     
-    # 5. 调用API生成效果图（使用模型降级机制）
-    result = await nano_banana_client.generate_with_fallback(
+    # 5. 调用 GetGoAPI 生成效果图（使用模型降级机制）
+    result = await getgoapi_client.generate_with_fallback(
         prompt=prompt,
-        image_base64_list=[image_base64],
+        reference_image=processed_image,
         model_priority=DEFAULT_MODEL_PRIORITY,
-        aspect_ratio=aspect_ratio,
+        aspect_ratio=mapped_ratio,
         image_size=image_size
     )
     
@@ -82,28 +90,35 @@ async def generate_renovation_image(
         }, status_code=500)
     
     data = result.get("data", {})
-    results = data.get("results", [])
+    images = data.get("images", [])
     
-    if not results:
+    if not images:
         return JSONResponse({
             "code": -1,
             "message": "未获取到生成结果",
             "data": None
         }, status_code=500)
     
-    # 7. 返回成功结果
-    output_urls = [r.get("url") for r in results if r.get("url")]
+    # 7. 保存生成的图片并返回 URL
+    output_urls = []
+    for i, img_data in enumerate(images):
+        output_filename = f"{timestamp}_{task_id}_output_{i}.png"
+        output_path = os.path.join(OUTPUT_DIR, output_filename)
+        async with aiofiles.open(output_path, 'wb') as f:
+            await f.write(img_data["data"])
+        output_urls.append(f"/output/{output_filename}")
     
     return JSONResponse({
         "code": 0,
         "message": "success",
         "data": {
-            "task_id": data.get("id", task_id),
+            "task_id": task_id,
             "status": "succeeded",
             "input_image": input_filename,
             "output_urls": output_urls,
             "style": style,
-            "prompt": prompt
+            "prompt": prompt,
+            "used_model": data.get("used_model", "unknown")
         }
     })
 
