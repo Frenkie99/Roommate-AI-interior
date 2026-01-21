@@ -10,7 +10,7 @@ from datetime import datetime
 from fastapi import APIRouter, File, UploadFile, Form, HTTPException
 from fastapi.responses import JSONResponse
 
-from app.services.nano_banana import nano_banana_client, NanoBananaModel, AspectRatio, ImageSize
+from app.services.nano_banana import nano_banana_client, NanoBananaModel, AspectRatio, ImageSize, DEFAULT_MODEL_PRIORITY
 from app.services.image_processor import image_processor
 from app.utils.prompt_builder import build_prompt
 
@@ -64,11 +64,11 @@ async def generate_renovation_image(
     # 4. 将图片转换为Base64
     image_base64 = nano_banana_client.image_to_base64(processed_image)
     
-    # 5. 调用API生成效果图（使用轮询模式等待结果）
-    result = await nano_banana_client.generate_and_wait(
+    # 5. 调用API生成效果图（使用模型降级机制）
+    result = await nano_banana_client.generate_with_fallback(
         prompt=prompt,
         image_base64_list=[image_base64],
-        model=NanoBananaModel.NANO_BANANA_PRO,
+        model_priority=DEFAULT_MODEL_PRIORITY,
         aspect_ratio=aspect_ratio,
         image_size=image_size
     )

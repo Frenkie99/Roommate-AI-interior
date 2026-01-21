@@ -313,10 +313,96 @@ class NanoBananaClient:
         logger.error(f"[generate_and_wait] 超时！task_id={task_id}，已等待{max_wait_seconds}秒")
         return {"code": -1, "msg": f"生成超时（已等待{max_wait_seconds}秒）", "data": {"task_id": task_id}}
     
+    async def generate_with_fallback(
+        self,
+        prompt: str,
+        image_urls: Optional[List[str]] = None,
+        image_base64_list: Optional[List[str]] = None,
+        model_priority: Optional[List[str]] = None,
+        aspect_ratio: str = AspectRatio.AUTO,
+        image_size: str = ImageSize.SIZE_1K,
+        max_wait_seconds: int = 300,
+        poll_interval: float = 2.0
+    ) -> dict:
+        """
+        带模型降级的图片生成（自动尝试备选模型）
+        
+        Args:
+            prompt: 提示词
+            image_urls: 参考图URL列表
+            image_base64_list: 参考图Base64列表
+            model_priority: 模型优先级列表，按顺序尝试
+            aspect_ratio: 输出图像比例
+            image_size: 输出图像大小
+            max_wait_seconds: 最大等待时间（秒）
+            poll_interval: 轮询间隔（秒）
+        
+        Returns:
+            生成结果，包含实际使用的模型信息
+        """
+        # 默认模型优先级：pro > 普通 > fast
+        if model_priority is None:
+            model_priority = [
+                NanoBananaModel.NANO_BANANA_PRO,
+                NanoBananaModel.NANO_BANANA,
+                NanoBananaModel.NANO_BANANA_FAST,
+            ]
+        
+        last_error = None
+        for model in model_priority:
+            logger.info(f"[generate_with_fallback] 尝试模型: {model}")
+            
+            result = await self.generate_and_wait(
+                prompt=prompt,
+                image_urls=image_urls,
+                image_base64_list=image_base64_list,
+                model=model,
+                aspect_ratio=aspect_ratio,
+                image_size=image_size,
+                max_wait_seconds=max_wait_seconds,
+                poll_interval=poll_interval
+            )
+            
+            # 检查是否成功
+            if result.get("code") == 0:
+                logger.info(f"[generate_with_fallback] 模型 {model} 生成成功")
+                # 添加实际使用的模型信息
+                if "data" in result and result["data"]:
+                    result["data"]["used_model"] = model
+                return result
+            
+            # 检查是否是可重试的错误（超时、服务不可用等）
+            error_msg = result.get("msg", "")
+            last_error = error_msg
+            
+            # 如果是 timeout 或服务端错误，尝试下一个模型
+            if "timeout" in error_msg.lower() or "gemini" in error_msg.lower():
+                logger.warning(f"[generate_with_fallback] 模型 {model} 失败（{error_msg}），尝试下一个模型")
+                continue
+            
+            # 其他错误（如参数错误）直接返回，不再尝试
+            logger.error(f"[generate_with_fallback] 模型 {model} 失败（不可重试）: {error_msg}")
+            return result
+        
+        # 所有模型都失败
+        logger.error(f"[generate_with_fallback] 所有模型都失败，最后错误: {last_error}")
+        return {
+            "code": -1,
+            "msg": f"所有模型都生成失败，最后错误: {last_error}",
+            "data": None
+        }
+    
     async def close(self):
         """关闭客户端连接"""
         await self.client.aclose()
 
+
+# 模型优先级配置（可在此处调整）
+DEFAULT_MODEL_PRIORITY = [
+    NanoBananaModel.NANO_BANANA_PRO,      # 优先使用 Pro 版本
+    NanoBananaModel.NANO_BANANA,          # 备选：普通版本
+    NanoBananaModel.NANO_BANANA_FAST,     # 最后：快速版本
+]
 
 # 全局客户端实例
 nano_banana_client = NanoBananaClient()
