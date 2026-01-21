@@ -69,7 +69,7 @@ class GetGoAPIClient:
             raise ValueError("GETGOAPI_KEY not set in environment")
         return {
             "Content-Type": "application/json",
-            "x-goog-api-key": self.api_key
+            "Authorization": f"Bearer {self.api_key}"
         }
     
     def image_to_base64(self, image_data: bytes) -> str:
@@ -313,10 +313,9 @@ class GetGoAPIClient:
         await self.client.aclose()
 
 
-# 模型优先级配置
+# 模型优先级配置（只使用 gemini-3-pro-image-preview）
 DEFAULT_MODEL_PRIORITY = [
     GetGoModel.GEMINI_3_PRO_IMAGE,
-    GetGoModel.GEMINI_25_FLASH_IMAGE,
 ]
 
 # 全局客户端实例
