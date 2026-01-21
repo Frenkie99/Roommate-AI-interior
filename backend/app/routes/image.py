@@ -10,7 +10,7 @@ from datetime import datetime
 from fastapi import APIRouter, File, UploadFile, Form, HTTPException
 from fastapi.responses import JSONResponse
 
-from app.services.getgoapi_client import getgoapi_client, GetGoModel, AspectRatio, ImageSize, DEFAULT_MODEL_PRIORITY
+from app.services.nano_banana import nano_banana_client, NanoBananaModel, AspectRatio, ImageSize, DEFAULT_MODEL_PRIORITY
 from app.services.image_processor import image_processor
 from app.utils.prompt_builder import build_prompt
 
@@ -72,10 +72,11 @@ async def generate_renovation_image(
     }
     mapped_ratio = ratio_map.get(aspect_ratio, "4:3")
     
-    # 5. 调用 API易 生成效果图（使用模型降级机制）
-    result = await getgoapi_client.generate_with_fallback(
+    # 5. 调用 Grsai API 生成效果图（使用模型降级机制）
+    image_base64 = nano_banana_client.image_to_base64(processed_image)
+    result = await nano_banana_client.generate_with_fallback(
         prompt=prompt,
-        reference_image=processed_image,
+        image_base64_list=[image_base64],
         model_priority=DEFAULT_MODEL_PRIORITY,
         aspect_ratio=mapped_ratio,
         image_size=image_size
@@ -90,23 +91,18 @@ async def generate_renovation_image(
         }, status_code=500)
     
     data = result.get("data", {})
-    images = data.get("images", [])
+    # Grsai API 返回 results 字段（URL列表）
+    results = data.get("results", [])
     
-    if not images:
+    if not results:
         return JSONResponse({
             "code": -1,
             "message": "未获取到生成结果",
             "data": None
         }, status_code=500)
     
-    # 7. 保存生成的图片并返回 URL
-    output_urls = []
-    for i, img_data in enumerate(images):
-        output_filename = f"{timestamp}_{task_id}_output_{i}.png"
-        output_path = os.path.join(OUTPUT_DIR, output_filename)
-        async with aiofiles.open(output_path, 'wb') as f:
-            await f.write(img_data["data"])
-        output_urls.append(f"/output/{output_filename}")
+    # 7. Grsai API 直接返回图片 URL，不需要本地保存
+    output_urls = [f"/api/proxy-image?url={url}" for url in results]
     
     return JSONResponse({
         "code": 0,
