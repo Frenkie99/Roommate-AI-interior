@@ -4,8 +4,8 @@
 import httpx
 import asyncio
 
-API_KEY = "sk-slz4gd4sw0WcrJLcqMhyZW0aNatVsVKyy8clTXLKqoWGUM87"
-BASE_URL = "https://api.getgoapi.com"
+API_KEY = "sk-5Cd5C9UJNSYfblvr375057376f6746Eb9b3818D27b3e00A3"
+BASE_URL = "https://api.apiyi.com"
 MODEL = "gemini-3-pro-image-preview"
 
 async def test_text_to_image():
@@ -27,8 +27,7 @@ async def test_text_to_image():
             "responseModalities": ["IMAGE"],
             "imageConfig": {
                 "aspectRatio": "4:3",
-                "imageSize": "2K",
-                "numberOfImages": 1
+                "imageSize": "2K"
             }
         }
     }

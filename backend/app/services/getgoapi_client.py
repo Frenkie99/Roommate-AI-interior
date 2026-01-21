@@ -1,6 +1,6 @@
 """
-GetGoAPI 客户端 - Gemini Image Generation
-API文档: https://api.getgoapi.com
+API易 客户端 - Gemini Image Generation
+API文档: https://api.apiyi.com
 支持模型: gemini-3-pro-image-preview, gemini-2.5-flash-image
 """
 
@@ -46,8 +46,8 @@ class GetGoAPIClient:
     MAX_RETRIES = 3
     RETRY_DELAY = 2.0
     
-    # API 基础 URL
-    BASE_URL = "https://api.getgoapi.com"
+    # API 基础 URL (API易平台)
+    BASE_URL = "https://api.apiyi.com"
     
     def __init__(self):
         self._api_key = None
@@ -60,13 +60,13 @@ class GetGoAPIClient:
     def api_key(self) -> str:
         """动态获取 API Key"""
         if self._api_key is None:
-            self._api_key = os.getenv("GETGOAPI_KEY")
+            self._api_key = os.getenv("APIYI_KEY")
         return self._api_key
     
     def _get_headers(self) -> dict:
         """获取请求头"""
         if not self.api_key:
-            raise ValueError("GETGOAPI_KEY not set in environment")
+            raise ValueError("APIYI_KEY not set in environment")
         return {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.api_key}"
@@ -140,8 +140,7 @@ class GetGoAPIClient:
                 "responseModalities": ["IMAGE"],
                 "imageConfig": {
                     "aspectRatio": aspect_ratio,
-                    "imageSize": image_size,
-                    "numberOfImages": number_of_images
+                    "imageSize": image_size
                 }
             }
         }
@@ -152,7 +151,7 @@ class GetGoAPIClient:
         last_error = None
         for attempt in range(self.MAX_RETRIES):
             try:
-                logger.info(f"[GetGoAPI] 尝试 {attempt + 1}/{self.MAX_RETRIES}，模型: {model}")
+                logger.info(f"[API易] 尝试 {attempt + 1}/{self.MAX_RETRIES}，模型: {model}")
                 
                 response = await self.client.post(
                     api_url,
@@ -196,7 +195,7 @@ class GetGoAPIClient:
                             "data": None
                         }
                     
-                    logger.info(f"[GetGoAPI] 生成成功，获取到 {len(images)} 张图片")
+                    logger.info(f"[API易] 生成成功，获取到 {len(images)} 张图片")
                     return {
                         "code": 0,
                         "msg": "success",
@@ -208,7 +207,7 @@ class GetGoAPIClient:
                 
                 # 处理错误响应
                 error_text = response.text
-                logger.warning(f"[GetGoAPI] HTTP {response.status_code}: {error_text}")
+                logger.warning(f"[API易] HTTP {response.status_code}: {error_text}")
                 
                 # 如果是服务端错误，重试
                 if response.status_code >= 500:
@@ -223,15 +222,15 @@ class GetGoAPIClient:
                 }
                 
             except httpx.TimeoutException as e:
-                logger.warning(f"[GetGoAPI] 超时: {str(e)}")
+                logger.warning(f"[API易] 超时: {str(e)}")
                 last_error = f"请求超时: {str(e)}"
                 continue
             except httpx.HTTPError as e:
-                logger.warning(f"[GetGoAPI] 网络错误: {str(e)}")
+                logger.warning(f"[API易] 网络错误: {str(e)}")
                 last_error = f"网络错误: {str(e)}"
                 continue
             except Exception as e:
-                logger.error(f"[GetGoAPI] 未知错误: {str(e)}")
+                logger.error(f"[API易] 未知错误: {str(e)}")
                 last_error = f"未知错误: {str(e)}"
                 continue
         
@@ -273,7 +272,7 @@ class GetGoAPIClient:
         
         last_error = None
         for model in model_priority:
-            logger.info(f"[GetGoAPI] 尝试模型: {model}")
+            logger.info(f"[API易] 尝试模型: {model}")
             
             result = await self.generate_image(
                 prompt=prompt,
@@ -285,7 +284,7 @@ class GetGoAPIClient:
             )
             
             if result.get("code") == 0:
-                logger.info(f"[GetGoAPI] 模型 {model} 生成成功")
+                logger.info(f"[API易] 模型 {model} 生成成功")
                 if "data" in result and result["data"]:
                     result["data"]["used_model"] = model
                 return result
@@ -295,11 +294,11 @@ class GetGoAPIClient:
             
             # 如果是超时或服务端错误，尝试下一个模型
             if "timeout" in error_msg.lower() or "500" in error_msg or "503" in error_msg:
-                logger.warning(f"[GetGoAPI] 模型 {model} 失败（{error_msg}），尝试下一个模型")
+                logger.warning(f"[API易] 模型 {model} 失败（{error_msg}），尝试下一个模型")
                 continue
             
             # 其他错误直接返回
-            logger.error(f"[GetGoAPI] 模型 {model} 失败（不可重试）: {error_msg}")
+            logger.error(f"[API易] 模型 {model} 失败（不可重试）: {error_msg}")
             return result
         
         return {
