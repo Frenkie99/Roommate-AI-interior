@@ -102,7 +102,7 @@ class DMXAPIClient:
         self,
         prompt: str,
         reference_image: Optional[bytes] = None,
-        model: str = GeminiModel.GEMINI_25_FLASH_IMAGE,  # 默认使用更稳定的 flash 模型
+        model: str = GeminiModel.GEMINI_3_PRO_IMAGE,  # 使用 gemini-3-pro-image-preview
         aspect_ratio: str = AspectRatio.RATIO_4_3,
         image_size: str = ImageSize.SIZE_1K
     ) -> dict:
@@ -136,29 +136,12 @@ class DMXAPIClient:
         # 添加提示词
         parts.append({"text": prompt})
         
-        # 构建请求体
-        # gemini-2.5-flash-image 不支持 responseModalities 和 imageConfig
-        if model == GeminiModel.GEMINI_25_FLASH_IMAGE:
-            payload = {
-                "contents": [{
-                    "parts": parts
-                }]
-            }
-        else:
-            # gemini-3-pro-image-preview 支持更多配置
-            payload = {
-                "contents": [{
-                    "parts": parts
-                }],
-                "generationConfig": {
-                    "responseModalities": ["IMAGE"],
-                    "imageConfig": {
-                        "aspectRatio": aspect_ratio
-                    }
-                }
-            }
-            if image_size != ImageSize.SIZE_1K:
-                payload["generationConfig"]["imageConfig"]["imageSize"] = image_size
+        # 构建请求体 - 统一使用简化格式，避免模型兼容性问题
+        payload = {
+            "contents": [{
+                "parts": parts
+            }]
+        }
         
         # API URL
         api_url = f"{self.BASE_URL}/v1beta/models/{model}:generateContent"
