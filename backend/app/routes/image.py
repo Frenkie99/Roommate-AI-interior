@@ -72,7 +72,7 @@ async def generate_renovation_image(
     }
     mapped_ratio = ratio_map.get(aspect_ratio, "4:3")
     
-    # 5. 调用 GetGoAPI 生成效果图（使用模型降级机制）
+    # 5. 调用 API易 生成效果图（使用模型降级机制）
     result = await getgoapi_client.generate_with_fallback(
         prompt=prompt,
         reference_image=processed_image,
