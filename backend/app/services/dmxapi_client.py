@@ -102,7 +102,7 @@ class DMXAPIClient:
         self,
         prompt: str,
         reference_image: Optional[bytes] = None,
-        model: str = GeminiModel.GEMINI_3_PRO_IMAGE,
+        model: str = GeminiModel.GEMINI_25_FLASH_IMAGE,  # 默认使用更稳定的 flash 模型
         aspect_ratio: str = AspectRatio.RATIO_4_3,
         image_size: str = ImageSize.SIZE_1K
     ) -> dict:
@@ -137,21 +137,28 @@ class DMXAPIClient:
         parts.append({"text": prompt})
         
         # 构建请求体
-        payload = {
-            "contents": [{
-                "parts": parts
-            }],
-            "generationConfig": {
-                "responseModalities": ["IMAGE"],
-                "imageConfig": {
-                    "aspectRatio": aspect_ratio
+        # gemini-2.5-flash-image 不支持 responseModalities 和 imageConfig
+        if model == GeminiModel.GEMINI_25_FLASH_IMAGE:
+            payload = {
+                "contents": [{
+                    "parts": parts
+                }]
+            }
+        else:
+            # gemini-3-pro-image-preview 支持更多配置
+            payload = {
+                "contents": [{
+                    "parts": parts
+                }],
+                "generationConfig": {
+                    "responseModalities": ["IMAGE"],
+                    "imageConfig": {
+                        "aspectRatio": aspect_ratio
+                    }
                 }
             }
-        }
-        
-        # 只有 gemini-3-pro-image-preview 支持 imageSize
-        if model == GeminiModel.GEMINI_3_PRO_IMAGE and image_size != ImageSize.SIZE_1K:
-            payload["generationConfig"]["imageConfig"]["imageSize"] = image_size
+            if image_size != ImageSize.SIZE_1K:
+                payload["generationConfig"]["imageConfig"]["imageSize"] = image_size
         
         # API URL
         api_url = f"{self.BASE_URL}/v1beta/models/{model}:generateContent"

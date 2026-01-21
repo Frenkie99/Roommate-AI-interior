@@ -72,11 +72,11 @@ async def generate_renovation_image(
     }
     mapped_ratio = ratio_map.get(aspect_ratio, "4:3")
     
-    # 5. 调用 DMXAPI 生成效果图
+    # 5. 调用 DMXAPI 生成效果图（使用更稳定的 flash 模型）
     result = await dmxapi_client.generate_image(
         prompt=prompt,
         reference_image=processed_image,
-        model=GeminiModel.GEMINI_3_PRO_IMAGE,
+        model=GeminiModel.GEMINI_25_FLASH_IMAGE,
         aspect_ratio=mapped_ratio,
         image_size=image_size
     )
