@@ -31,11 +31,12 @@ STRUCTURE_CONSTRAINTS = {
 }
 
 # 完整结构约束模板（推荐用于复杂毛坯图）
-STRUCTURE_TEMPLATE_FULL = """CRITICAL STRUCTURAL CONSTRAINTS:
-1. The original wall positions, room geometry, and window apertures are fixed and must not be altered.
-2. Maintain the exact floor plan and ceiling height.
-3. The camera perspective, focal length, and vanishing points must remain 100% consistent with the input image.
-4. Do not perform any structural remodeling; focus solely on surface materials, lighting, and furniture."""
+STRUCTURE_TEMPLATE_FULL = """CRITICAL STRUCTURAL CONSTRAINTS (MUST FOLLOW STRICTLY):
+1. WINDOWS: The exact size, position, and proportions of ALL windows in the input image MUST be preserved. Do NOT enlarge, shrink, move, or change the shape of any window. The window-to-wall ratio must remain identical.
+2. WALLS: The original wall positions, room geometry, and all architectural openings are fixed and must not be altered.
+3. FLOOR PLAN: Maintain the exact floor plan, ceiling height, and room dimensions.
+4. CAMERA: The camera perspective, focal length, and vanishing points must remain 100% consistent with the input image.
+5. FOCUS: Do not perform any structural remodeling. Focus ONLY on surface materials, lighting, furniture, and decoration."""
 
 # 紧凑版结构约束（用于 Token 受限场景）
 STRUCTURE_TEMPLATE_COMPACT = "Keep all walls, windows, doors, and ceiling height exactly as shown. Do not add or remove any architectural elements."
