@@ -8,8 +8,13 @@ import os
 import base64
 import httpx
 import asyncio
+import logging
 from typing import Optional, List, Union
 from enum import Enum
+
+# 配置日志
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 
 class NanoBananaModel(str, Enum):
@@ -55,11 +60,18 @@ class TaskStatus(str, Enum):
 class NanoBananaClient:
     """Grsai Nano Banana API 客户端"""
     
+    # 重试配置
+    MAX_RETRIES = 3
+    RETRY_DELAY = 2.0  # 秒
+    
     def __init__(self):
         # 延迟获取环境变量，确保main.py已加载
         self._api_key = None
         self._api_url = None
-        self.client = httpx.AsyncClient(timeout=180.0)
+        # 增加超时时间，连接超时30秒，读取超时300秒
+        self.client = httpx.AsyncClient(
+            timeout=httpx.Timeout(connect=30.0, read=300.0, write=30.0, pool=30.0)
+        )
     
     @property
     def api_key(self) -> str:
@@ -133,20 +145,42 @@ class NanoBananaClient:
         if urls:
             payload["urls"] = urls
         
-        try:
-            response = await self.client.post(
-                f"{self.api_url}/v1/draw/nano-banana",
-                headers=self._get_headers(),
-                json=payload
-            )
-            response.raise_for_status()
-            return response.json()
-        except httpx.HTTPError as e:
-            return {
-                "code": -1,
-                "msg": f"API请求失败: {str(e)}",
-                "data": None
-            }
+        last_error = None
+        for attempt in range(self.MAX_RETRIES):
+            try:
+                logger.info(f"[generate_image] 尝试 {attempt + 1}/{self.MAX_RETRIES}，模型: {model}")
+                response = await self.client.post(
+                    f"{self.api_url}/v1/draw/nano-banana",
+                    headers=self._get_headers(),
+                    json=payload
+                )
+                response.raise_for_status()
+                result = response.json()
+                logger.info(f"[generate_image] 成功，task_id: {result.get('data', {}).get('id')}")
+                return result
+            except httpx.TimeoutException as e:
+                last_error = f"请求超时: {str(e)}"
+                logger.warning(f"[generate_image] 超时 (尝试 {attempt + 1}): {last_error}")
+            except httpx.HTTPStatusError as e:
+                last_error = f"HTTP错误 {e.response.status_code}: {e.response.text[:200]}"
+                logger.warning(f"[generate_image] HTTP错误 (尝试 {attempt + 1}): {last_error}")
+            except httpx.HTTPError as e:
+                last_error = f"网络错误: {str(e)}"
+                logger.warning(f"[generate_image] 网络错误 (尝试 {attempt + 1}): {last_error}")
+            except Exception as e:
+                last_error = f"未知错误: {str(e)}"
+                logger.error(f"[generate_image] 未知错误 (尝试 {attempt + 1}): {last_error}")
+            
+            # 重试前等待
+            if attempt < self.MAX_RETRIES - 1:
+                await asyncio.sleep(self.RETRY_DELAY * (attempt + 1))
+        
+        logger.error(f"[generate_image] 所有重试失败: {last_error}")
+        return {
+            "code": -1,
+            "msg": f"API请求失败（已重试{self.MAX_RETRIES}次）: {last_error}",
+            "data": None
+        }
     
     async def get_result(self, task_id: str) -> dict:
         """
@@ -167,8 +201,19 @@ class NanoBananaClient:
                 json=payload
             )
             response.raise_for_status()
-            return response.json()
+            result = response.json()
+            status = result.get('data', {}).get('status', 'unknown')
+            logger.debug(f"[get_result] task_id={task_id}, status={status}")
+            return result
+        except httpx.TimeoutException as e:
+            logger.warning(f"[get_result] 超时: {str(e)}")
+            return {
+                "code": -1,
+                "msg": f"查询超时: {str(e)}",
+                "data": None
+            }
         except httpx.HTTPError as e:
+            logger.warning(f"[get_result] 网络错误: {str(e)}")
             return {
                 "code": -1,
                 "msg": f"获取结果失败: {str(e)}",
@@ -222,6 +267,11 @@ class NanoBananaClient:
         
         # 2. 轮询获取结果
         elapsed = 0
+        consecutive_errors = 0
+        max_consecutive_errors = 5
+        
+        logger.info(f"[generate_and_wait] 开始轮询，task_id={task_id}，最大等待{max_wait_seconds}秒")
+        
         while elapsed < max_wait_seconds:
             await asyncio.sleep(poll_interval)
             elapsed += poll_interval
@@ -229,21 +279,39 @@ class NanoBananaClient:
             result = await self.get_result(task_id)
             
             if result.get("code") != 0:
+                consecutive_errors += 1
+                if consecutive_errors >= max_consecutive_errors:
+                    logger.error(f"[generate_and_wait] 连续{max_consecutive_errors}次查询失败，放弃")
+                    return {
+                        "code": -1,
+                        "msg": f"查询结果连续失败{max_consecutive_errors}次: {result.get('msg')}",
+                        "data": {"task_id": task_id}
+                    }
                 continue
             
+            consecutive_errors = 0  # 重置错误计数
             data = result.get("data", {})
             status = data.get("status")
+            progress = data.get("progress", 0)
+            
+            if elapsed % 10 < poll_interval:  # 每10秒打印一次进度
+                logger.info(f"[generate_and_wait] task_id={task_id}, status={status}, progress={progress}, elapsed={elapsed:.0f}s")
             
             if status == TaskStatus.SUCCEEDED:
+                logger.info(f"[generate_and_wait] 生成成功！task_id={task_id}，耗时{elapsed:.0f}秒")
                 return result
             elif status == TaskStatus.FAILED:
+                failure_reason = data.get('failure_reason', '')
+                error_msg = data.get('error', '')
+                logger.error(f"[generate_and_wait] 生成失败: {failure_reason} - {error_msg}")
                 return {
                     "code": -1,
-                    "msg": f"生成失败: {data.get('failure_reason', '')} - {data.get('error', '')}",
+                    "msg": f"生成失败: {failure_reason} - {error_msg}",
                     "data": data
                 }
         
-        return {"code": -1, "msg": "生成超时", "data": {"task_id": task_id}}
+        logger.error(f"[generate_and_wait] 超时！task_id={task_id}，已等待{max_wait_seconds}秒")
+        return {"code": -1, "msg": f"生成超时（已等待{max_wait_seconds}秒）", "data": {"task_id": task_id}}
     
     async def close(self):
         """关闭客户端连接"""
