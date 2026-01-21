@@ -57,8 +57,8 @@ const detectStyleFromText = (text) => {
   return null;
 };
 
-// 后端API地址
-const API_BASE = 'http://localhost:8000';
+// 后端API地址（生产环境使用相对路径，由Nginx代理）
+const API_BASE = '';
 
 export default function PlaygroundPage() {
   const [selectedRoom, setSelectedRoom] = useState('living_room');
