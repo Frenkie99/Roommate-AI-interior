@@ -46,8 +46,8 @@ class GetGoAPIClient:
     MAX_RETRIES = 3
     RETRY_DELAY = 2.0
     
-    # API 基础 URL（中国优化线路）
-    BASE_URL = "https://cn.getgoapi.com"
+    # API 基础 URL
+    BASE_URL = "https://api.getgoapi.com"
     
     def __init__(self):
         self._api_key = None
