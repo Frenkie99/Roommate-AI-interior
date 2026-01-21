@@ -68,7 +68,7 @@ async def generate_renovation_image(
     result = await nano_banana_client.generate_and_wait(
         prompt=prompt,
         image_base64_list=[image_base64],
-        model=NanoBananaModel.NANO_BANANA_PRO_VIP,
+        model=NanoBananaModel.NANO_BANANA,
         aspect_ratio=aspect_ratio,
         image_size=image_size
     )
