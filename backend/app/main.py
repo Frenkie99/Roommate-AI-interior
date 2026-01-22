@@ -33,11 +33,11 @@ else:
     print(f"[WARN] .env not found at: {env_path}")
 
 # 验证关键环境变量
-api_key = os.getenv('GRSAI_API_KEY')
+api_key = os.getenv('APIYI_KEY')
 if api_key:
-    print(f"[INFO] Grsai API Key: {api_key[:15]}...")
+    print(f"[INFO] API易 Key: {api_key[:15]}...")
 else:
-    print("[WARN] GRSAI_API_KEY not set!")
+    print("[WARN] APIYI_KEY not set!")
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
