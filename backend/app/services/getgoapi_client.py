@@ -142,8 +142,9 @@ class GetGoAPIClient:
             }
         }
         
-        # API URL
-        api_url = f"{self.BASE_URL}/v1beta/models/{model}:generateContent"
+        # API URL - 确保使用模型名称字符串而非枚举对象
+        model_name = model.value if hasattr(model, 'value') else str(model)
+        api_url = f"{self.BASE_URL}/v1beta/models/{model_name}:generateContent"
         
         last_error = None
         for attempt in range(self.MAX_RETRIES):
