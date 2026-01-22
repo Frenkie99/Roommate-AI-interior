@@ -50,7 +50,6 @@ class GetGoAPIClient:
     BASE_URL = "https://api.apiyi.com"
     
     def __init__(self):
-        self._api_key = None
         # 增加超时时间
         self.client = httpx.AsyncClient(
             timeout=httpx.Timeout(connect=30.0, read=300.0, write=30.0, pool=30.0)
@@ -58,10 +57,8 @@ class GetGoAPIClient:
     
     @property
     def api_key(self) -> str:
-        """动态获取 API Key"""
-        if self._api_key is None:
-            self._api_key = os.getenv("APIYI_KEY")
-        return self._api_key
+        """每次动态获取 API Key，不缓存"""
+        return os.getenv("APIYI_KEY")
     
     def _get_headers(self) -> dict:
         """获取请求头"""
