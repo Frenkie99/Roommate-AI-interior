@@ -6,7 +6,7 @@ import asyncio
 
 API_KEY = "sk-5Cd5C9UJNSYfblvr375057376f6746Eb9b3818D27b3e00A3"
 BASE_URL = "https://api.apiyi.com"
-MODEL = "gemini-2.5-flash-image"
+MODEL = "gemini-3-pro-image-preview"
 
 async def test_text_to_image():
     url = f"{BASE_URL}/v1beta/models/{MODEL}:generateContent"

@@ -312,7 +312,8 @@ class GetGoAPIClient:
 
 # 模型优先级配置
 DEFAULT_MODEL_PRIORITY = [
-    GetGoModel.GEMINI_25_FLASH_IMAGE,  # 使用 flash 版本
+    GetGoModel.GEMINI_3_PRO_IMAGE,  # 使用 Pro 版本，质量更高，结构保持更好
+    GetGoModel.GEMINI_25_FLASH_IMAGE,  # 降级备选
 ]
 
 # 全局客户端实例
