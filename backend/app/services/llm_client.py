@@ -244,48 +244,42 @@ class LLMClient:
         room_type: Optional[str],
         custom_prompt: Optional[str]
     ) -> str:
-        """基于 LLM 分析构建增强版提示词"""
+        """基于 LLM 分析构建增强版提示词 - 结构约束始终保留"""
         
-        room_analysis = analysis.get("room_analysis", {})
         design_rec = analysis.get("design_recommendations", {})
-        prompt_enh = analysis.get("prompt_enhancement", {})
         
         prompt_parts = []
         
-        # 角色与任务
+        # ===== 1. 角色与任务 =====
         prompt_parts.append("Act as a professional architectural visualization engine.")
         prompt_parts.append(f"Task: Renovate the provided raw space into a {style} interior.")
         
-        # 空间分析结果
-        if room_analysis:
-            prompt_parts.append("## SPACE ANALYSIS:")
-            prompt_parts.append(f"Room type: {room_analysis.get('room_type', 'unknown')}")
-            prompt_parts.append(f"Space characteristics: {room_analysis.get('space_description', '')}")
-            prompt_parts.append(f"Lighting analysis: {room_analysis.get('lighting_analysis', '')}")
-            prompt_parts.append(f"Structural constraints: {room_analysis.get('structural_elements', '')}")
+        # ===== 2. 结构约束（最高优先级，不可覆盖）=====
+        prompt_parts.append("""## CRITICAL STRUCTURAL CONSTRAINTS (MUST FOLLOW STRICTLY):
+1. WINDOWS: The exact size, position, and proportions of ALL windows in the input image MUST be preserved. Do NOT enlarge, shrink, move, or change the shape of any window. The window-to-wall ratio must remain identical.
+2. WALLS: The original wall positions, room geometry, and all architectural openings are fixed and must not be altered.
+3. FLOOR PLAN: Maintain the exact floor plan, ceiling height, and room dimensions.
+4. CAMERA: The camera perspective, focal length, and vanishing points must remain 100% consistent with the input image.
+5. FOCUS: Do not perform any structural remodeling. Focus ONLY on surface materials, lighting, furniture, and decoration.""")
         
-        # 设计建议
+        # ===== 3. LLM 增强的设计建议（仅限软装和视觉效果）=====
         if design_rec:
-            prompt_parts.append("## DESIGN RECOMMENDATIONS:")
-            prompt_parts.append(f"Layout: {design_rec.get('layout_suggestion', '')}")
-            prompt_parts.append(f"Furniture placement: {design_rec.get('furniture_placement', '')}")
-            prompt_parts.append(f"Lighting design: {design_rec.get('lighting_design', '')}")
-            prompt_parts.append(f"Color scheme: {design_rec.get('color_scheme', '')}")
+            prompt_parts.append("## DESIGN RECOMMENDATIONS (LLM Enhanced):")
+            if design_rec.get('layout_suggestion'):
+                prompt_parts.append(f"Furniture layout: {design_rec.get('layout_suggestion', '')}")
+            if design_rec.get('furniture_placement'):
+                prompt_parts.append(f"Furniture placement: {design_rec.get('furniture_placement', '')}")
+            if design_rec.get('lighting_design'):
+                prompt_parts.append(f"Lighting design: {design_rec.get('lighting_design', '')}")
+            if design_rec.get('color_scheme'):
+                prompt_parts.append(f"Color scheme: {design_rec.get('color_scheme', '')}")
         
-        # 增强约束
-        if prompt_enh:
-            prompt_parts.append("## ENHANCED CONSTRAINTS:")
-            prompt_parts.append(f"Spatial constraints: {prompt_enh.get('spatial_constraints', '')}")
-            prompt_parts.append(f"Design focus: {prompt_enh.get('design_focus', '')}")
-            prompt_parts.append(f"Quality requirements: {prompt_enh.get('quality_requirements', '')}")
-            prompt_parts.append(f"Custom elements: {prompt_enh.get('custom_elements', '')}")
-        
-        # 用户自定义
+        # ===== 4. 用户自定义需求 =====
         if custom_prompt:
             prompt_parts.append(f"## USER REQUIREMENTS:")
             prompt_parts.append(custom_prompt)
         
-        # 质量要求
+        # ===== 5. 质量要求 =====
         prompt_parts.append("## QUALITY STANDARDS:")
         prompt_parts.append("photorealistic architecture photography, ultra-detailed textures, highly realistic")
         prompt_parts.append("shot on Canon EOS R5, 16mm f/8, professional architectural composition")
@@ -300,16 +294,24 @@ class LLMClient:
         room_type: Optional[str],
         custom_prompt: Optional[str]
     ) -> str:
-        """构建备用提示词（当 JSON 解析失败时）"""
+        """构建备用提示词（当 JSON 解析失败时）- 结构约束始终保留"""
         
         prompt_parts = []
         
         prompt_parts.append("Act as a professional architectural visualization engine.")
         prompt_parts.append(f"Task: Renovate the provided raw space into a {style} interior.")
         
-        # LLM 分析内容
-        prompt_parts.append("## AI ANALYSIS:")
-        prompt_parts.append(raw_content)
+        # ===== 结构约束（最高优先级，不可覆盖）=====
+        prompt_parts.append("""## CRITICAL STRUCTURAL CONSTRAINTS (MUST FOLLOW STRICTLY):
+1. WINDOWS: The exact size, position, and proportions of ALL windows in the input image MUST be preserved. Do NOT enlarge, shrink, move, or change the shape of any window. The window-to-wall ratio must remain identical.
+2. WALLS: The original wall positions, room geometry, and all architectural openings are fixed and must not be altered.
+3. FLOOR PLAN: Maintain the exact floor plan, ceiling height, and room dimensions.
+4. CAMERA: The camera perspective, focal length, and vanishing points must remain 100% consistent with the input image.
+5. FOCUS: Do not perform any structural remodeling. Focus ONLY on surface materials, lighting, furniture, and decoration.""")
+        
+        # LLM 分析内容（仅用于设计建议）
+        prompt_parts.append("## DESIGN SUGGESTIONS (from AI analysis):")
+        prompt_parts.append(raw_content[:1000] if len(raw_content) > 1000 else raw_content)
         
         # 基础风格信息
         prompt_parts.append(f"## STYLE: {style}")
