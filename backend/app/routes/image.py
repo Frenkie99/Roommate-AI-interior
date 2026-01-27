@@ -11,6 +11,7 @@ from fastapi import APIRouter, File, UploadFile, Form, HTTPException
 from fastapi.responses import JSONResponse
 
 from app.services.getgoapi_client import getgoapi_client, GetGoModel, AspectRatio, ImageSize, DEFAULT_MODEL_PRIORITY
+from app.services.llm_client import llm_client, LLMModel, DEFAULT_LLM_MODEL_PRIORITY
 from app.services.image_processor import image_processor
 from app.utils.prompt_builder import build_prompt
 
@@ -58,8 +59,33 @@ async def generate_renovation_image(
     async with aiofiles.open(input_path, 'wb') as f:
         await f.write(processed_image)
     
-    # 3. 构建提示词
-    prompt = build_prompt(style, room_type, custom_prompt)
+    # 3. 使用 LLM 智能分析并生成提示词
+    use_llm = os.getenv("USE_LLM_PROMPT", "true").lower() == "true"
+    llm_analysis = None
+    
+    if use_llm:
+        try:
+            print(f"[LLM] 开始分析毛坯房图片...")
+            llm_result = await llm_client.analyze_room_and_generate_prompt(
+                image_data=processed_image,
+                style=style,
+                room_type=room_type,
+                custom_prompt=custom_prompt,
+                model=DEFAULT_LLM_MODEL_PRIORITY[0]
+            )
+            
+            if llm_result.get("code") == 0:
+                llm_analysis = llm_result.get("data", {})
+                prompt = llm_analysis.get("enhanced_prompt", "")
+                print(f"[LLM] 智能提示词生成成功")
+            else:
+                print(f"[LLM] 分析失败: {llm_result.get('message')}, 使用静态提示词")
+                prompt = build_prompt(style, room_type, custom_prompt)
+        except Exception as e:
+            print(f"[LLM] 异常: {str(e)}, 使用静态提示词")
+            prompt = build_prompt(style, room_type, custom_prompt)
+    else:
+        prompt = build_prompt(style, room_type, custom_prompt)
     
     # 4. 映射宽高比
     ratio_map = {
@@ -119,7 +145,9 @@ async def generate_renovation_image(
             "output_urls": output_urls,
             "style": style,
             "prompt": prompt,
-            "used_model": data.get("used_model", "unknown")
+            "used_model": data.get("used_model", "unknown"),
+            "llm_analysis": llm_analysis.get("analysis") if llm_analysis else None,
+            "llm_enabled": use_llm
         }
     })
 

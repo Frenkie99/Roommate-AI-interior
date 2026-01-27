@@ -35,9 +35,20 @@ else:
 # 验证关键环境变量
 api_key = os.getenv('APIYI_KEY')
 if api_key:
-    print(f"[INFO] API易 Key: {api_key[:15]}...")
+    print(f"[INFO] API易 Key (图像生成): {api_key[:15]}...")
 else:
     print("[WARN] APIYI_KEY not set!")
+
+# LLM API Key (智能提示词)
+llm_api_key = os.getenv('LLM_APIYI_KEY')
+if llm_api_key:
+    print(f"[INFO] API易 Key (LLM): {llm_api_key[:15]}...")
+else:
+    print("[WARN] LLM_APIYI_KEY not set!")
+
+# LLM 功能开关
+use_llm = os.getenv('USE_LLM_PROMPT', 'true')
+print(f"[INFO] LLM 智能提示词: {'启用' if use_llm.lower() == 'true' else '禁用'}")
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
