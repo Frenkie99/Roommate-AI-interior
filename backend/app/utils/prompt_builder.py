@@ -41,6 +41,9 @@ STRUCTURE_TEMPLATE_FULL = """CRITICAL STRUCTURAL CONSTRAINTS (MUST FOLLOW STRICT
 # 紧凑版结构约束（用于 Token 受限场景）
 STRUCTURE_TEMPLATE_COMPACT = "Keep all walls, windows, doors, and ceiling height exactly as shown. Do not add or remove any architectural elements."
 
+# 全局结构约束导出（供 llm_client.py 引用）
+GLOBAL_STRUCTURE_CONSTRAINTS = STRUCTURE_TEMPLATE_FULL
+
 
 # ============================================================================
 # 装修风格提示词库 v2.0 (Gemini 3 Optimized)
@@ -51,7 +54,8 @@ STYLE_PROMPTS: Dict[str, Dict] = {
     "modern_luxury": {
         "name": "现代轻奢",
         "logic": "强调材质的对比（哑光 vs 亮光）与精致的金属点缀",
-        "core": "(sophisticated modern luxury interior:1.3)",
+        "vibe": "Sophisticated, refined, and high-end with a sense of understated elegance",
+        "core": "sophisticated modern luxury interior",
         "materials": "calacatta marble, brushed brass accents, leather upholstery, glossy finishes, velvet texture",
         "colors": "warm greige, champagne gold, ivory white, deep navy contrast, metallic highlights",
         "furniture": "italian designer furniture, tufted sofa, sleek metal legs, marble coffee table",
@@ -61,7 +65,8 @@ STYLE_PROMPTS: Dict[str, Dict] = {
     "chinese_modern": {
         "name": "新中式",
         "logic": "去除传统繁复，强调对称性、留白与深色木作的质感",
-        "core": "(contemporary chinese zen interior:1.3)",
+        "vibe": "Serene, balanced, and culturally rooted with modern simplicity",
+        "core": "contemporary chinese zen interior",
         "materials": "dark walnut wood, natural silk, brass details, ink-wash painting textures, stone",
         "colors": "dark wood tones, off-white background, cinnabar red accents, jade green, gold",
         "furniture": "ming-style minimalist chairs, symmetrical layout, round-backed armchairs, solid wood console",
@@ -71,7 +76,8 @@ STYLE_PROMPTS: Dict[str, Dict] = {
     "american_transitional": {
         "name": "美式风格",
         "logic": "强调线条感（护墙板）和体量感大的舒适家具",
-        "core": "(modern american transitional interior:1.3)",
+        "vibe": "Warm, inviting, and comfortable with classic American charm",
+        "core": "modern american transitional interior",
         "materials": "wainscoting wall panels, dark oak flooring, linen fabric, brass hardware, crown molding",
         "colors": "warm neutral tones, navy blue, sage green, cream white, antique brass",
         "furniture": "large comfortable fabric sofa, leather armchairs, solid wood coffee table, shaker style cabinets",
@@ -81,7 +87,8 @@ STYLE_PROMPTS: Dict[str, Dict] = {
     "european_neoclassical": {
         "name": "欧式风格",
         "logic": "侧重于石膏线条、鱼骨拼地板和优雅的比例",
-        "core": "(neoclassical european interior:1.3)",
+        "vibe": "Elegant, timeless, and romantically European with classical proportions",
+        "core": "neoclassical european interior",
         "materials": "intricate wall moldings (boiserie), herringbone wood floor, marble fireplace, plaster relief",
         "colors": "creamy white, beige, pastel tones, gold leaf accents, light grey",
         "furniture": "curved elegant furniture, velvet upholstery, carved wood details, cabriole legs",
@@ -91,7 +98,8 @@ STYLE_PROMPTS: Dict[str, Dict] = {
     "industrial_loft": {
         "name": "工业风",
         "logic": "暴露的结构美学，引入微水泥等现代材质，减少脏旧感",
-        "core": "(modern industrial loft interior:1.3)",
+        "vibe": "Raw, edgy, and urban with refined industrial aesthetics",
+        "core": "modern industrial loft interior",
         "materials": "exposed concrete walls, micro-cement floor, black steel, red brick, distressed leather",
         "colors": "cement gray, matte black, rust orange, dark wood, metallic silver",
         "furniture": "iron frame furniture, chesterfield leather sofa, raw wood tables, open shelving",
@@ -101,7 +109,8 @@ STYLE_PROMPTS: Dict[str, Dict] = {
     "natural_wood": {
         "name": "原木风",
         "logic": "现代极简与自然的结合，强调大面积浅色木饰面",
-        "core": "(warm minimalist natural wood interior:1.3)",
+        "vibe": "Warm, organic, and naturally calming with Scandinavian influences",
+        "core": "warm minimalist natural wood interior",
         "materials": "light ash wood, matte micro-cement, cotton linen, rattan, travertine stone",
         "colors": "warm white, beige, light wood tones, cream, earth tones",
         "furniture": "curved wooden furniture, boucle sofa, low profile designs, organic shapes",
@@ -111,7 +120,8 @@ STYLE_PROMPTS: Dict[str, Dict] = {
     "japanese_traditional": {
         "name": "日式",
         "logic": "严格遵循传统日式元素，如榻榻米、障子门，强调低矮重心",
-        "core": "(authentic japanese ryokan style interior:1.3)",
+        "vibe": "Zen, tranquil, and authentically Japanese with mindful simplicity",
+        "core": "authentic japanese ryokan style interior",
         "materials": "tatami mats, shoji screens (rice paper), cedar wood (sugi), bamboo, clay walls",
         "colors": "natural wood color, straw yellow, matcha green, white, charcoal gray",
         "furniture": "low wooden tables (chabudai), floor cushions (zabuton), futon, built-in storage",
@@ -121,7 +131,8 @@ STYLE_PROMPTS: Dict[str, Dict] = {
     "bohemian": {
         "name": "波西米亚",
         "logic": "繁复的纹理叠加、植物、编织物和自由奔放的色彩",
-        "core": "(eclectic bohemian chic interior:1.3)",
+        "vibe": "Free-spirited, eclectic, and artistically layered with global influences",
+        "core": "eclectic bohemian chic interior",
         "materials": "macrame, rattan, persian rugs, velvet, layered textiles, natural wood",
         "colors": "terracotta, emerald green, mustard yellow, warm earth tones, vibrant patterns",
         "furniture": "peacock chairs, low sofas, poufs, vintage wooden pieces, hanging chairs",
@@ -131,7 +142,8 @@ STYLE_PROMPTS: Dict[str, Dict] = {
     "bauhaus": {
         "name": "包豪斯",
         "logic": "形式追随功能，使用钢管家具、三原色点缀和几何抽象感",
-        "core": "(bauhaus modernist interior:1.3)",
+        "vibe": "Functional, geometric, and artistically modernist with primary color accents",
+        "core": "bauhaus modernist interior",
         "materials": "tubular steel (chrome), glass, plywood, leather, smooth plaster",
         "colors": "white background, black lines, primary colors accents (red, yellow, blue)",
         "furniture": "tubular steel chairs (cantilever), functional modular furniture, geometric forms",
@@ -141,7 +153,8 @@ STYLE_PROMPTS: Dict[str, Dict] = {
     "modern_minimalist": {
         "name": "现代简约",
         "logic": "少即是多，利用留白（Negative Space）和隐藏式设计",
-        "core": "(ultra-modern minimalist interior:1.3)",
+        "vibe": "Clean, airy, and architecturally pure with intentional negative space",
+        "core": "ultra-modern minimalist interior",
         "materials": "matte white surfaces, self-leveling cement, glass, anodized aluminum",
         "colors": "monochromatic white, cool gray, black contrasts, neutral palette",
         "furniture": "blocky geometric furniture, hidden handle cabinets, sharp lines, suspended furniture",
@@ -159,7 +172,7 @@ ROOM_TYPE_PROMPTS: Dict[str, Dict] = {
     "living_room": {
         "name": "客厅",
         "logic": "强调视觉重心（通常是电视墙或景观窗）与围合感的平衡",
-        "core": "(spacious open-plan living room with balanced layout:1.3)",
+        "core": "spacious open-plan living room with balanced layout",
         "hardscape": "Ceiling: suspended gypsum ceiling with hidden cove lighting, modern track lights. Walls: textured feature wall (TV background), neutral painted side walls.",
         "furniture": "Layout: L-shaped modular sofa arrangement, low-profile marble coffee table, single lounge chair. Items: slim media console, side tables.",
         "softscape": "large geometric area rug defining the seating zone, floor-to-ceiling sheer curtains, minimal abstract art, indoor potted tree"
@@ -167,7 +180,7 @@ ROOM_TYPE_PROMPTS: Dict[str, Dict] = {
     "bedroom": {
         "name": "卧室",
         "logic": "强调舒适性与私密性，避免视线直冲床头",
-        "core": "(cozy and serene bedroom sanctuary:1.3)",
+        "core": "cozy and serene bedroom sanctuary",
         "hardscape": "Ceiling: flat clean ceiling with soft perimeter lighting. Walls: upholstered or wood-paneled headboard wall, warm neutral wall paint.",
         "furniture": "Layout: double bed centered against the main wall. Items: symmetrical nightstands, floating wall shelves, sliding door wardrobe to save space.",
         "softscape": "layered high-thread-count bedding, blackout curtains, soft bedside pendant lights, plush bedside rug"
@@ -175,7 +188,7 @@ ROOM_TYPE_PROMPTS: Dict[str, Dict] = {
     "master_bedroom": {
         "name": "主卧",
         "logic": "强调套房感和功能分区（睡眠区+休闲区/梳妆区）",
-        "core": "(luxurious master bedroom suite with functional zoning:1.3)",
+        "core": "luxurious master bedroom suite with functional zoning",
         "hardscape": "Ceiling: intricate multi-level ceiling design, central statement chandelier. Walls: decorative molding (wainscoting) or wallpaper, bookmatched stone accents.",
         "furniture": "Layout: King-size bed with bench at foot, separate seating corner with armchairs. Items: vanity dresser, walk-in closet visibility.",
         "softscape": "premium velvet bedding, double-layer drapery, architectural wall sconces, art gallery wall, fresh flowers"
@@ -183,7 +196,7 @@ ROOM_TYPE_PROMPTS: Dict[str, Dict] = {
     "kitchen": {
         "name": "厨房",
         "logic": "强调洗-切-炒动线和材质的高级感（反光与哑光的对比）",
-        "core": "(modern gourmet kitchen with ergonomic workflow:1.3)",
+        "core": "modern gourmet kitchen with ergonomic workflow",
         "hardscape": "Ceiling: moisture-resistant smooth ceiling, recessed downlights. Walls: marble or ceramic tile backsplash, easy-clean surfaces.",
         "furniture": "Layout: U-shaped or galley layout with central kitchen island (if space permits). Items: sleek handle-less cabinetry, integrated appliances (fridge, oven), bar stools.",
         "softscape": "under-cabinet LED strip lighting, designer faucet, organized countertop accessories, fruit bowl"
@@ -191,7 +204,7 @@ ROOM_TYPE_PROMPTS: Dict[str, Dict] = {
     "dining_room": {
         "name": "餐厅",
         "logic": "强调聚餐氛围，灯光必须压低并聚焦于桌面",
-        "core": "(elegant formal dining room atmosphere:1.3)",
+        "core": "elegant formal dining room atmosphere",
         "hardscape": "Ceiling: decorative ceiling medallion or defined dining zone ceiling. Walls: textured wallpaper or wood veneer buffet wall.",
         "furniture": "Layout: large dining table centered under light. Items: upholstered dining chairs, sideboard console for storage, wine display cabinet.",
         "softscape": "low-hanging statement pendant light (focus on table), table centerpiece (vase/candles), wall art mirror to expand space"
@@ -199,7 +212,7 @@ ROOM_TYPE_PROMPTS: Dict[str, Dict] = {
     "bathroom": {
         "name": "卫生间",
         "logic": "强调干湿分离（Wet/Dry separation）和洁净感",
-        "core": "(modern spa-like bathroom retreat:1.3)",
+        "core": "modern spa-like bathroom retreat",
         "hardscape": "Ceiling: waterproof ceiling with ventilation shadow gaps. Walls: floor-to-ceiling large format porcelain tiles, shower niche.",
         "furniture": "Layout: floating vanity unit (wall-mounted). Items: frameless glass shower enclosure, freestanding bathtub (optional), smart toilet.",
         "softscape": "backlit smart mirror, chrome or matte black fixtures, rolled clean towels, ambient waterproof lighting"
@@ -207,7 +220,7 @@ ROOM_TYPE_PROMPTS: Dict[str, Dict] = {
     "study": {
         "name": "书房",
         "logic": "强调专注度，收纳系统要像展示柜一样有设计感",
-        "core": "(productive home office and creative studio:1.3)",
+        "core": "productive home office and creative studio",
         "hardscape": "Ceiling: acoustic treatment or simple flat ceiling. Walls: built-in floor-to-ceiling bookshelves, sound-absorbing felt panels.",
         "furniture": "Layout: desk facing the window or room center. Items: large executive desk, ergonomic office chair, reading nook armchair.",
         "softscape": "professional desk lamp, organized books, cable management, blinds for light control"
@@ -215,7 +228,7 @@ ROOM_TYPE_PROMPTS: Dict[str, Dict] = {
     "kids_room": {
         "name": "儿童房",
         "logic": "强调安全性、趣味性和可成长性（留出活动空间）",
-        "core": "(playful and imaginative children's room:1.3)",
+        "core": "playful and imaginative children's room",
         "hardscape": "Ceiling: creative lighting (cloud/star shape) or colorful paint. Walls: half-wall paint, chalkboard wall or washable wallpaper.",
         "furniture": "Layout: zoned for sleep and play. Items: bunk bed or house-frame bed, low-height storage bins, study desk.",
         "softscape": "soft non-slip play rug, colorful scatter cushions, whimsical wall decals, warm night light"
@@ -223,7 +236,7 @@ ROOM_TYPE_PROMPTS: Dict[str, Dict] = {
     "balcony": {
         "name": "阳台",
         "logic": "强调室内空间的延伸，模糊室内外界限",
-        "core": "(relaxing outdoor balcony garden oasis:1.3)",
+        "core": "relaxing outdoor balcony garden oasis",
         "hardscape": "Ceiling: wooden slat ceiling or weather-resistant paint. Walls: vertical garden wall or outdoor screen.",
         "furniture": "Layout: corner seating arrangement. Items: weather-resistant rattan chairs, small round coffee table.",
         "softscape": "potted plants varying in height, string lights, outdoor waterproof rug, glass railing visualization"
@@ -231,7 +244,7 @@ ROOM_TYPE_PROMPTS: Dict[str, Dict] = {
     "entrance": {
         "name": "玄关",
         "logic": "第一印象，强调收纳的隐蔽性和照明的仪式感",
-        "core": "(welcoming entryway foyer with smart storage:1.3)",
+        "core": "welcoming entryway foyer with smart storage",
         "hardscape": "Ceiling: recessed spotlight focusing on decor. Walls: full-length mirror, decorative wall hooks or paneling.",
         "furniture": "Layout: clear passage width. Items: slim console table, built-in shoe cabinet (floor-to-ceiling).",
         "softscape": "decorative tray for keys, sculptural vase, warm entry light, durable runner rug"
@@ -383,6 +396,88 @@ def build_prompt_simple(
         parts.append(custom_prompt)
     
     return ", ".join(parts)
+
+
+def build_prompt_v2(
+    style: str,
+    room_type: Optional[str] = None,
+    llm_analysis: Optional[Dict] = None,
+    custom_prompt: Optional[str] = None
+) -> str:
+    """
+    构建增强版提示词 v2.0 - 支持接收 LLM 分析结果
+    
+    混合架构：
+    - 结构约束：始终使用静态模板（最高优先级）
+    - 风格/材质：使用专业库（确保质量下限）
+    - 空间分析：来自 LLM 的动态感知（增强灵活性）
+    
+    Args:
+        style: 装修风格ID
+        room_type: 房间类型ID
+        llm_analysis: LLM 分析结果字典
+        custom_prompt: 用户自定义需求
+    
+    Returns:
+        完整的增强版提示词
+    """
+    prompt_parts = []
+    
+    # ===== 1. 角色定义 =====
+    prompt_parts.append("## ROLE: Professional Architectural Renderer")
+    
+    style_info = STYLE_PROMPTS.get(style, {})
+    style_name = style_info.get("name", style)
+    room_name = ROOM_TYPE_PROMPTS.get(room_type, {}).get("name", room_type) if room_type else "room"
+    
+    prompt_parts.append(f"Task: Transform this raw {room_name} into a {style_name} interior.")
+    
+    # ===== 2. 结构约束（最高优先级，不可覆盖）=====
+    prompt_parts.append(GLOBAL_STRUCTURE_CONSTRAINTS)
+    
+    # ===== 3. LLM 空间分析（动态感知）=====
+    if llm_analysis:
+        room_analysis = llm_analysis.get("room_analysis", {})
+        design_rec = llm_analysis.get("design_recommendations", {})
+        
+        if room_analysis:
+            physical_features = room_analysis.get("space_description", "") or room_analysis.get("physical_features", "")
+            if physical_features:
+                prompt_parts.append(f"## SPACE CONTEXT: {physical_features}")
+        
+        if design_rec:
+            design_intent = []
+            if design_rec.get("layout_suggestion"):
+                design_intent.append(f"Layout: {design_rec['layout_suggestion']}")
+            if design_rec.get("furniture_placement"):
+                design_intent.append(f"Furniture: {design_rec['furniture_placement']}")
+            if design_rec.get("color_scheme"):
+                design_intent.append(f"Colors: {design_rec['color_scheme']}")
+            if design_intent:
+                prompt_parts.append(f"## DESIGN LOGIC: {'; '.join(design_intent)}")
+    
+    # ===== 4. 风格材质库（确保质量下限）=====
+    if style_info:
+        prompt_parts.append(f"## ATMOSPHERE: {style_info.get('vibe', '')}")
+        prompt_parts.append(f"## MATERIAL & FINISHES: {style_info.get('materials', '')}")
+        prompt_parts.append(f"## LIGHTING SCHEME: {style_info.get('lighting', '')}")
+        prompt_parts.append(f"## COLOR PALETTE: {style_info.get('colors', '')}")
+        prompt_parts.append(f"## FURNITURE STYLE: {style_info.get('furniture', '')}")
+    
+    # ===== 5. 房间细节 =====
+    if room_type and room_type in ROOM_TYPE_PROMPTS:
+        room_info = ROOM_TYPE_PROMPTS[room_type]
+        prompt_parts.append(f"## ROOM LAYOUT: {room_info.get('furniture', '')}")
+        prompt_parts.append(f"## SOFT FURNISHINGS: {room_info.get('softscape', '')}")
+    
+    # ===== 6. 用户自定义需求 =====
+    if custom_prompt:
+        prompt_parts.append(f"## USER REQUIREMENTS: {custom_prompt}")
+    
+    # ===== 7. 质量要求 =====
+    prompt_parts.append(f"## QUALITY: {QUALITY_PROMPTS['realism']}, {QUALITY_PROMPTS['camera']}, {QUALITY_PROMPTS['lighting']}")
+    
+    return "\n\n".join(prompt_parts)
 
 
 def build_prompt_result(
