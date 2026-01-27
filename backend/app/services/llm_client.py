@@ -200,7 +200,8 @@ Output a single valid JSON object."""
                 style=style,
                 room_type=room_type,
                 llm_analysis=analysis_data,
-                custom_prompt=custom_prompt
+                custom_prompt=custom_prompt,
+                preserve_structure=True  # 结构约束默认开启
             )
             
             return {

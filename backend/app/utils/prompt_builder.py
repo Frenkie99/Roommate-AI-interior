@@ -402,72 +402,94 @@ def build_prompt_v2(
     style: str,
     room_type: Optional[str] = None,
     llm_analysis: Optional[Dict] = None,
-    custom_prompt: Optional[str] = None
+    custom_prompt: Optional[str] = None,
+    preserve_structure: bool = True,
+    compact_mode: bool = False
 ) -> str:
     """
     构建增强版提示词 v2.0 - 支持接收 LLM 分析结果
     
     混合架构：
-    - 结构约束：始终使用静态模板（最高优先级）
+    - 结构约束：可选开关（默认开启，最高优先级）
     - 风格/材质：使用专业库（确保质量下限）
     - 空间分析：来自 LLM 的动态感知（增强灵活性）
+    - 排他性逻辑：LLM 建议优先于静态模板
     
     Args:
         style: 装修风格ID
         room_type: 房间类型ID
         llm_analysis: LLM 分析结果字典
         custom_prompt: 用户自定义需求
+        preserve_structure: 是否保持原始结构（默认True）
+        compact_mode: 紧凑模式（Token受限场景）
     
     Returns:
         完整的增强版提示词
     """
+    # 处理默认值，避免后续大量 if 嵌套
+    if llm_analysis is None:
+        llm_analysis = {}
+    
     prompt_parts = []
     
     # ===== 1. 角色定义 =====
-    prompt_parts.append("## ROLE: Professional Architectural Renderer")
-    
     style_info = STYLE_PROMPTS.get(style, {})
     style_name = style_info.get("name", style)
     room_name = ROOM_TYPE_PROMPTS.get(room_type, {}).get("name", room_type) if room_type else "room"
     
+    prompt_parts.append("## ROLE: Professional Architectural Renderer")
     prompt_parts.append(f"Task: Transform this raw {room_name} into a {style_name} interior.")
     
-    # ===== 2. 结构约束（最高优先级，不可覆盖）=====
-    prompt_parts.append(GLOBAL_STRUCTURE_CONSTRAINTS)
+    # ===== 2. 结构约束（可选开关）=====
+    if preserve_structure:
+        if compact_mode:
+            prompt_parts.append(STRUCTURE_TEMPLATE_COMPACT)
+        else:
+            prompt_parts.append(GLOBAL_STRUCTURE_CONSTRAINTS)
     
     # ===== 3. LLM 空间分析（动态感知）=====
-    if llm_analysis:
-        room_analysis = llm_analysis.get("room_analysis", {})
-        design_rec = llm_analysis.get("design_recommendations", {})
-        
-        if room_analysis:
-            physical_features = room_analysis.get("space_description", "") or room_analysis.get("physical_features", "")
-            if physical_features:
-                prompt_parts.append(f"## SPACE CONTEXT: {physical_features}")
-        
-        if design_rec:
-            design_intent = []
-            if design_rec.get("layout_suggestion"):
-                design_intent.append(f"Layout: {design_rec['layout_suggestion']}")
-            if design_rec.get("furniture_placement"):
-                design_intent.append(f"Furniture: {design_rec['furniture_placement']}")
-            if design_rec.get("color_scheme"):
-                design_intent.append(f"Colors: {design_rec['color_scheme']}")
-            if design_intent:
-                prompt_parts.append(f"## DESIGN LOGIC: {'; '.join(design_intent)}")
+    room_analysis = llm_analysis.get("room_analysis", {})
+    design_rec = llm_analysis.get("design_recommendations", {})
+    
+    # 标记是否有 LLM 提供的布局建议（用于排他性逻辑）
+    has_dynamic_layout = bool(design_rec.get("layout_suggestion") or design_rec.get("furniture_placement"))
+    has_dynamic_colors = bool(design_rec.get("color_scheme"))
+    
+    if room_analysis:
+        physical_features = room_analysis.get("space_description", "") or room_analysis.get("physical_features", "")
+        if physical_features:
+            prompt_parts.append(f"## SPACE CONTEXT: {physical_features}")
+    
+    if design_rec:
+        design_intent = []
+        if design_rec.get("layout_suggestion"):
+            design_intent.append(f"Layout: {design_rec['layout_suggestion']}")
+        if design_rec.get("furniture_placement"):
+            design_intent.append(f"Furniture: {design_rec['furniture_placement']}")
+        if design_rec.get("color_scheme"):
+            design_intent.append(f"Colors: {design_rec['color_scheme']}")
+        if design_rec.get("lighting_design"):
+            design_intent.append(f"Lighting: {design_rec['lighting_design']}")
+        if design_intent:
+            prompt_parts.append(f"## DESIGN LOGIC (AI Analysis): {'; '.join(design_intent)}")
     
     # ===== 4. 风格材质库（确保质量下限）=====
     if style_info:
         prompt_parts.append(f"## ATMOSPHERE: {style_info.get('vibe', '')}")
         prompt_parts.append(f"## MATERIAL & FINISHES: {style_info.get('materials', '')}")
         prompt_parts.append(f"## LIGHTING SCHEME: {style_info.get('lighting', '')}")
-        prompt_parts.append(f"## COLOR PALETTE: {style_info.get('colors', '')}")
+        # 颜色：如果 LLM 提供了配色建议，降级静态库
+        if not has_dynamic_colors:
+            prompt_parts.append(f"## COLOR PALETTE: {style_info.get('colors', '')}")
         prompt_parts.append(f"## FURNITURE STYLE: {style_info.get('furniture', '')}")
     
-    # ===== 5. 房间细节 =====
+    # ===== 5. 房间细节（排他性逻辑）=====
     if room_type and room_type in ROOM_TYPE_PROMPTS:
         room_info = ROOM_TYPE_PROMPTS[room_type]
-        prompt_parts.append(f"## ROOM LAYOUT: {room_info.get('furniture', '')}")
+        # 布局：只有当 LLM 没有提供布局建议时，才使用静态模板兜底
+        if not has_dynamic_layout:
+            prompt_parts.append(f"## ROOM LAYOUT (Standard): {room_info.get('furniture', '')}")
+        # 软装通常可以叠加
         prompt_parts.append(f"## SOFT FURNISHINGS: {room_info.get('softscape', '')}")
     
     # ===== 6. 用户自定义需求 =====
@@ -475,7 +497,10 @@ def build_prompt_v2(
         prompt_parts.append(f"## USER REQUIREMENTS: {custom_prompt}")
     
     # ===== 7. 质量要求 =====
-    prompt_parts.append(f"## QUALITY: {QUALITY_PROMPTS['realism']}, {QUALITY_PROMPTS['camera']}, {QUALITY_PROMPTS['lighting']}")
+    if compact_mode:
+        prompt_parts.append(f"## QUALITY: {QUALITY_PROMPTS['realism']}")
+    else:
+        prompt_parts.append(f"## QUALITY: {QUALITY_PROMPTS['realism']}, {QUALITY_PROMPTS['camera']}, {QUALITY_PROMPTS['lighting']}")
     
     return "\n\n".join(prompt_parts)
 
@@ -483,16 +508,20 @@ def build_prompt_v2(
 def build_prompt_result(
     style: str,
     room_type: Optional[str] = None,
+    llm_analysis: Optional[Dict] = None,
     custom_prompt: Optional[str] = None,
     preserve_structure: bool = True,
     compact_mode: bool = False
 ) -> PromptResult:
     """
-    构建提示词结果对象（推荐使用）- v4.0
+    构建提示词结果对象（v4.0 混合架构版）
+    
+    优先使用 build_prompt_v2 逻辑，支持 LLM 分析结果注入
     
     Args:
         style: 装修风格ID
         room_type: 房间类型ID
+        llm_analysis: LLM 分析结果字典（可选）
         custom_prompt: 用户自定义提示词
         preserve_structure: 是否强调保持原始结构
         compact_mode: 紧凑模式
@@ -500,9 +529,10 @@ def build_prompt_result(
     Returns:
         PromptResult 对象
     """
-    prompt = build_prompt(
+    prompt = build_prompt_v2(
         style=style,
         room_type=room_type,
+        llm_analysis=llm_analysis,
         custom_prompt=custom_prompt,
         preserve_structure=preserve_structure,
         compact_mode=compact_mode
