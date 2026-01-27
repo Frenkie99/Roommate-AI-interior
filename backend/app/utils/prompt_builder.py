@@ -287,7 +287,10 @@ def build_prompt(
     compact_mode: bool = False
 ) -> str:
     """
-    构建完整的装修效果图生成提示词 v4.0 (Gemini 3 优化版)
+    [已废弃] 请使用 build_prompt_v2
+    保留此函数仅为了兼容旧测试用例和备用回退
+    
+    原始功能：构建完整的装修效果图生成提示词 v4.0 (Gemini 3 优化版)
     
     设计原则：
     1. 角色设定 - 以专业建筑可视化引擎的身份执行
@@ -440,14 +443,18 @@ def build_prompt_v2(
     prompt_parts.append("## ROLE: Professional Architectural Renderer")
     prompt_parts.append(f"Task: Transform this raw {room_name} into a {style_name} interior.")
     
-    # ===== 2. 结构约束（可选开关）=====
+    # ===== 2. 氛围定调（优先级最高，让模型先理解“感觉”）=====
+    if style_info and style_info.get('vibe'):
+        prompt_parts.append(f"## ATMOSPHERE & VIBE: {style_info.get('vibe')}")
+    
+    # ===== 3. 结构约束（可选开关）=====
     if preserve_structure:
         if compact_mode:
             prompt_parts.append(STRUCTURE_TEMPLATE_COMPACT)
         else:
             prompt_parts.append(GLOBAL_STRUCTURE_CONSTRAINTS)
     
-    # ===== 3. LLM 空间分析（动态感知）=====
+    # ===== 4. LLM 空间分析（动态感知）=====
     room_analysis = llm_analysis.get("room_analysis", {})
     design_rec = llm_analysis.get("design_recommendations", {})
     
@@ -473,9 +480,9 @@ def build_prompt_v2(
         if design_intent:
             prompt_parts.append(f"## DESIGN LOGIC (AI Analysis): {'; '.join(design_intent)}")
     
-    # ===== 4. 风格材质库（确保质量下限）=====
+    # ===== 5. 风格材质库（确保质量下限）=====
     if style_info:
-        prompt_parts.append(f"## ATMOSPHERE: {style_info.get('vibe', '')}")
+        # ATMOSPHERE 已在前面定调，这里不再重复
         prompt_parts.append(f"## MATERIAL & FINISHES: {style_info.get('materials', '')}")
         prompt_parts.append(f"## LIGHTING SCHEME: {style_info.get('lighting', '')}")
         # 颜色：如果 LLM 提供了配色建议，降级静态库
@@ -483,7 +490,7 @@ def build_prompt_v2(
             prompt_parts.append(f"## COLOR PALETTE: {style_info.get('colors', '')}")
         prompt_parts.append(f"## FURNITURE STYLE: {style_info.get('furniture', '')}")
     
-    # ===== 5. 房间细节（排他性逻辑）=====
+    # ===== 6. 房间细节（排他性逻辑）=====
     if room_type and room_type in ROOM_TYPE_PROMPTS:
         room_info = ROOM_TYPE_PROMPTS[room_type]
         # 布局：只有当 LLM 没有提供布局建议时，才使用静态模板兜底
@@ -492,11 +499,11 @@ def build_prompt_v2(
         # 软装通常可以叠加
         prompt_parts.append(f"## SOFT FURNISHINGS: {room_info.get('softscape', '')}")
     
-    # ===== 6. 用户自定义需求 =====
+    # ===== 7. 用户自定义需求 =====
     if custom_prompt:
         prompt_parts.append(f"## USER REQUIREMENTS: {custom_prompt}")
     
-    # ===== 7. 质量要求 =====
+    # ===== 8. 质量要求 =====
     if compact_mode:
         prompt_parts.append(f"## QUALITY: {QUALITY_PROMPTS['realism']}")
     else:
