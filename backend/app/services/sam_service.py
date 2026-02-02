@@ -21,8 +21,8 @@ class SAM3Service:
     
     def __init__(self):
         self.hf_token = os.getenv("HF_TOKEN")
-        self.model_id = "facebook/sam2-hiera-large"
-        self.api_url = f"https://router.huggingface.co/hf-inference/models/{self.model_id}"
+        self.model_id = "facebook/sam-vit-base"
+        self.api_url = f"https://api-inference.huggingface.co/models/{self.model_id}"
         
     def _image_to_base64(self, image: Image.Image) -> str:
         """将PIL Image转换为base64字符串"""
