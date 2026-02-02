@@ -94,9 +94,9 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-4 overflow-hidden">
-        <div className="flex min-h-[480px]">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden">
+        <div className="flex flex-col md:flex-row min-h-[400px]">
           {/* 左侧 - Logo和设计图片区域 */}
           <div className="hidden md:flex md:w-1/2 relative overflow-hidden">
             {/* 背景图片 */}
