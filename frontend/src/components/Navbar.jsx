@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Globe } from 'lucide-react';
+import AuthModal from './AuthModal';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [lang, setLang] = useState('zh');
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const location = useLocation();
 
   const toggleLang = () => {
@@ -18,8 +20,7 @@ export default function Navbar() {
     newDesign: lang === 'zh' ? '新建设计' : 'New Design',
     history: lang === 'zh' ? '历史记录' : 'History',
     pricing: lang === 'zh' ? '定价' : 'Pricing',
-    login: lang === 'zh' ? '登录' : 'Log In',
-    signup: lang === 'zh' ? '注册' : 'Sign Up',
+    loginSignup: lang === 'zh' ? '登录/注册' : 'Login/Sign Up',
   };
 
   return (
@@ -62,12 +63,12 @@ export default function Navbar() {
 
         {/* Right Actions */}
         <div className="hidden md:flex items-center justify-end gap-5 pr-4 flex-1">
-          <a href="#" className="text-sm font-medium text-charcoal/80 hover:text-warm-gold transition-colors">
-            {t.login}
-          </a>
-          <a href="#" className="gold-gradient text-white px-6 py-2.5 rounded-sm text-sm font-medium hover:opacity-90 transition-opacity">
-            {t.signup}
-          </a>
+          <button 
+            onClick={() => setShowAuthModal(true)}
+            className="gold-gradient text-white px-6 py-2.5 rounded-sm text-sm font-medium hover:opacity-90 transition-opacity"
+          >
+            {t.loginSignup}
+          </button>
           <button 
             onClick={toggleLang}
             className="text-sm font-medium text-charcoal/80 hover:text-warm-gold transition-colors flex items-center gap-1.5 border border-warm-gold/30 px-3 py-2 rounded-sm"
@@ -95,12 +96,22 @@ export default function Navbar() {
             <Link to="/history" className="block text-charcoal/80 hover:text-warm-gold py-2" onClick={() => setIsOpen(false)}>{t.history}</Link>
             <a href="#pricing" className="block text-charcoal/80 hover:text-warm-gold py-2" onClick={() => setIsOpen(false)}>{t.pricing}</a>
             <div className="pt-4 border-t border-warm-gold/10 space-y-3">
-              <a href="#" className="block text-charcoal/80 hover:text-warm-gold py-2">{t.login}</a>
-              <a href="#" className="block gold-gradient text-white text-center py-3 rounded-sm">{t.signup}</a>
+              <button 
+                onClick={() => setShowAuthModal(true)}
+                className="block w-full gold-gradient text-white text-center py-3 rounded-sm"
+              >
+                {t.loginSignup}
+              </button>
             </div>
           </div>
         </div>
       )}
+      
+      {/* Auth Modal */}
+      <AuthModal 
+        isOpen={showAuthModal} 
+        onClose={() => setShowAuthModal(false)} 
+      />
     </nav>
   );
 }
