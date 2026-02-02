@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
-import { Upload, Zap, Download, Send, Lightbulb, MessageSquare } from 'lucide-react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { Upload, Zap, Download, Send, Lightbulb, MessageSquare, Eye, Wand2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 
 // 房间类型映射 v2.0：按距离家门口远近排序（玄关→主卧）
@@ -76,6 +76,16 @@ export default function PlaygroundPage() {
   const fileInputRef = useRef(null);
   const chatContainerRef = useRef(null);
   const [isDragover, setIsDragover] = useState(false);
+  
+  // 精修模式相关状态
+  const [viewMode, setViewMode] = useState('preview'); // 'preview' | 'refine'
+  const [segmentData, setSegmentData] = useState(null); // SAM分割数据
+  const [hoveredMask, setHoveredMask] = useState(null); // 悬停的mask
+  const [selectedMask, setSelectedMask] = useState(null); // 选中锁定的mask
+  const [isSegmenting, setIsSegmenting] = useState(false); // 分割加载中
+  const canvasRef = useRef(null);
+  const imageContainerRef = useRef(null);
+  const chatInputRef = useRef(null);
 
   // 自动滚动到聊天底部
   useEffect(() => {
@@ -83,6 +93,194 @@ export default function PlaygroundPage() {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
   }, [chatMessages]);
+
+  // 点击图片进行SAM分割
+  const handleImageClick = useCallback(async (e) => {
+    if (viewMode !== 'refine' || !generatedImage || isSegmenting) return;
+    
+    const container = imageContainerRef.current;
+    if (!container) return;
+    
+    const rect = container.getBoundingClientRect();
+    const img = container.querySelector('img');
+    if (!img) return;
+    
+    // 计算点击在图片上的实际坐标
+    const imgRect = img.getBoundingClientRect();
+    const scaleX = img.naturalWidth / imgRect.width;
+    const scaleY = img.naturalHeight / imgRect.height;
+    const x = Math.round((e.clientX - imgRect.left) * scaleX);
+    const y = Math.round((e.clientY - imgRect.top) * scaleY);
+    
+    setIsSegmenting(true);
+    
+    try {
+      // 获取图片blob
+      const response = await fetch(generatedImage);
+      const blob = await response.blob();
+      
+      const formData = new FormData();
+      formData.append('image', blob, 'image.jpg');
+      formData.append('x', x);
+      formData.append('y', y);
+      formData.append('label', 1);
+      
+      const segResponse = await fetch(`${API_BASE}/api/v1/segment/by-point`, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      const result = await segResponse.json();
+      
+      if (result.code === 0 && result.data?.masks?.length > 0) {
+        const maskData = {
+          mask: result.data.masks[0],
+          box: result.data.boxes?.[0],
+          score: result.data.scores?.[0],
+          clickPoint: { x, y }
+        };
+        setSelectedMask(maskData);
+        setSegmentData(result.data);
+        
+        // 聚焦到聊天输入框
+        if (chatInputRef.current) {
+          chatInputRef.current.focus();
+        }
+        
+        // 添加AI提示消息
+        setChatMessages(prev => [...prev, { 
+          type: 'ai', 
+          text: '已选中目标区域。请告诉我您想对这个区域做什么修改？例如：换成蓝色沙发、改成绿植、删除这个物体...' 
+        }]);
+      } else {
+        throw new Error(result.message || '分割失败');
+      }
+    } catch (error) {
+      console.error('Segment error:', error);
+      setChatMessages(prev => [...prev, { 
+        type: 'ai', 
+        text: `分割失败：${error.message}。请重试或点击其他位置。` 
+      }]);
+    } finally {
+      setIsSegmenting(false);
+    }
+  }, [viewMode, generatedImage, isSegmenting]);
+
+  // 绘制mask到canvas
+  useEffect(() => {
+    if (!canvasRef.current || !selectedMask?.mask || viewMode !== 'refine') return;
+    
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    const img = imageContainerRef.current?.querySelector('img');
+    
+    if (!img) return;
+    
+    // 设置canvas尺寸与图片显示尺寸一致
+    const imgRect = img.getBoundingClientRect();
+    canvas.width = imgRect.width;
+    canvas.height = imgRect.height;
+    
+    // 清空canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // 绘制半透明遮罩
+    const maskBase64 = selectedMask.mask;
+    const maskImg = new Image();
+    maskImg.onload = () => {
+      ctx.globalAlpha = 0.4;
+      ctx.drawImage(maskImg, 0, 0, canvas.width, canvas.height);
+      ctx.globalAlpha = 1.0;
+      
+      // 绘制边框
+      ctx.strokeStyle = '#D4B07B';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(0, 0, canvas.width, canvas.height);
+    };
+    maskImg.src = `data:image/png;base64,${maskBase64}`;
+  }, [selectedMask, viewMode]);
+
+  // 切换精修模式
+  const toggleRefineMode = () => {
+    if (viewMode === 'preview') {
+      setViewMode('refine');
+      setSelectedMask(null);
+      setSegmentData(null);
+    } else {
+      setViewMode('preview');
+      setSelectedMask(null);
+      setSegmentData(null);
+    }
+  };
+
+  // 带mask的生成请求
+  const handleSendChatWithMask = async (customPrompt = null) => {
+    const messageText = customPrompt || chatInput.trim();
+    if (!messageText) return;
+    if (!generatedImage) {
+      setChatMessages(prev => [...prev, { type: 'ai', text: '请先生成一张设计图，才能进行精修。' }]);
+      return;
+    }
+    
+    setChatMessages(prev => [...prev, { type: 'user', text: messageText }]);
+    setChatInput('');
+    
+    // 如果有选中的mask，使用inpaint API
+    if (selectedMask && viewMode === 'refine') {
+      setChatMessages(prev => [...prev, { type: 'ai', text: '正在对选中区域进行精修，请稍候...' }]);
+      setIsGenerating(true);
+      setProgress(10);
+      setStatusText('正在处理局部修改...');
+      
+      try {
+        const response = await fetch(generatedImage);
+        const blob = await response.blob();
+        
+        const formData = new FormData();
+        formData.append('image', blob, 'image.jpg');
+        formData.append('mask_base64', selectedMask.mask);
+        formData.append('prompt', messageText);
+        formData.append('strength', 0.85);
+        
+        setProgress(30);
+        const inpaintResponse = await fetch(`${API_BASE}/api/v1/segment/inpaint`, {
+          method: 'POST',
+          body: formData,
+        });
+        
+        const result = await inpaintResponse.json();
+        setProgress(90);
+        
+        if (result.code === 0 && result.data?.result_image) {
+          setGeneratedImage(result.data.result_image);
+          setProgress(100);
+          setStatusText('精修完成!');
+          setChatMessages(prev => {
+            const newMessages = [...prev];
+            newMessages[newMessages.length - 1] = { type: 'ai', text: '局部精修完成！如需继续修改，请点击其他区域或描述新的需求。' };
+            return newMessages;
+          });
+          // 清除选中状态
+          setSelectedMask(null);
+        } else {
+          throw new Error(result.message || '精修失败');
+        }
+      } catch (error) {
+        console.error('Inpaint error:', error);
+        setChatMessages(prev => {
+          const newMessages = [...prev];
+          newMessages[newMessages.length - 1] = { type: 'ai', text: `精修失败：${error.message}。请重试。` };
+          return newMessages;
+        });
+        setProgress(0);
+      } finally {
+        setIsGenerating(false);
+      }
+    } else {
+      // 普通聊天生成
+      await handleSendChat(messageText);
+    }
+  };
 
   const handleFileSelect = (file) => {
     if (file && file.type.startsWith('image/')) {
@@ -382,7 +580,32 @@ export default function PlaygroundPage() {
               {/* Preview Area */}
               <div className="luxury-card rounded-lg overflow-hidden flex-1 flex flex-col min-h-0">
                 <div className="bg-mist/50 p-3 border-b border-warm-gold/10 flex items-center justify-between flex-shrink-0">
-                  <h3 className="font-medium text-charcoal text-sm">设计预览</h3>
+                  {/* 模式切换按钮 */}
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setViewMode('preview')}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                        viewMode === 'preview' 
+                          ? 'bg-warm-gold text-white' 
+                          : 'bg-white border border-warm-gold/30 text-charcoal hover:border-warm-gold'
+                      }`}
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      设计预览
+                    </button>
+                    <button
+                      onClick={toggleRefineMode}
+                      disabled={!generatedImage}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                        viewMode === 'refine' 
+                          ? 'bg-warm-gold text-white' 
+                          : 'bg-white border border-warm-gold/30 text-charcoal hover:border-warm-gold disabled:opacity-50 disabled:cursor-not-allowed'
+                      }`}
+                    >
+                      <Wand2 className="w-3.5 h-3.5" />
+                      精修模式
+                    </button>
+                  </div>
                   {generatedImage && (
                     <button 
                       onClick={async () => {
@@ -454,7 +677,47 @@ export default function PlaygroundPage() {
                     
                     {/* 生成结果 */}
                     {generatedImage && !isGenerating && (
-                      <img src={generatedImage} alt="Generated Design" className="w-full h-full object-contain rounded-lg" />
+                      <div 
+                        ref={imageContainerRef}
+                        className={`relative w-full h-full ${viewMode === 'refine' ? 'cursor-crosshair' : ''}`}
+                        onClick={handleImageClick}
+                      >
+                        <img src={generatedImage} alt="Generated Design" className="w-full h-full object-contain rounded-lg" />
+                        
+                        {/* Canvas遮罩层 - 精修模式下显示 */}
+                        {viewMode === 'refine' && (
+                          <canvas
+                            ref={canvasRef}
+                            className="absolute top-0 left-0 w-full h-full pointer-events-none"
+                            style={{ mixBlendMode: 'multiply' }}
+                          />
+                        )}
+                        
+                        {/* 精修模式提示 */}
+                        {viewMode === 'refine' && !selectedMask && !isSegmenting && (
+                          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-full text-xs">
+                            点击图片中的物体进行选择
+                          </div>
+                        )}
+                        
+                        {/* 分割加载中 */}
+                        {isSegmenting && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-lg">
+                            <div className="bg-white px-4 py-2 rounded-lg flex items-center gap-2">
+                              <div className="w-4 h-4 border-2 border-warm-gold border-t-transparent rounded-full animate-spin"></div>
+                              <span className="text-sm text-charcoal">正在识别物体...</span>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* 选中区域提示 */}
+                        {selectedMask && viewMode === 'refine' && (
+                          <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-warm-gold text-white px-4 py-2 rounded-full text-xs flex items-center gap-2">
+                            <Wand2 className="w-3 h-3" />
+                            已选中区域，请在右侧输入修改指令
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -486,19 +749,31 @@ export default function PlaygroundPage() {
                   ))}
                 </div>
 
-                {/* Quick Prompts */}
+                {/* Quick Prompts - 根据模式显示不同快捷按钮 */}
                 <div className="px-3 py-2 border-t border-warm-gold/10 flex-shrink-0">
                   <div className="flex flex-wrap gap-1.5">
-                    {quickPrompts.map((item, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleSendChat(item.prompt)}
-                        disabled={isGenerating}
-                        className="px-2 py-1 text-xs bg-warm-gold/10 text-charcoal/80 rounded-full hover:bg-warm-gold/20 transition-colors disabled:opacity-50"
-                      >
-                        {item.label}
-                      </button>
-                    ))}
+                    {viewMode === 'refine' && selectedMask ? (
+                      // 精修模式快捷按钮
+                      <>
+                        <button onClick={() => handleSendChatWithMask('换成现代风格的沙发')} disabled={isGenerating} className="px-2 py-1 text-xs bg-warm-gold/10 text-charcoal/80 rounded-full hover:bg-warm-gold/20 transition-colors disabled:opacity-50">换沙发</button>
+                        <button onClick={() => handleSendChatWithMask('换成绿色植物')} disabled={isGenerating} className="px-2 py-1 text-xs bg-warm-gold/10 text-charcoal/80 rounded-full hover:bg-warm-gold/20 transition-colors disabled:opacity-50">换绿植</button>
+                        <button onClick={() => handleSendChatWithMask('换成蓝色')} disabled={isGenerating} className="px-2 py-1 text-xs bg-warm-gold/10 text-charcoal/80 rounded-full hover:bg-warm-gold/20 transition-colors disabled:opacity-50">换颜色</button>
+                        <button onClick={() => handleSendChatWithMask('移除这个物体')} disabled={isGenerating} className="px-2 py-1 text-xs bg-warm-gold/10 text-charcoal/80 rounded-full hover:bg-warm-gold/20 transition-colors disabled:opacity-50">移除</button>
+                        <button onClick={() => setSelectedMask(null)} className="px-2 py-1 text-xs bg-red-100 text-red-600 rounded-full hover:bg-red-200 transition-colors">取消选择</button>
+                      </>
+                    ) : (
+                      // 普通模式快捷按钮
+                      quickPrompts.map((item, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handleSendChat(item.prompt)}
+                          disabled={isGenerating}
+                          className="px-2 py-1 text-xs bg-warm-gold/10 text-charcoal/80 rounded-full hover:bg-warm-gold/20 transition-colors disabled:opacity-50"
+                        >
+                          {item.label}
+                        </button>
+                      ))
+                    )}
                   </div>
                 </div>
 
@@ -506,16 +781,19 @@ export default function PlaygroundPage() {
                 <div className="p-3 border-t border-warm-gold/10 flex-shrink-0">
                   <div className="flex items-center gap-2">
                     <input
+                      ref={chatInputRef}
                       type="text"
                       value={chatInput}
                       onChange={(e) => setChatInput(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && !isGenerating && handleSendChat()}
+                      onKeyPress={(e) => e.key === 'Enter' && !isGenerating && (selectedMask ? handleSendChatWithMask() : handleSendChat())}
                       disabled={isGenerating}
-                      className="flex-1 border border-warm-gold/20 rounded-lg px-3 py-2 text-xs focus:border-warm-gold focus:outline-none transition-colors disabled:opacity-50"
-                      placeholder="输入您的设计需求，如：换个颜色、加点装饰..."
+                      className={`flex-1 border rounded-lg px-3 py-2 text-xs focus:outline-none transition-colors disabled:opacity-50 ${
+                        selectedMask ? 'border-warm-gold bg-warm-gold/5 focus:border-warm-gold' : 'border-warm-gold/20 focus:border-warm-gold'
+                      }`}
+                      placeholder={selectedMask ? "描述对选中区域的修改..." : "输入您的设计需求，如：换个颜色、加点装饰..."}
                     />
                     <button 
-                      onClick={() => handleSendChat()}
+                      onClick={() => selectedMask ? handleSendChatWithMask() : handleSendChat()}
                       disabled={isGenerating || !chatInput.trim()}
                       className="gold-gradient text-white px-3 py-2 rounded-lg text-xs font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
                     >
