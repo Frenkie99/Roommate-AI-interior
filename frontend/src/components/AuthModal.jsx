@@ -94,9 +94,23 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden">
-        <div className="flex flex-col md:flex-row min-h-[400px]">
+    <div 
+      className="fixed inset-0 z-[9999] flex items-center justify-center"
+      style={{ 
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        backdropFilter: 'blur(4px)',
+        WebkitBackdropFilter: 'blur(4px)'
+      }}
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div 
+        className="bg-white w-full max-w-2xl mx-4 overflow-hidden"
+        style={{ 
+          borderRadius: '12px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+        }}
+      >
+        <div className="flex flex-col md:flex-row" style={{ minHeight: '420px' }}>
           {/* 左侧 - Logo和设计图片区域 */}
           <div className="hidden md:flex md:w-1/2 relative overflow-hidden">
             {/* 背景图片 */}
@@ -154,7 +168,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
                       value={phone}
                       onChange={(e) => { setPhone(e.target.value); setErrors(prev => ({...prev, phone: ''})); }}
                       placeholder="请输入手机号"
-                      className={`w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-warm-gold focus:border-transparent ${errors.phone ? 'border-red-400' : 'border-gray-300'}`}
+                      className={`w-full pl-10 pr-4 py-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D4B07B] focus:border-transparent ${errors.phone ? 'border-red-400' : 'border-gray-300'}`}
                     />
                   </div>
                   {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
@@ -172,16 +186,16 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
                       onChange={(e) => { setCode(e.target.value); setErrors(prev => ({...prev, code: ''})); }}
                       placeholder="请输入验证码"
                       maxLength={6}
-                      className={`flex-1 px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-warm-gold focus:border-transparent ${errors.code ? 'border-red-400' : 'border-gray-300'}`}
+                      className={`flex-1 px-4 py-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D4B07B] focus:border-transparent ${errors.code ? 'border-red-400' : 'border-gray-300'}`}
                     />
                     <button
                       type="button"
                       onClick={sendCode}
                       disabled={countdown > 0 || isLoading}
-                      className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors min-w-[100px] ${
+                      className={`px-4 py-4 rounded-lg text-sm font-medium transition-colors min-w-[100px] ${
                         countdown > 0 || isLoading 
                           ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                          : 'bg-warm-gold text-white hover:bg-warm-gold/90'
+                          : 'bg-[#D4B07B] text-white hover:bg-[#C9A56C]'
                       }`}
                     >
                       {countdown > 0 ? `${countdown}s` : (codeSent ? '重新获取' : '获取验证码')}
@@ -194,9 +208,10 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className={`w-full gold-gradient text-white py-3 rounded-lg font-medium transition-opacity flex items-center justify-center gap-2 ${
-                    isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:opacity-90'
+                  className={`w-full text-white py-4 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${
+                    isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:brightness-110'
                   }`}
+                  style={{ backgroundColor: '#D4B07B' }}
                 >
                   {isLoading ? (
                     <>
@@ -217,7 +232,8 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
                 {isLogin ? '还没有账号？' : '已有账号？'}
                 <button
                   onClick={() => setIsLogin(!isLogin)}
-                  className="text-warm-gold hover:text-warm-gold/80 font-medium ml-1"
+                  className="font-medium ml-1"
+                  style={{ color: '#D4B07B' }}
                 >
                   {isLogin ? '立即注册' : '立即登录'}
                 </button>
