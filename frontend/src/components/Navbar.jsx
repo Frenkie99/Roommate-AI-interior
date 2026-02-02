@@ -53,12 +53,12 @@ export default function Navbar() {
           >
             {t.history}
           </Link>
-          <a 
-            href="#pricing" 
+          <button 
+            onClick={() => setShowAuthModal(true)}
             className="text-sm font-medium transition-colors text-charcoal/80 hover:text-warm-gold"
           >
             {t.pricing}
-          </a>
+          </button>
         </div>
 
         {/* Right Actions */}
@@ -94,7 +94,7 @@ export default function Navbar() {
             <Link to="/" className="block text-charcoal/80 hover:text-warm-gold py-2" onClick={() => setIsOpen(false)}>{t.home}</Link>
             <Link to="/playground" className="block text-charcoal/80 hover:text-warm-gold py-2" onClick={() => setIsOpen(false)}>{t.newDesign}</Link>
             <Link to="/history" className="block text-charcoal/80 hover:text-warm-gold py-2" onClick={() => setIsOpen(false)}>{t.history}</Link>
-            <a href="#pricing" className="block text-charcoal/80 hover:text-warm-gold py-2" onClick={() => setIsOpen(false)}>{t.pricing}</a>
+            <button onClick={() => { setIsOpen(false); setShowAuthModal(true); }} className="block text-charcoal/80 hover:text-warm-gold py-2 text-left w-full">{t.pricing}</button>
             <div className="pt-4 border-t border-warm-gold/10 space-y-3">
               <button 
                 onClick={() => setShowAuthModal(true)}
