@@ -33,15 +33,6 @@ export default function HistoryPage() {
       <Navbar />
       
       <main className="pt-[84px] min-h-screen">
-        {/* Page Header */}
-        <div className="bg-white border-b border-warm-gold/10 py-8 px-8">
-          <div className="max-w-7xl mx-auto">
-            <p className="text-warm-gold text-xs font-medium tracking-[0.3em] uppercase mb-2">DESIGN HISTORY</p>
-            <h1 className="font-serif text-4xl font-bold text-charcoal">我的作品集</h1>
-            <p className="text-charcoal/60 mt-2 text-sm">查看您之前生成的所有设计方案和对话记录</p>
-          </div>
-        </div>
-
         {/* Tabs */}
         <div className="bg-white border-b border-warm-gold/10 px-8">
           <div className="max-w-7xl mx-auto flex gap-8">
