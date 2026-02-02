@@ -21,7 +21,7 @@ class SAM3Service:
     
     def __init__(self):
         self.hf_token = os.getenv("HF_TOKEN")
-        self.model_id = "facebook/sam-vit-base"
+        self.model_id = "facebook/sam3"
         self.api_url = f"https://router.huggingface.co/hf-inference/models/{self.model_id}"
         
     def _image_to_base64(self, image: Image.Image) -> str:
@@ -53,49 +53,30 @@ class SAM3Service:
             包含mask和边界框的字典
         """
         async with httpx.AsyncClient(timeout=120.0) as client:
-            headers = {
-                "Content-Type": "image/png"
-            }
+            headers = {}
             if self.hf_token:
                 headers["Authorization"] = f"Bearer {self.hf_token}"
             
-            # 将图片转为bytes发送
-            buffer = io.BytesIO()
-            image.save(buffer, format="PNG")
-            image_bytes = buffer.getvalue()
+            image_b64 = self._image_to_base64(image)
             
-            # 使用mask-generation端点
-            api_url = "https://router.huggingface.co/hf-inference/models/facebook/sam-vit-base"
+            payload = {
+                "inputs": {
+                    "image": image_b64,
+                    "input_points": [[[point[0], point[1]]]],
+                    "input_labels": [[label]]
+                }
+            }
             
             response = await client.post(
-                api_url,
+                self.api_url,
                 headers=headers,
-                content=image_bytes
+                json=payload
             )
             
             if response.status_code == 200:
-                result = response.json()
-                # 处理返回的masks，找到包含点击点的mask
-                masks = []
-                boxes = []
-                scores = []
-                
-                if isinstance(result, list):
-                    for item in result:
-                        if 'mask' in item:
-                            # 检查点击点是否在mask内
-                            mask_data = item.get('mask')
-                            masks.append(mask_data)
-                            boxes.append(item.get('box', []))
-                            scores.append(item.get('score', 0.5))
-                
-                return {
-                    "masks": masks[:1] if masks else [],  # 只返回第一个mask
-                    "boxes": boxes[:1] if boxes else [],
-                    "scores": scores[:1] if scores else []
-                }
+                return response.json()
             else:
-                raise Exception(f"SAM API error: {response.status_code} - {response.text}")
+                raise Exception(f"SAM3 API error: {response.status_code} - {response.text}")
     
     async def segment_by_text(
         self, 
