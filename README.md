@@ -2,6 +2,47 @@
 
 > 基于 API易 Gemini API + Segmind SAM3 的智能装修设计与局部精修工具
 
+[![AI装修平台](https://img.shields.io/badge/AI-装修-智能设计-blue)](https://github.com/Frenkie99/Roommate-AI-interior)
+[![技术栈](https://img.shields.io/badge/技术栈-React--FastAPI-brightgreen)](https://github.com/Frenkie99/Roommate-AI-interior)
+[![RAG知识库](https://img.shields.io/badge/RAG-知识库-orange)](https://github.com/Frenkie99/Roommate-AI-interior)
+
+## 🎬 功能演示
+
+### 主界面预览
+
+<div align="center">
+  <img src="frontend/public/assets/interior-design-bg.jpg" alt="AI装修平台主界面" width="800"/>
+
+  <p><em>简洁优雅的用户界面，支持拖拽上传图片</em></p>
+</div>
+
+### 核心功能展示
+
+| 功能 | 说明 |
+|------|------|
+| **🎨 智能生成** | 上传毛坯房照片，选择风格，一键生成精美装修效果图 |
+| **✂️ 精准分割** | SAM3模型智能识别家具边界，支持框选局部区域 |
+| **💬 对话精修** | 选中区域后，通过自然语言对话修改（"换沙发"、"改颜色"） |
+| **📚 知识问答** | 内置RAG知识库，回答装修相关问题，提供专业建议 |
+| **🎭 多风格支持** | 现代轻奢、新中式、北欧、工业风等10+种风格 |
+
+### 实际效果示例
+
+```
+上传毛坯房照片 → 选择"现代轻奢"风格 → AI生成效果图 → 满意对话精修 → 下载高清图片
+```
+
+**生成效果特点：**
+- ✅ 保持原有房间结构（窗户、墙体、层高完全一致）
+- ✅ 专业级材质和光影效果
+- ✅ 支持局部精细化修改
+- ✅ 4K高清输出
+
+**功能视频演示：**
+> 如需查看完整功能演示，请克隆项目并本地运行
+
+---
+
 ## 📋 项目概述
 
 本项目旨在开发一个AI驱动的装修效果图生成工具，用户只需上传毛坯房照片，即可自动生成精美的装修效果图。
@@ -306,22 +347,58 @@ GET /api/v1/task/{task_id}
 ## 🛠️ 技术栈
 
 ### 前端
-- **框架**: React 18 + TypeScript
-- **构建工具**: Vite
-- **UI组件**: Ant Design / shadcn/ui
-- **样式**: TailwindCSS
-- **状态管理**: Zustand
-- **HTTP客户端**: Axios
+- **框架**: React 18 + Vite
+- **UI**: TailwindCSS + Framer Motion
+- **组件**: Lucide Icons + React Dropzone
 
 ### 后端
-- **框架**: Python FastAPI
-- **异步支持**: asyncio + httpx
-- **图片处理**: Pillow
-- **任务队列**: Celery + Redis (可选)
-- **存储**: 本地存储 / 云存储(OSS)
+- **框架**: Python FastAPI + Uvicorn
+- **AI**: API易 Gemini + Segmind SAM3 + DeepSeek RAG
+- **向量库**: Chroma + 21条装修知识
 
 ### 外部服务
-- **AI生成**: Nano Banana Pro API
+- **AI生成**: API易平台 Gemini Flash
+- **图像分割**: Segmind SAM3
+- **知识问答**: DeepSeek V3 (RAG)
+
+---
+
+## 🚀 快速体验
+
+### 本地运行（推荐）
+
+```bash
+# 克隆项目
+git clone https://github.com/Frenkie99/Roommate-AI-interior.git
+cd Roommate-AI-interior
+
+# 启动后端
+cd backend
+pip install -r requirements.txt
+python -m uvicorn app.main:app --port 8000
+
+# 启动前端（新终端）
+cd frontend
+npm install
+npm run dev
+```
+
+访问 http://localhost:5173 即可使用完整功能！
+
+---
+
+## 📸 添加您的截图
+
+如果您想展示自己的项目截图：
+
+1. 运行项目并截图界面
+2. 将截图保存到 `frontend/public/screenshots/` 目录
+3. 在README中添加：
+   ```markdown
+   <div align="center">
+     <img src="frontend/public/screenshots/screenshot1.png" alt="界面截图1" width="800"/>
+   </div>
+   ```
 
 ---
 
