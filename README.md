@@ -8,13 +8,45 @@
 
 ## 🎬 功能演示
 
-### 主界面预览
+### Landing Page - 简洁优雅的首页
 
 <div align="center">
-  <img src="frontend/public/assets/interior-design-bg.jpg" alt="AI装修平台主界面" width="800"/>
+  <img src="frontend/public/screenshots/screenshot1_landing.jpg" alt="Landing Page首页" width="900"/>
 
-  <p><em>简洁优雅的用户界面，支持拖拽上传图片</em></p>
+  <p><em>简洁优雅的用户界面，拖拽上传图片</em></p>
 </div>
+
+---
+
+### 操作控制台 - 风格与参数选择
+
+<div align="center">
+  <img src="frontend/public/screenshots/screenshot2_console.jpg" alt="操作控制台" width="900"/>
+
+  <p><em>10种装修风格 + 房间类型 + 生成参数设置</em></p>
+</div>
+
+---
+
+### 生成结果 - AI智能生成效果图
+
+<div align="center">
+  <img src="frontend/public/screenshots/screenshot3_result.jpg" alt="生成结果展示" width="900"/>
+
+  <p><em>保持原有结构，生成专业级装修效果图</em></p>
+</div>
+
+---
+
+### 智能对话 - RAG知识库问答
+
+<div align="center">
+  <img src="frontend/public/screenshots/screenshot4_chat.jpg" alt="智能对话界面" width="900"/>
+
+  <p><em>AI助手实时解答装修问题，提供专业建议</em></p>
+</div>
+
+---
 
 ### 核心功能展示
 

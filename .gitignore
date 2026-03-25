@@ -69,8 +69,10 @@ find_*.py
 # 临时图片和输出
 sam3_result.png
 segmind_test_result.png
-*_result.png
-*_result.jpg
+# 忽略根目录下的result文件，但不忽略screenshots目录
+/*_result.png
+/*_result.jpg
+!frontend/public/screenshots/*
 
 # SSL证书和私钥（敏感信息）
 *.key
