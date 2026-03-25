@@ -11,13 +11,13 @@
 ### 完整功能展示
 
 <div align="center">
-  <img src="frontend/public/screenshots/screenshot1_landing.jpg" alt="Landing Page首页" width="900"/>
+  <img src="frontend/public/screenshots/screenshot1.jpg" alt="功能截图1" width="900"/>
   <br/>
-  <img src="frontend/public/screenshots/screenshot3_result.jpg" alt="生成结果展示" width="900"/>
+  <img src="frontend/public/screenshots/screenshot2.jpg" alt="功能截图2" width="900"/>
   <br/>
-  <img src="frontend/public/screenshots/screenshot4_chat.jpg" alt="智能对话界面" width="900"/>
-
-  <p><em>Landing Page → AI生成效果图 → 智能对话问答</em></p>
+  <img src="frontend/public/screenshots/screenshot3.jpg" alt="功能截图3" width="900"/>
+  <br/>
+  <img src="frontend/public/screenshots/screenshot4.jpg" alt="功能截图4" width="900"/>
 </div>
 
 ---
