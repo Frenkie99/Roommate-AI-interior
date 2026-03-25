@@ -63,7 +63,7 @@ OUTPUT_DIR.mkdir(exist_ok=True)
 
 app = FastAPI(
     title="AI 装修效果图生成器",
-    description="基于 Nano Banana Pro API 的智能装修效果图生成服务",
+    description="基于 API易平台 的智能装修效果图生成服务",
     version="1.0.0"
 )
 

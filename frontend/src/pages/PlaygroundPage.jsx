@@ -83,6 +83,11 @@ export default function PlaygroundPage() {
   const [hoveredMask, setHoveredMask] = useState(null); // 悬停的mask
   const [selectedMask, setSelectedMask] = useState(null); // 选中锁定的mask
   const [isSegmenting, setIsSegmenting] = useState(false); // 分割加载中
+  const [displayImage, setDisplayImage] = useState(null); // 当前显示的图片（原图或overlay）
+  // 框选模式
+  const [isDrawingBox, setIsDrawingBox] = useState(false);
+  const [boxStart, setBoxStart] = useState(null);
+  const [boxEnd, setBoxEnd] = useState(null);
   const canvasRef = useRef(null);
   const imageContainerRef = useRef(null);
   const chatInputRef = useRef(null);
@@ -94,63 +99,102 @@ export default function PlaygroundPage() {
     }
   }, [chatMessages]);
 
-  // 点击图片进行SAM分割
-  const handleImageClick = useCallback(async (e) => {
+  // 框选/点选模式 - 鼠标按下开始绘制
+  const handleMouseDown = useCallback((e) => {
     if (viewMode !== 'refine' || !generatedImage || isSegmenting) return;
     
-    const container = imageContainerRef.current;
-    if (!container) return;
-    
-    const rect = container.getBoundingClientRect();
-    const img = container.querySelector('img');
+    const img = imageContainerRef.current?.querySelector('img');
     if (!img) return;
     
-    // 计算点击在图片上的实际坐标
     const imgRect = img.getBoundingClientRect();
     const scaleX = img.naturalWidth / imgRect.width;
     const scaleY = img.naturalHeight / imgRect.height;
     const x = Math.round((e.clientX - imgRect.left) * scaleX);
     const y = Math.round((e.clientY - imgRect.top) * scaleY);
     
+    setIsDrawingBox(true);
+    setBoxStart({ x, y, screenX: e.clientX - imgRect.left, screenY: e.clientY - imgRect.top });
+    setBoxEnd({ x, y, screenX: e.clientX - imgRect.left, screenY: e.clientY - imgRect.top });
+  }, [viewMode, generatedImage, isSegmenting]);
+
+  // 框选模式 - 鼠标移动更新框
+  const handleMouseMove = useCallback((e) => {
+    if (!isDrawingBox || !boxStart) return;
+    
+    const img = imageContainerRef.current?.querySelector('img');
+    if (!img) return;
+    
+    const imgRect = img.getBoundingClientRect();
+    const scaleX = img.naturalWidth / imgRect.width;
+    const scaleY = img.naturalHeight / imgRect.height;
+    const x = Math.round((e.clientX - imgRect.left) * scaleX);
+    const y = Math.round((e.clientY - imgRect.top) * scaleY);
+    
+    setBoxEnd({ x, y, screenX: e.clientX - imgRect.left, screenY: e.clientY - imgRect.top });
+  }, [isDrawingBox, boxStart]);
+
+  // 框选模式 - 鼠标松开发送分割请求
+  const handleMouseUp = useCallback(async (e) => {
+    if (!isDrawingBox || !boxStart || !boxEnd) {
+      setIsDrawingBox(false);
+      return;
+    }
+    
+    // 检查框是否足够大（至少30像素）
+    const width = Math.abs(boxEnd.x - boxStart.x);
+    const height = Math.abs(boxEnd.y - boxStart.y);
+    
+    if (width < 30 || height < 30) {
+      // 框太小，忽略
+      setIsDrawingBox(false);
+      setBoxStart(null);
+      setBoxEnd(null);
+      return;
+    }
+    
     setIsSegmenting(true);
     
     try {
-      // 获取图片blob
       const response = await fetch(generatedImage);
       const blob = await response.blob();
       
+      // 只使用框选模式
+      const x1 = Math.min(boxStart.x, boxEnd.x);
+      const y1 = Math.min(boxStart.y, boxEnd.y);
+      const x2 = Math.max(boxStart.x, boxEnd.x);
+      const y2 = Math.max(boxStart.y, boxEnd.y);
+      
       const formData = new FormData();
       formData.append('image', blob, 'image.jpg');
-      formData.append('x', x);
-      formData.append('y', y);
-      formData.append('label', 1);
+      formData.append('x1', x1);
+      formData.append('y1', y1);
+      formData.append('x2', x2);
+      formData.append('y2', y2);
       
-      const segResponse = await fetch(`${API_BASE}/api/v1/segment/by-point`, {
+      const segResponse = await fetch(`${API_BASE}/api/v1/segment/by-box`, {
         method: 'POST',
         body: formData,
       });
       
       const result = await segResponse.json();
+      console.log('Segment result:', result);
       
-      if (result.code === 0 && result.data?.masks?.length > 0) {
+      if (result.code === 0 && result.data?.mask) {
         const maskData = {
-          mask: result.data.masks[0],
-          box: result.data.boxes?.[0],
-          score: result.data.scores?.[0],
-          clickPoint: { x, y }
+          mask: result.data.mask,  // 黑白mask用于inpaint
+          overlay: result.data.overlay,  // overlay用于高亮显示
+          box: { x1, y1, x2, y2 }
         };
         setSelectedMask(maskData);
         setSegmentData(result.data);
         
-        // 聚焦到聊天输入框
         if (chatInputRef.current) {
           chatInputRef.current.focus();
         }
         
-        // 添加AI提示消息
         setChatMessages(prev => [...prev, { 
           type: 'ai', 
-          text: '已选中目标区域。请告诉我您想对这个区域做什么修改？例如：换成蓝色沙发、改成绿植、删除这个物体...' 
+          text: '✨ 已框选目标家具！请告诉我您想做什么修改？例如：换成现代风沙发、改成绿植、换个颜色...' 
         }]);
       } else {
         throw new Error(result.message || '分割失败');
@@ -159,45 +203,25 @@ export default function PlaygroundPage() {
       console.error('Segment error:', error);
       setChatMessages(prev => [...prev, { 
         type: 'ai', 
-        text: `分割失败：${error.message}。请重试或点击其他位置。` 
+        text: `分割失败：${error.message}` 
       }]);
     } finally {
       setIsSegmenting(false);
+      setIsDrawingBox(false);
+      setBoxStart(null);
+      setBoxEnd(null);
     }
-  }, [viewMode, generatedImage, isSegmenting]);
+  }, [isDrawingBox, boxStart, boxEnd, generatedImage]);
 
-  // 绘制mask到canvas
+  // 显示overlay高亮图
   useEffect(() => {
-    if (!canvasRef.current || !selectedMask?.mask || viewMode !== 'refine') return;
-    
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    const img = imageContainerRef.current?.querySelector('img');
-    
-    if (!img) return;
-    
-    // 设置canvas尺寸与图片显示尺寸一致
-    const imgRect = img.getBoundingClientRect();
-    canvas.width = imgRect.width;
-    canvas.height = imgRect.height;
-    
-    // 清空canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // 绘制半透明遮罩
-    const maskBase64 = selectedMask.mask;
-    const maskImg = new Image();
-    maskImg.onload = () => {
-      ctx.globalAlpha = 0.4;
-      ctx.drawImage(maskImg, 0, 0, canvas.width, canvas.height);
-      ctx.globalAlpha = 1.0;
-      
-      // 绘制边框
-      ctx.strokeStyle = '#D4B07B';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(0, 0, canvas.width, canvas.height);
-    };
-    maskImg.src = `data:image/png;base64,${maskBase64}`;
+    if (selectedMask?.overlay && viewMode === 'refine') {
+      // 显示overlay图片（高亮选中物体）
+      const prefix = selectedMask.overlay.startsWith('/9j/') ? 'data:image/jpeg;base64,' : 'data:image/png;base64,';
+      setDisplayImage(prefix + selectedMask.overlay);
+    } else {
+      setDisplayImage(null);
+    }
   }, [selectedMask, viewMode]);
 
   // 切换精修模式
@@ -210,6 +234,12 @@ export default function PlaygroundPage() {
       setViewMode('preview');
       setSelectedMask(null);
       setSegmentData(null);
+      // 恢复原图
+      const imgElement = imageContainerRef.current?.querySelector('img');
+      if (imgElement?.dataset.originalSrc) {
+        imgElement.src = imgElement.dataset.originalSrc;
+        delete imgElement.dataset.originalSrc;
+      }
     }
   };
 
@@ -238,7 +268,7 @@ export default function PlaygroundPage() {
         
         const formData = new FormData();
         formData.append('image', blob, 'image.jpg');
-        formData.append('mask_base64', selectedMask.mask);
+        formData.append('mask_base64', selectedMask.mask);  // 使用黑白mask
         formData.append('prompt', messageText);
         formData.append('strength', 0.85);
         
@@ -680,9 +710,29 @@ export default function PlaygroundPage() {
                       <div 
                         ref={imageContainerRef}
                         className={`relative w-full h-full ${viewMode === 'refine' ? 'cursor-crosshair' : ''}`}
-                        onClick={handleImageClick}
+                        onMouseDown={handleMouseDown}
+                        onMouseMove={handleMouseMove}
+                        onMouseUp={handleMouseUp}
+                        onMouseLeave={() => { if (isDrawingBox) { setIsDrawingBox(false); setBoxStart(null); setBoxEnd(null); } }}
                       >
-                        <img src={generatedImage} alt="Generated Design" className="w-full h-full object-contain rounded-lg" />
+                        <img src={displayImage || generatedImage} alt="Generated Design" className="w-full h-full object-contain rounded-lg select-none" draggable={false} />
+                        
+                        {/* 框选绘制中的矩形 - 浅蓝色虚线框 */}
+                        {isDrawingBox && boxStart && boxEnd && (
+                          <div
+                            className="absolute border-2 border-dashed pointer-events-none"
+                            style={{
+                              left: Math.min(boxStart.screenX, boxEnd.screenX),
+                              top: Math.min(boxStart.screenY, boxEnd.screenY),
+                              width: Math.abs(boxEnd.screenX - boxStart.screenX),
+                              height: Math.abs(boxEnd.screenY - boxStart.screenY),
+                              borderColor: '#60A5FA',
+                              backgroundColor: 'rgba(96, 165, 250, 0.2)'
+                            }}
+                          />
+                        )}
+                        
+                        {/* 选中区域显示已改为overlay高亮图 */}
                         
                         {/* Canvas遮罩层 - 精修模式下显示 */}
                         {viewMode === 'refine' && (
@@ -694,17 +744,17 @@ export default function PlaygroundPage() {
                         )}
                         
                         {/* 精修模式提示 */}
-                        {viewMode === 'refine' && !selectedMask && !isSegmenting && (
+                        {viewMode === 'refine' && !selectedMask && !isSegmenting && !isDrawingBox && (
                           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-full text-xs">
-                            点击图片中的物体进行选择
+                            拖动鼠标框选要修改的家具
                           </div>
                         )}
                         
-                        {/* 分割加载中 */}
+                        {/* 分割加载中 - 简洁进度动画 */}
                         {isSegmenting && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-lg">
-                            <div className="bg-white px-4 py-2 rounded-lg flex items-center gap-2">
-                              <div className="w-4 h-4 border-2 border-warm-gold border-t-transparent rounded-full animate-spin"></div>
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-lg">
+                            <div className="bg-white px-5 py-3 rounded-lg shadow-lg flex items-center gap-3">
+                              <div className="w-5 h-5 border-2 border-warm-gold border-t-transparent rounded-full animate-spin"></div>
                               <span className="text-sm text-charcoal">正在识别物体...</span>
                             </div>
                           </div>

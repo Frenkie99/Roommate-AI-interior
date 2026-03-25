@@ -1,28 +1,54 @@
 """
 SAM3 分割服务
-使用 Meta Segment Anything Model 3 进行图像分割
-支持点击选择、文本提示等多种分割方式
+使用 Segmind API 调用 SAM3 模型进行图像分割
+支持点坐标、文本提示、边界框三种分割方式
 """
 
 import os
 import io
 import base64
 import httpx
+import asyncio
 from typing import List, Dict, Optional, Tuple
 from PIL import Image
 import numpy as np
 
 
+# 中英文家具翻译映射
+FURNITURE_TRANSLATIONS = {
+    "沙发": "sofa", "美式沙发": "american sofa", "现代沙发": "modern sofa",
+    "椅子": "chair", "单人椅": "armchair", "休闲椅": "lounge chair",
+    "桌子": "table", "茶几": "coffee table", "餐桌": "dining table", "书桌": "desk",
+    "灯": "lamp", "台灯": "table lamp", "落地灯": "floor lamp", "吸顶灯": "ceiling lamp",
+    "绿植": "plant", "盆栽": "potted plant", "花": "flower",
+    "床": "bed", "地毯": "rug", "窗帘": "curtain", "画": "painting",
+    "柜子": "cabinet", "书柜": "bookshelf", "电视柜": "TV stand",
+    "墙": "wall", "地板": "floor", "窗户": "window", "门": "door",
+}
+
+def translate_furniture(text: str) -> str:
+    """提取并翻译家具关键词"""
+    text_lower = text.lower()
+    # 直接匹配中文关键词
+    for cn, en in FURNITURE_TRANSLATIONS.items():
+        if cn in text:
+            return en
+    # 如果是英文，直接返回
+    if text.isascii():
+        return text_lower
+    # 默认返回furniture
+    return "furniture"
+
+
 class SAM3Service:
     """
     SAM3 分割服务
-    通过 Hugging Face Inference API 调用 SAM3 模型
+    通过 Segmind API 调用 SAM3 模型
     """
     
     def __init__(self):
-        self.hf_token = os.getenv("HF_TOKEN")
-        self.model_id = "facebook/sam3"
-        self.api_url = f"https://router.huggingface.co/hf-inference/models/{self.model_id}"
+        self.api_key = os.getenv("SEGMIND_API_KEY", "SG_63bab65c13127931")
+        self.api_url = "https://api.segmind.com/v1/sam3-image"
         
     def _image_to_base64(self, image: Image.Image) -> str:
         """将PIL Image转换为base64字符串"""
@@ -35,36 +61,17 @@ class SAM3Service:
         image_data = base64.b64decode(b64_string)
         return Image.open(io.BytesIO(image_data))
     
-    async def segment_by_point(
-        self, 
-        image: Image.Image, 
-        point: Tuple[int, int],
-        label: int = 1
-    ) -> Dict:
+    async def _call_api(self, payload: Dict) -> bytes:
         """
-        通过点击坐标分割图像
+        调用Segmind SAM3 API
         
-        Args:
-            image: PIL Image对象
-            point: 点击坐标 (x, y)
-            label: 1=正向选择, 0=负向排除
-            
         Returns:
-            包含mask和边界框的字典
+            二进制PNG图片数据
         """
-        async with httpx.AsyncClient(timeout=120.0) as client:
-            headers = {}
-            if self.hf_token:
-                headers["Authorization"] = f"Bearer {self.hf_token}"
-            
-            image_b64 = self._image_to_base64(image)
-            
-            payload = {
-                "inputs": {
-                    "image": image_b64,
-                    "input_points": [[[point[0], point[1]]]],
-                    "input_labels": [[label]]
-                }
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            headers = {
+                "x-api-key": self.api_key,
+                "Content-Type": "application/json"
             }
             
             response = await client.post(
@@ -74,13 +81,13 @@ class SAM3Service:
             )
             
             if response.status_code == 200:
-                return response.json()
+                return response.content
             else:
-                raise Exception(f"SAM3 API error: {response.status_code} - {response.text}")
+                raise Exception(f"Segmind API error: {response.status_code} - {response.text}")
     
     async def segment_by_text(
         self, 
-        image: Image.Image, 
+        image_url: str, 
         text_prompt: str,
         threshold: float = 0.5
     ) -> Dict:
@@ -88,83 +95,109 @@ class SAM3Service:
         通过文本提示分割图像
         
         Args:
-            image: PIL Image对象
-            text_prompt: 文本描述 (如 "sofa", "chair", "lamp")
+            image_url: 公网可访问的图片URL
+            text_prompt: 文本描述 (支持中文，会自动翻译)
             threshold: 置信度阈值
             
         Returns:
-            包含masks和boxes的字典
+            包含分割结果的字典
         """
-        async with httpx.AsyncClient(timeout=120.0) as client:
-            headers = {}
-            if self.hf_token:
-                headers["Authorization"] = f"Bearer {self.hf_token}"
-            
-            image_b64 = self._image_to_base64(image)
-            
-            payload = {
-                "inputs": {
-                    "image": image_b64,
-                    "text": text_prompt
-                },
-                "parameters": {
-                    "threshold": threshold
-                }
+        # 翻译中文关键词为英文
+        en_prompt = translate_furniture(text_prompt)
+        
+        payload = {
+            "image": image_url,
+            "text_prompt": en_prompt,
+            "return_preview": False,
+            "return_overlay": True,  # 使用overlay效果
+            "return_masks": False,
+            "threshold": threshold
+        }
+        
+        image_data = await self._call_api(payload)
+        
+        # 将二进制数据转为base64
+        overlay_base64 = base64.b64encode(image_data).decode("utf-8")
+        
+        return {
+            "output": {
+                "image_data": image_data,
+                "overlay_base64": overlay_base64,
+                "translated_prompt": en_prompt
             }
-            
-            response = await client.post(
-                self.api_url,
-                headers=headers,
-                json=payload
-            )
-            
-            if response.status_code == 200:
-                return response.json()
-            else:
-                raise Exception(f"SAM3 API error: {response.status_code} - {response.text}")
+        }
     
-    async def segment_by_box(
+    async def segment_by_point(
         self, 
-        image: Image.Image, 
-        box: Tuple[int, int, int, int],
+        image_url: str, 
+        point: Tuple[int, int],
         label: int = 1
     ) -> Dict:
         """
-        通过边界框分割图像
+        通过点击坐标分割图像
         
         Args:
-            image: PIL Image对象
-            box: 边界框 (x1, y1, x2, y2)
-            label: 1=正向选择, 0=负向排除
-            
-        Returns:
-            包含mask的字典
+            image_url: 公网可访问的图片URL
+            point: (x, y) 点击坐标
+            label: 1=选择该区域, 0=排除该区域
+        
+        优化: 降低pred_iou_thresh让模型更倾向于选择整体物体而非局部纹理
         """
-        async with httpx.AsyncClient(timeout=120.0) as client:
-            headers = {}
-            if self.hf_token:
-                headers["Authorization"] = f"Bearer {self.hf_token}"
-            
-            image_b64 = self._image_to_base64(image)
-            
-            payload = {
-                "inputs": {
-                    "image": image_b64,
-                    "input_boxes": [[list(box)]],
-                    "input_boxes_labels": [[label]]
-                }
+        payload = {
+            "image": image_url,
+            "points_input": f"[[{point[0]}, {point[1]}]]",
+            "point_labels_input": f"[{label}]",
+            "return_preview": False,
+            "return_overlay": True,
+            "return_masks": False,
+            "pred_iou_thresh": 0.5,  # 降低IoU阈值，更倾向于选择整体
+            "threshold": 0.3  # 降低检测阈值
+        }
+        
+        overlay_data = await self._call_api(payload)
+        overlay_base64 = base64.b64encode(overlay_data).decode("utf-8")
+        
+        return {
+            "output": {
+                "overlay_base64": overlay_base64,
+                "mask_base64": overlay_base64
             }
-            
-            response = await client.post(
-                self.api_url,
-                headers=headers,
-                json=payload
-            )
-            
-            if response.status_code == 200:
-                return response.json()
-            else:
-                raise Exception(f"SAM3 API error: {response.status_code} - {response.text}")
+        }
+    
+    async def segment_by_box(
+        self, 
+        image_url: str, 
+        box: Tuple[int, int, int, int]
+    ) -> Dict:
+        """
+        通过边界框分割图像 - 只使用框选，返回黑白mask
+        
+        Args:
+            image_url: 公网可访问的图片URL
+            box: (x1, y1, x2, y2) 边界框坐标
+        """
+        x1, y1, x2, y2 = box
+        boxes_input = f"[[{x1}, {y1}, {x2}, {y2}]]"
+        
+        # 只使用框选，不添加中心点，避免选中同类物体
+        # SAM3只支持return_overlay，我们获取overlay后在后端提取mask
+        payload = {
+            "image": image_url,
+            "boxes_input": boxes_input,
+            "return_preview": False,
+            "return_overlay": True,
+            "return_masks": False
+        }
+        
+        overlay_data = await self._call_api(payload)
+        overlay_base64 = base64.b64encode(overlay_data).decode("utf-8")
+        
+        # 从overlay提取黑白mask - 在路由层处理
+        return {
+            "output": {
+                "overlay_base64": overlay_base64
+            }
+        }
 
 
 def create_rgba_mask(

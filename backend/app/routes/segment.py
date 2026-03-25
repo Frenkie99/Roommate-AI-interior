@@ -1,19 +1,71 @@
 """
 分割与局部替换 API 路由
 提供 SAM3 分割和 Inpainting 替换功能
+使用 RunComfy API 进行 SAM3 分割
 """
 
+import os
 import io
+import uuid
 import base64
+import httpx
 from typing import List, Optional
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from PIL import Image
+from PIL import Image, ImageFilter, ImageDraw
 import numpy as np
+from scipy import ndimage
 
 from app.services.sam_service import sam3_service, create_rgba_mask, extract_masked_region
+
+
+def extract_mask_from_segmented_image(segmented_img: Image.Image) -> np.ndarray:
+    """
+    从分割后的图片中提取mask（非透明/非白色区域）
+    """
+    img_array = np.array(segmented_img.convert("RGBA"))
+    
+    # 检测alpha通道或非白色区域
+    if img_array.shape[2] == 4:
+        # 有alpha通道，使用alpha作为mask
+        mask = img_array[:, :, 3] > 128
+    else:
+        # 检测非白色区域
+        is_white = (img_array[:, :, 0] > 250) & (img_array[:, :, 1] > 250) & (img_array[:, :, 2] > 250)
+        mask = ~is_white
+    
+    return mask.astype(np.uint8) * 255
+
+
+def create_outline_image(mask: np.ndarray, color=(255, 200, 50), thickness=3) -> Image.Image:
+    """
+    从mask创建边缘轮廓图（亮黄色虚线）
+    """
+    # 提取边缘
+    dilated = ndimage.binary_dilation(mask > 128, iterations=thickness)
+    eroded = ndimage.binary_erosion(mask > 128, iterations=1)
+    outline = dilated & ~eroded
+    
+    # 创建RGBA图像
+    h, w = mask.shape
+    outline_img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    pixels = outline_img.load()
+    
+    # 绘制虚线边缘
+    for y in range(h):
+        for x in range(w):
+            if outline[y, x]:
+                # 虚线效果：每隔几个像素绘制
+                if (x + y) % 8 < 5:
+                    pixels[x, y] = (*color, 255)
+    
+    return outline_img
 from app.services.inpaint_service import inpaint_service
+
+# 图片保存目录
+OUTPUT_DIR = os.getenv("OUTPUT_DIR", "/var/www/roommate/output")
+BASE_URL = os.getenv("BASE_URL", "https://roommate-ai.cn")
 
 
 router = APIRouter(prefix="/api/v1/segment", tags=["Segmentation"])
@@ -48,36 +100,61 @@ def image_to_base64(image: Image.Image, format: str = "PNG") -> str:
 
 @router.post("/by-point")
 async def segment_by_point(
-    image: UploadFile = File(...),
     x: int = Form(...),
     y: int = Form(...),
-    label: int = Form(1)
+    label: int = Form(1),
+    image_url: str = Form(None),
+    image: UploadFile = File(default=None)
 ):
     """
-    通过点击坐标分割图像
+    通过点击坐标分割图像 (使用RunComfy SAM3 API)
+    注意: RunComfy API暂不支持点选择，将使用通用物体识别
     
-    - **image**: 上传的图像文件
+    - **image**: 上传的图像文件 (与image_url二选一)
+    - **image_url**: 图片的公网URL (与image二选一)
     - **x**: 点击的X坐标
     - **y**: 点击的Y坐标  
     - **label**: 1=选择该区域, 0=排除该区域
     """
     try:
-        contents = await image.read()
-        pil_image = Image.open(io.BytesIO(contents)).convert("RGB")
+        final_image_url = image_url
+        
+        if image and not image_url:
+            contents = await image.read()
+            filename = f"segment_input_{uuid.uuid4().hex}.png"
+            temp_file_path = os.path.join(OUTPUT_DIR, filename)
+            
+            os.makedirs(OUTPUT_DIR, exist_ok=True)
+            pil_image = Image.open(io.BytesIO(contents)).convert("RGB")
+            pil_image.save(temp_file_path, "PNG")
+            
+            final_image_url = f"{BASE_URL}/output/{filename}"
+        
+        if not final_image_url:
+            return JSONResponse({
+                "code": -1,
+                "message": "请提供image或image_url参数",
+                "data": None
+            }, status_code=400)
         
         result = await sam3_service.segment_by_point(
-            image=pil_image,
+            image_url=final_image_url,
             point=(x, y),
             label=label
         )
+        
+        output = result.get("output", {})
+        overlay_base64 = output.get("overlay_base64")
+        mask_base64 = output.get("mask_base64")
         
         return JSONResponse({
             "code": 0,
             "message": "分割成功",
             "data": {
-                "masks": result.get("masks", []),
-                "boxes": result.get("boxes", []),
-                "scores": result.get("scores", [])
+                "overlay": overlay_base64,
+                "mask": mask_base64,
+                "input_image": final_image_url,
+                "click_point": {"x": x, "y": y}
             }
         })
         
@@ -91,35 +168,61 @@ async def segment_by_point(
 
 @router.post("/by-text")
 async def segment_by_text(
-    image: UploadFile = File(...),
     text: str = Form(...),
-    threshold: float = Form(0.5)
+    threshold: float = Form(0.5),
+    image_url: str = Form(None),
+    image: UploadFile = File(default=None)
 ):
     """
-    通过文本提示分割图像
+    通过文本提示分割图像 (使用RunComfy SAM3 API)
     
-    - **image**: 上传的图像文件
+    - **image**: 上传的图像文件 (与image_url二选一)
+    - **image_url**: 图片的公网URL (与image二选一)
     - **text**: 文本描述 (如 "sofa", "chair", "lamp")
     - **threshold**: 置信度阈值
     """
     try:
-        contents = await image.read()
-        pil_image = Image.open(io.BytesIO(contents)).convert("RGB")
+        # 确定图片URL
+        final_image_url = image_url
+        temp_file_path = None
         
+        if image and not image_url:
+            # 上传文件模式：保存到服务器并生成URL
+            contents = await image.read()
+            filename = f"segment_input_{uuid.uuid4().hex}.png"
+            temp_file_path = os.path.join(OUTPUT_DIR, filename)
+            
+            os.makedirs(OUTPUT_DIR, exist_ok=True)
+            pil_image = Image.open(io.BytesIO(contents)).convert("RGB")
+            pil_image.save(temp_file_path, "PNG")
+            
+            final_image_url = f"{BASE_URL}/output/{filename}"
+        
+        if not final_image_url:
+            return JSONResponse({
+                "code": -1,
+                "message": "请提供image或image_url参数",
+                "data": None
+            }, status_code=400)
+        
+        # 调用RunComfy SAM3 API
         result = await sam3_service.segment_by_text(
-            image=pil_image,
+            image_url=final_image_url,
             text_prompt=text,
             threshold=threshold
         )
+        
+        # RunComfy返回分割后的图片URL
+        output = result.get("output", {})
+        segmented_image_url = output.get("image") or (output.get("images", [None])[0] if output.get("images") else None)
         
         return JSONResponse({
             "code": 0,
             "message": "分割成功",
             "data": {
-                "masks": result.get("masks", []),
-                "boxes": result.get("boxes", []),
-                "scores": result.get("scores", []),
-                "labels": result.get("labels", [])
+                "segmented_image": segmented_image_url,
+                "request_id": result.get("request_id"),
+                "input_image": final_image_url
             }
         })
         
@@ -133,38 +236,74 @@ async def segment_by_text(
 
 @router.post("/by-box")
 async def segment_by_box(
+    request: Request,
     image: UploadFile = File(...),
     x1: int = Form(...),
     y1: int = Form(...),
     x2: int = Form(...),
-    y2: int = Form(...),
-    label: int = Form(1)
+    y2: int = Form(...)
 ):
     """
-    通过边界框分割图像
+    通过边界框分割图像 - 框选比点选更精准
     
     - **image**: 上传的图像文件
     - **x1, y1**: 左上角坐标
     - **x2, y2**: 右下角坐标
-    - **label**: 1=选择, 0=排除
     """
     try:
         contents = await image.read()
         pil_image = Image.open(io.BytesIO(contents)).convert("RGB")
         
+        # 保存临时文件并获取公网URL
+        output_dir = "/var/www/roommate/output"
+        os.makedirs(output_dir, exist_ok=True)
+        temp_filename = f"temp_{uuid.uuid4().hex[:8]}.jpg"
+        temp_path = os.path.join(output_dir, temp_filename)
+        pil_image.save(temp_path, "JPEG", quality=90)
+        
+        base_url = str(request.base_url).rstrip('/')
+        if '47.76.239.100' in base_url or 'localhost' in base_url:
+            base_url = "http://47.76.239.100:8000"
+        image_url = f"{base_url}/output/{temp_filename}"
+        
         result = await sam3_service.segment_by_box(
-            image=pil_image,
-            box=(x1, y1, x2, y2),
-            label=label
+            image_url=image_url,
+            box=(x1, y1, x2, y2)
         )
+        
+        # 清理临时文件
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+        
+        output = result.get("output", {})
+        overlay_base64 = output.get("overlay_base64", "")
+        
+        # 从overlay提取黑白mask
+        overlay_data = base64.b64decode(overlay_base64)
+        overlay_image = Image.open(io.BytesIO(overlay_data)).convert("RGB")
+        original_resized = pil_image.resize(overlay_image.size)
+        
+        overlay_array = np.array(overlay_image)
+        original_array = np.array(original_resized)
+        
+        # 计算差异提取mask
+        diff = np.abs(overlay_array.astype(int) - original_array.astype(int))
+        diff_sum = np.sum(diff, axis=2)
+        mask_array = (diff_sum > 30).astype(np.uint8) * 255
+        
+        # 转换为base64
+        mask_image = Image.fromarray(mask_array, mode="L")
+        buffered = io.BytesIO()
+        mask_image.save(buffered, format="PNG")
+        mask_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
         
         return JSONResponse({
             "code": 0,
             "message": "分割成功",
             "data": {
-                "masks": result.get("masks", []),
-                "boxes": result.get("boxes", []),
-                "scores": result.get("scores", [])
+                "mask": mask_base64,
+                "overlay": overlay_base64,  # 返回overlay用于高亮显示
+                "box": {"x1": x1, "y1": y1, "x2": x2, "y2": y2}
             }
         })
         
@@ -229,7 +368,7 @@ async def inpaint_region(
     局部替换 (Inpainting)
     
     - **image**: 原始图像
-    - **mask_base64**: 要替换区域的mask (白色=替换区域)
+    - **mask_base64**: 黑白mask的base64（白色=替换区域）
     - **prompt**: 描述新内容的提示词
     - **negative_prompt**: 负向提示词
     - **strength**: 替换强度 (0-1)
@@ -238,6 +377,7 @@ async def inpaint_region(
         contents = await image.read()
         pil_image = Image.open(io.BytesIO(contents)).convert("RGB")
         
+        # 解码黑白mask
         mask_data = base64.b64decode(mask_base64)
         mask_image = Image.open(io.BytesIO(mask_data)).convert("L")
         mask_array = np.array(mask_image)

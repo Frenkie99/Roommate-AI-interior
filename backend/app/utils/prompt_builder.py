@@ -1,5 +1,5 @@
 """
-Prompt 构建工具 - 提示词工程核心模块 v4.0 (Gemini 3 / Nano Banana 专用)
+Prompt 构建工具 - 提示词工程核心模块 v4.0 (API易平台 Gemini 专用)
 负责构建高质量的装修效果图生成提示词
 
 设计原则（针对 Gemini 3 多模态模型优化）：

@@ -46,3 +46,39 @@ backend/sam3_*.py
 
 # 参考文件
 frontend/just for reference/
+
+# 项目根目录临时脚本和测试文件
+check_*.py
+test_*.py
+test_*.png
+test_*.jpg
+fix_*.py
+deploy_*.py
+deploy_*.sh
+deploy_*.bat
+deploy_*.ps1
+restart_*.py
+add_hf_token.py
+setup_*.py
+rebuild_*.py
+copy_*.py
+upload_*.py
+debug_*.py
+find_*.py
+
+# 临时图片和输出
+sam3_result.png
+segmind_test_result.png
+*_result.png
+*_result.jpg
+
+# SSL证书和私钥（敏感信息）
+*.key
+*.pem
+*_nginx/
+
+# 测试页面
+frontend/test-*.html
+
+# Claude本地配置
+.claude/settings.local.json

@@ -1,6 +1,6 @@
 """
 Inpainting 局部替换服务
-使用 Stable Diffusion Inpainting 模型进行局部图像替换
+使用 API易平台 进行局部图像编辑
 """
 
 import os
@@ -15,12 +15,14 @@ import numpy as np
 class InpaintService:
     """
     Inpainting 服务
-    通过 Grsai API 或其他 Inpainting API 实现局部替换
+    通过 API易平台 Gemini模型实现局部替换
     """
     
     def __init__(self):
-        self.api_key = os.getenv("GRSAI_API_KEY")
-        self.api_url = os.getenv("GRSAI_API_URL", "https://grsai.dakka.com.cn")
+        # 使用API易平台 - 与基础生图相同的配置
+        self.api_key = os.getenv("APIYI_KEY", "sk-5Cd5C9UJNSYfblvr375057376f6746Eb9b3818D27b3e00A3")
+        self.api_url = "https://api.apiyi.com"
+        self.model = "gemini-3-pro-image-preview"
         
     def _image_to_base64(self, image: Image.Image, format: str = "PNG") -> str:
         """将PIL Image转换为base64字符串"""
@@ -45,14 +47,15 @@ class InpaintService:
         strength: float = 0.85
     ) -> Image.Image:
         """
-        执行局部替换
+        执行局部替换 - 使用API易平台的Gemini模型
+        发送原图+mask两张图，mask作为位置参考
         
         Args:
             image: 原始图像
             mask: 要替换区域的mask (白色=替换区域)
             prompt: 描述新内容的提示词
-            negative_prompt: 负向提示词
-            strength: 替换强度 (0-1)
+            negative_prompt: 负向提示词（暂未使用）
+            strength: 替换强度（暂未使用）
             
         Returns:
             替换后的图像
@@ -63,19 +66,50 @@ class InpaintService:
         image_b64 = self._image_to_base64(image, "JPEG")
         mask_b64 = self._mask_to_base64(mask)
         
-        if negative_prompt is None:
-            negative_prompt = "blurry, low quality, distorted, deformed"
+        # 构建编辑提示词 - 发送两张图，第二张是mask指示位置
+        edit_prompt = f"""I'm providing two images:
+1. First image: An interior design photo
+2. Second image: A black and white mask where WHITE areas indicate the region to be edited
+
+Please edit the FIRST image by replacing ONLY the white areas shown in the mask with: {prompt}
+
+Important requirements:
+- Keep all other parts of the image exactly the same
+- Maintain the same room layout, lighting, and perspective
+- The result should be a clean interior design image
+- Only modify the area indicated by the white region in the mask
+
+Generate a new interior design image with the masked area replaced."""
         
         async with httpx.AsyncClient(timeout=300.0) as client:
+            # 使用API易的generateContent接口 - 发送原图+mask两张图
             payload = {
-                "model": "nano-banana",
-                "input_image": image_b64,
-                "mask": mask_b64,
-                "prompt": prompt,
-                "negative_prompt": negative_prompt,
-                "strength": strength,
-                "num_inference_steps": 30,
-                "guidance_scale": 7.5
+                "contents": [{
+                    "parts": [
+                        {
+                            "inlineData": {
+                                "mimeType": "image/jpeg",
+                                "data": image_b64
+                            }
+                        },
+                        {
+                            "inlineData": {
+                                "mimeType": "image/png",
+                                "data": mask_b64
+                            }
+                        },
+                        {
+                            "text": edit_prompt
+                        }
+                    ]
+                }],
+                "generationConfig": {
+                    "responseModalities": ["IMAGE"],
+                    "imageConfig": {
+                        "aspectRatio": "4:3",
+                        "imageSize": "1K"
+                    }
+                }
             }
             
             headers = {
@@ -83,22 +117,23 @@ class InpaintService:
                 "Content-Type": "application/json"
             }
             
-            response = await client.post(
-                f"{self.api_url}/api/v1/images/inpaint",
-                headers=headers,
-                json=payload
-            )
+            api_url = f"{self.api_url}/v1beta/models/{self.model}:generateContent"
+            response = await client.post(api_url, headers=headers, json=payload)
             
             if response.status_code == 200:
                 result = response.json()
-                if result.get("code") == 0 and result.get("data", {}).get("output_urls"):
-                    output_url = result["data"]["output_urls"][0]
-                    img_response = await client.get(output_url)
-                    return Image.open(io.BytesIO(img_response.content))
-                else:
-                    raise Exception(f"Inpaint API error: {result.get('message', 'Unknown error')}")
+                # 解析返回的图片（与基础生图相同格式）
+                candidates = result.get("candidates", [])
+                if candidates:
+                    parts = candidates[0].get("content", {}).get("parts", [])
+                    for part in parts:
+                        if "inlineData" in part:
+                            img_data = part["inlineData"].get("data", "")
+                            if img_data:
+                                return Image.open(io.BytesIO(base64.b64decode(img_data)))
+                raise Exception("API返回中未找到图片")
             else:
-                raise Exception(f"Inpaint API error: {response.status_code} - {response.text}")
+                raise Exception(f"API错误: {response.status_code} - {response.text}")
     
     async def replace_furniture(
         self,
