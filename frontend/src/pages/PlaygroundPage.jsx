@@ -401,9 +401,92 @@ export default function PlaygroundPage() {
     { label: '更简约', prompt: '保持房间结构不变，设计得更加简约现代' },
   ];
 
+  // ===== RAG 知识库相关函数 =====
+
+  // 检测是否为知识类问题的关键词
+  const isKnowledgeQuestion = (message) => {
+    const knowledgeKeywords = [
+      '什么', '如何', '怎么', '为什么', '建议', '推荐',
+      '材料', '颜色', '搭配', '风格', '设计', '适合',
+      '特点', '区别', '选择', '注意事项', '预算',
+      '介绍', '什么是', '如何选择', '怎么搭配', '哪些',
+      '好不好', '优缺点', '哪种', '怎么样'
+    ];
+    return knowledgeKeywords.some(keyword => message.includes(keyword));
+  };
+
+  // 查询知识库
+  const queryKnowledgeBase = async (message, style, roomType) => {
+    try {
+      const response = await fetch(`${API_BASE}/api/v1/knowledge/query`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question: message,
+          style: style,
+          room_type: roomType,
+          n_results: 5
+        })
+      });
+
+      if (!response.ok) {
+        console.error('知识库查询失败:', response.status);
+        return null;
+      }
+
+      const data = await response.json();
+      return data.code === 0 ? data.data : null;
+    } catch (error) {
+      console.error('知识库查询异常:', error);
+      return null;
+    }
+  };
+
   const handleSendChat = async (customPrompt = null) => {
     const messageText = customPrompt || chatInput.trim();
     if (!messageText) return;
+
+    // 检测是否为知识类问题（不需要图片也能回答）
+    if (isKnowledgeQuestion(messageText)) {
+      // 添加用户消息
+      setChatMessages(prev => [...prev, { type: 'user', text: messageText }]);
+      setChatInput('');
+
+      // 显示正在查询
+      setChatMessages(prev => [...prev, { type: 'ai', text: '正在查询知识库...' }]);
+
+      // 调用RAG知识库
+      const result = await queryKnowledgeBase(messageText, selectedStyle, selectedRoom);
+
+      if (result && result.answer) {
+        // 替换等待消息为实际回答
+        setChatMessages(prev => {
+          const newMessages = [...prev];
+          newMessages[newMessages.length - 1] = {
+            type: 'ai',
+            text: result.answer,
+            sources: result.sources,
+            isKnowledgeAnswer: true
+          };
+          return newMessages;
+        });
+      } else {
+        // 知识库查询失败
+        setChatMessages(prev => {
+          const newMessages = [...prev];
+          newMessages[newMessages.length - 1] = {
+            type: 'ai',
+            text: result?.need_init
+              ? '知识库尚未初始化。请联系管理员运行初始化脚本。'
+              : '抱歉，我暂时无法回答这个问题。您可以尝试上传图片生成设计方案。'
+          };
+          return newMessages;
+        });
+      }
+      return;
+    }
+
+    // 原有的图片生成逻辑
     if (!uploadedImage) {
       setChatMessages(prev => [...prev, { type: 'ai', text: '请先上传一张房间照片，我才能为您生成设计方案。' }]);
       return;
@@ -792,8 +875,17 @@ export default function PlaygroundPage() {
                 <div ref={chatContainerRef} className="chat-container flex-1 overflow-y-auto p-3 space-y-3 min-h-0">
                   {chatMessages.map((msg, index) => (
                     <div key={index} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`px-3 py-2 rounded-2xl max-w-[90%] text-xs ${msg.type === 'user' ? 'chat-bubble-user rounded-tr-sm' : 'chat-bubble-ai rounded-tl-sm'}`}>
-                        {msg.text}
+                      <div className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'} max-w-[90%]`}>
+                        <div className={`px-3 py-2 rounded-2xl text-xs ${msg.type === 'user' ? 'chat-bubble-user rounded-tr-sm' : 'chat-bubble-ai rounded-tl-sm'}`}>
+                          {msg.text}
+                        </div>
+                        {/* 知识来源标注 */}
+                        {msg.type === 'ai' && msg.isKnowledgeAnswer && msg.sources && msg.sources.length > 0 && (
+                          <div className="mt-1 text-xs text-charcoal/50 flex items-center gap-1 px-2">
+                            <Lightbulb className="w-3 h-3" />
+                            <span>参考: {msg.sources.slice(0, 2).join(', ')}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}

@@ -15,6 +15,10 @@ from app.utils.prompt_builder import GLOBAL_STRUCTURE_CONSTRAINTS, STYLE_PROMPTS
 
 class LLMModel(str, Enum):
     """支持的 LLM 模型列表"""
+    # DeepSeek 模型（OpenAI 兼容格式）
+    DEEPSEEK_CHAT = "deepseek-chat"
+    DEEPSEEK_V3 = "deepseek-v3"
+    # Gemini 模型（Gemini 格式）
     GEMINI_3_FLASH_PREVIEW = "gemini-3-flash-preview"
     GEMINI_25_FLASH_PREVIEW = "gemini-2.5-flash-preview"
 
@@ -239,13 +243,88 @@ Output a single valid JSON object."""
                 "data": None
             }
     
+    async def chat_text(
+        self,
+        prompt: str,
+        model: LLMModel = LLMModel.DEEPSEEK_CHAT
+    ) -> str:
+        """
+        纯文本对话（用于RAG问答）- 支持 OpenAI 兼容格式
+
+        Args:
+            prompt: 完整的对话提示词
+            model: LLM模型（默认使用 DeepSeek）
+
+        Returns:
+            AI生成的文本回复
+        """
+        # 判断使用哪种格式
+        is_deepseek = model in [LLMModel.DEEPSEEK_CHAT, LLMModel.DEEPSEEK_V3]
+
+        if is_deepseek:
+            # DeepSeek 使用 OpenAI 兼容格式
+            payload = {
+                "model": model.value,
+                "messages": [
+                    {"role": "system", "content": "你是专业室内设计顾问。"},
+                    {"role": "user", "content": prompt}
+                ],
+                "temperature": 0.7,
+                "max_tokens": 2048
+            }
+            api_url = f"{self.BASE_URL}/v1/chat/completions"
+        else:
+            # Gemini 使用原生格式
+            payload = {
+                "contents": [{
+                    "parts": [{"text": prompt}]
+                }],
+                "generationConfig": {
+                    "responseModalities": ["TEXT"],
+                    "responseMimeType": "text/plain",
+                    "temperature": 0.7,
+                    "maxOutputTokens": 2048
+                }
+            }
+            model_name = model.value if hasattr(model, 'value') else str(model)
+            api_url = f"{self.BASE_URL}/v1beta/models/{model_name}:generateContent"
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}"
+        }
+
+        try:
+            response = await self.client.post(api_url, headers=headers, json=payload)
+            response.raise_for_status()
+            result = response.json()
+
+            if is_deepseek:
+                # OpenAI 格式响应
+                if "choices" in result and len(result["choices"]) > 0:
+                    return result["choices"][0]["message"]["content"]
+                else:
+                    return "抱歉，我暂时无法回答这个问题。"
+            else:
+                # Gemini 格式响应
+                if "candidates" in result and len(result["candidates"]) > 0:
+                    return result["candidates"][0]["content"]["parts"][0]["text"]
+                else:
+                    return "抱歉，我暂时无法回答这个问题。"
+        except httpx.HTTPStatusError as e:
+            return f"API请求失败: {e.response.text}"
+        except Exception as e:
+            return f"回答生成失败: {str(e)}"
+
     async def close(self):
         """关闭客户端连接"""
         await self.client.aclose()
 
 
-# 模型优先级配置
+# 模型优先级配置（DeepSeek 优先）
 DEFAULT_LLM_MODEL_PRIORITY = [
+    LLMModel.DEEPSEEK_CHAT,
+    LLMModel.DEEPSEEK_V3,
     LLMModel.GEMINI_3_FLASH_PREVIEW,
     LLMModel.GEMINI_25_FLASH_PREVIEW,
 ]

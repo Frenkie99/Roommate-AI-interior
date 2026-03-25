@@ -56,6 +56,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.routes import image
 from app.routes import segment
+from app.routes import knowledge
 
 # 输出目录
 OUTPUT_DIR = Path(__file__).parent.parent.parent / "output"
@@ -79,6 +80,7 @@ app.add_middleware(
 # 注册路由
 app.include_router(image.router, prefix="/api/v1", tags=["image"])
 app.include_router(segment.router, tags=["segment"])
+app.include_router(knowledge.router, tags=["knowledge"])
 
 # 静态文件服务 - 用于访问生成的图片
 app.mount("/output", StaticFiles(directory=str(OUTPUT_DIR)), name="output")
