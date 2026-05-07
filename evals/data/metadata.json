@@ -1,0 +1,177 @@
+{
+  "version": "1.0",
+  "created_at": "2026-04-29T13:48:49.050362",
+  "total_pairs": 10,
+  "pairs": [
+    {
+      "pair_id": "pair_000",
+      "input_path": "E:\\vibe coding projects\\20250109-AI 装修-agentic版\\evals\\data\\images\\pair_000_input.png",
+      "output_path": "E:\\vibe coding projects\\20250109-AI 装修-agentic版\\evals\\data\\images\\pair_000_output.png",
+      "prompt": "A modern luxury living room with warm lighting and natural materials",
+      "style": "modern_luxury",
+      "room_type": "living_room",
+      "tags": [
+        "well_lit",
+        "spacious"
+      ],
+      "dataset_split": "standard",
+      "metadata": {
+        "seed": 42,
+        "generator": "mock"
+      }
+    },
+    {
+      "pair_id": "pair_001",
+      "input_path": "E:\\vibe coding projects\\20250109-AI 装修-agentic版\\evals\\data\\images\\pair_001_input.png",
+      "output_path": "E:\\vibe coding projects\\20250109-AI 装修-agentic版\\evals\\data\\images\\pair_001_output.png",
+      "prompt": "Modern minimalist renovation of a bedroom with high ceiling",
+      "style": "minimalist",
+      "room_type": "bedroom",
+      "tags": [
+        "well_lit",
+        "clean"
+      ],
+      "dataset_split": "standard",
+      "metadata": {
+        "seed": 42,
+        "generator": "mock"
+      }
+    },
+    {
+      "pair_id": "pair_002",
+      "input_path": "E:\\vibe coding projects\\20250109-AI 装修-agentic版\\evals\\data\\images\\pair_002_input.png",
+      "output_path": "E:\\vibe coding projects\\20250109-AI 装修-agentic版\\evals\\data\\images\\pair_002_output.png",
+      "prompt": "scandinavian design for a kitchen, featuring elegant furniture",
+      "style": "scandinavian",
+      "room_type": "kitchen",
+      "tags": [
+        "well_lit",
+        "clean"
+      ],
+      "dataset_split": "standard",
+      "metadata": {
+        "seed": 42,
+        "generator": "mock"
+      }
+    },
+    {
+      "pair_id": "pair_003",
+      "input_path": "E:\\vibe coding projects\\20250109-AI 装修-agentic版\\evals\\data\\images\\pair_003_input.png",
+      "output_path": "E:\\vibe coding projects\\20250109-AI 装修-agentic版\\evals\\data\\images\\pair_003_output.png",
+      "prompt": "A japanese bathroom with warm lighting and natural materials",
+      "style": "japanese",
+      "room_type": "bathroom",
+      "tags": [
+        "well_lit",
+        "clean"
+      ],
+      "dataset_split": "standard",
+      "metadata": {
+        "seed": 42,
+        "generator": "mock"
+      }
+    },
+    {
+      "pair_id": "pair_004",
+      "input_path": "E:\\vibe coding projects\\20250109-AI 装修-agentic版\\evals\\data\\images\\pair_004_input.png",
+      "output_path": "E:\\vibe coding projects\\20250109-AI 装修-agentic版\\evals\\data\\images\\pair_004_output.png",
+      "prompt": "Cozy french vintage study renovation with sustainable materials",
+      "style": "french_vintage",
+      "room_type": "study",
+      "tags": [
+        "well_lit",
+        "spacious"
+      ],
+      "dataset_split": "standard",
+      "metadata": {
+        "seed": 42,
+        "generator": "mock"
+      }
+    },
+    {
+      "pair_id": "pair_005",
+      "input_path": "E:\\vibe coding projects\\20250109-AI 装修-agentic版\\evals\\data\\images\\pair_005_input.png",
+      "output_path": "E:\\vibe coding projects\\20250109-AI 装修-agentic版\\evals\\data\\images\\pair_005_output.png",
+      "prompt": "Cozy industrial dining room renovation with sustainable materials",
+      "style": "industrial",
+      "room_type": "dining_room",
+      "tags": [
+        "well_lit",
+        "clean"
+      ],
+      "dataset_split": "standard",
+      "metadata": {
+        "seed": 42,
+        "generator": "mock"
+      }
+    },
+    {
+      "pair_id": "pair_006",
+      "input_path": "E:\\vibe coding projects\\20250109-AI 装修-agentic版\\evals\\data\\images\\pair_006_input.png",
+      "output_path": "E:\\vibe coding projects\\20250109-AI 装修-agentic版\\evals\\data\\images\\pair_006_output.png",
+      "prompt": "A bohemian balcony with warm lighting and natural materials",
+      "style": "bohemian",
+      "room_type": "balcony",
+      "tags": [
+        "specific_style",
+        "minimalist"
+      ],
+      "dataset_split": "competitor",
+      "metadata": {
+        "seed": 42,
+        "generator": "mock"
+      }
+    },
+    {
+      "pair_id": "pair_007",
+      "input_path": "E:\\vibe coding projects\\20250109-AI 装修-agentic版\\evals\\data\\images\\pair_007_input.png",
+      "output_path": "E:\\vibe coding projects\\20250109-AI 装修-agentic版\\evals\\data\\images\\pair_007_output.png",
+      "prompt": "A art deco children room with warm lighting and natural materials",
+      "style": "art_deco",
+      "room_type": "children_room",
+      "tags": [
+        "complex_structure",
+        "beam"
+      ],
+      "dataset_split": "competitor",
+      "metadata": {
+        "seed": 42,
+        "generator": "mock"
+      }
+    },
+    {
+      "pair_id": "pair_008",
+      "input_path": "E:\\vibe coding projects\\20250109-AI 装修-agentic版\\evals\\data\\images\\pair_008_input.png",
+      "output_path": "E:\\vibe coding projects\\20250109-AI 装修-agentic版\\evals\\data\\images\\pair_008_output.png",
+      "prompt": "chinese traditional design for a entryway, featuring elegant furniture",
+      "style": "chinese_traditional",
+      "room_type": "entryway",
+      "tags": [
+        "complex_structure",
+        "beam"
+      ],
+      "dataset_split": "competitor",
+      "metadata": {
+        "seed": 42,
+        "generator": "mock"
+      }
+    },
+    {
+      "pair_id": "pair_009",
+      "input_path": "E:\\vibe coding projects\\20250109-AI 装修-agentic版\\evals\\data\\images\\pair_009_input.png",
+      "output_path": "E:\\vibe coding projects\\20250109-AI 装修-agentic版\\evals\\data\\images\\pair_009_output.png",
+      "prompt": "Cozy coastal basement renovation with sustainable materials",
+      "style": "coastal",
+      "room_type": "basement",
+      "tags": [
+        "dark_light",
+        "extreme_angle"
+      ],
+      "dataset_split": "corner_case",
+      "metadata": {
+        "seed": 42,
+        "generator": "mock"
+      }
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # AI 智能室内设计平台
 
-> 基于 API易 Gemini API + Segmind SAM3 的智能装修设计与局部精修工具
+> 基于 API易 Gemini API + Segmind SAM3 的智能装修设计与局部精修工具，内置评测平台
 
 [![AI装修平台](https://img.shields.io/badge/AI-装修-智能设计-blue)](https://github.com/Frenkie99/Roommate-AI-interior)
 [![技术栈](https://img.shields.io/badge/技术栈-React--FastAPI-brightgreen)](https://github.com/Frenkie99/Roommate-AI-interior)
@@ -46,6 +46,60 @@
 
 **功能视频演示：**
 > 如需查看完整功能演示，请克隆项目并本地运行
+
+---
+
+## 📊 评测平台
+
+### 概述
+
+内置 AI 效果图评测系统，支持批量生成、多维度评分、可视化分析。
+
+### 评测流程
+
+```
+数据采集 → 手动筛选 → 批量生成 → 多维度评分 → 可视化分析
+  (171张)    (85张)     (API调用)   (3个指标)    (Streamlit)
+```
+
+### 评测指标
+
+| 指标 | 原理 | 意义 |
+|------|------|------|
+| **CLIP Score** | OpenAI CLIP 模型计算图像语义相似度 | 空间语义保留程度 |
+| **Structural Fidelity** | Canny 边缘检测 + SSIM 结构相似度 | 承重结构、透视关系保持度 |
+| **LLM Judge** | DeepSeek 基于风格/房间/提示词盲评 | 设计质量、风格准确性 |
+
+### 评测结果（85 张样本）
+
+| 指标 | 平均值 | 范围 |
+|------|--------|------|
+| CLIP Score | 0.85 | 0.76 – 0.93 |
+| Structural Fidelity | 66.9 | 56.6 – 77.9 |
+| LLM Judge | 3.79 | 3.0 – 5.0 |
+
+### 运行评测
+
+```bash
+# 批量生成效果图
+python -m evals.dataset.batch_generate
+
+# 下载效果图到本地
+python -m evals.dataset.download_outputs
+
+# 运行评测
+python -m evals.executor.runner
+
+# 启动评测仪表盘
+streamlit run evals/ui/app.py --server.port 8501
+```
+
+### 评测平台功能
+
+- **概览**：指标卡片 + 分布图 + 标签统计
+- **数据表**：可排序、可筛选的评测结果
+- **图像对比**：毛坯原图 vs AI 效果图 + 评分详情
+- **Badcase 分析**：最差/最佳表现案例复盘
 
 ---
 
@@ -133,6 +187,31 @@ AI-装修效果图生成器/
 │
 ├── input/                    # 输入目录（毛坯房原图）
 ├── output/                   # 输出目录（生成的效果图）
+│
+├── evals/                    # 评测平台
+│   ├── dataset/              # 数据集管理
+│   │   ├── batch_generate.py     # 批量生成脚本
+│   │   ├── download_outputs.py   # 下载效果图脚本
+│   │   ├── batch_search.py       # Bing 图片搜索
+│   │   ├── screener.py           # AI 图片筛选
+│   │   ├── loader.py             # 数据加载器
+│   │   └── schemas.py            # 数据模型
+│   ├── scorer/               # 评分器
+│   │   ├── clip_scorer.py        # CLIP 语义相似度
+│   │   ├── structural_fidelity.py # 结构保真度
+│   │   ├── llm_judge.py          # LLM 盲评
+│   │   ├── fid_scorer.py         # FID 图像真实感
+│   │   └── iou_scorer.py         # IoU 分割精度
+│   ├── executor/             # 评测执行器
+│   │   ├── runner.py             # 编排器
+│   │   └── result_store.py       # 结果存储
+│   ├── ui/                   # Streamlit 仪表盘
+│   │   ├── app.py                # 入口
+│   │   └── components/           # UI 组件
+│   ├── config.py             # 全局配置
+│   └── data/                 # 评测数据
+│       ├── real_metadata.json    # 评测集元数据
+│       └── eval_results.json     # 评测结果
 │
 └── assets/                   # 资源文件
     └── samples/              # 示例图片

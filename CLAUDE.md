@@ -4,6 +4,7 @@
 - 前端：React 18 + Vite + TailwindCSS
 - 后端：Python FastAPI + Uvicorn
 - AI 服务：API易 Gemini + Segmind SAM3 + DeepSeek RAG
+- 评测平台：Streamlit + PyTorch + OpenCV
 
 ## 项目结构
 - frontend/src/components/ — React 组件
@@ -14,6 +15,12 @@
 - backend/app/models/ — 数据模型
 - input/ — 用户上传的毛坯房原图
 - output/ — AI 生成的效果图
+- evals/ — 评测平台
+  - evals/dataset/ — 数据集管理（采集、筛选、批量生成）
+  - evals/scorer/ — 评分器（CLIP、结构保真度、LLM Judge）
+  - evals/executor/ — 评测执行器
+  - evals/ui/ — Streamlit 仪表盘
+  - evals/data/ — 评测数据（metadata、eval_results）
 
 ## 开发规范
 - 后端端口 8000，前端端口 5173

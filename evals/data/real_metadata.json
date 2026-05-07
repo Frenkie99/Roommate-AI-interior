@@ -1,0 +1,1197 @@
+{
+  "version": "1.0",
+  "created_at": "2026-05-07T12:10:17.290618",
+  "total_pairs": 85,
+  "pairs": [
+    {
+      "pair_id": "pair_000",
+      "input_path": "data/candidates/competitor_small_apartment_bare_walls_b2d9dab8.jpg",
+      "output_path": "output/20260507_123936_6751c631_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 包豪斯 interior.\n\n## ATMOSPHERE & VIBE: Functional, geometric, and artistically modernist with primary color accents\n\nCR",
+      "style": "bauhaus",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "competitor",
+      "metadata": {
+        "source_filename": "competitor_small_apartment_bare_walls_b2d9dab8.jpg",
+        "original_category": "competitor"
+      }
+    },
+    {
+      "pair_id": "pair_001",
+      "input_path": "data/candidates/competitor_小户型毛坯房_1aab5cc3.jpg",
+      "output_path": "output/20260507_124007_ef7b9e4a_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 现代轻奢 interior.\n\n## ATMOSPHERE & VIBE: Sophisticated, refined, and high-end with a sense of understated elegance\n\nCRIT",
+      "style": "modern_luxury",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "competitor",
+      "metadata": {
+        "source_filename": "competitor_小户型毛坯房_1aab5cc3.jpg",
+        "original_category": "competitor"
+      }
+    },
+    {
+      "pair_id": "pair_002",
+      "input_path": "data/candidates/competitor_小户型毛坯房_32bff511.jpg",
+      "output_path": "output/20260507_124039_ea706424_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 美式风格 interior.\n\n## ATMOSPHERE & VIBE: Warm, inviting, and comfortable with classic American charm\n\nCRITICAL STRUCTURA",
+      "style": "american_transitional",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "competitor",
+      "metadata": {
+        "source_filename": "competitor_小户型毛坯房_32bff511.jpg",
+        "original_category": "competitor"
+      }
+    },
+    {
+      "pair_id": "pair_003",
+      "input_path": "data/candidates/competitor_小户型毛坯房_5df76954.jpg",
+      "output_path": "output/20260507_124112_996ce61e_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 新中式 interior.\n\n## ATMOSPHERE & VIBE: Serene, balanced, and culturally rooted with modern simplicity\n\nCRITICAL STRUCTU",
+      "style": "chinese_modern",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "competitor",
+      "metadata": {
+        "source_filename": "competitor_小户型毛坯房_5df76954.jpg",
+        "original_category": "competitor"
+      }
+    },
+    {
+      "pair_id": "pair_004",
+      "input_path": "data/candidates/competitor_小户型毛坯房_6b6fd039.jpg",
+      "output_path": "output/20260507_124144_b8b1c40b_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 美式风格 interior.\n\n## ATMOSPHERE & VIBE: Warm, inviting, and comfortable with classic American charm\n\nCRITICAL STRUCTURA",
+      "style": "american_transitional",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "competitor",
+      "metadata": {
+        "source_filename": "competitor_小户型毛坯房_6b6fd039.jpg",
+        "original_category": "competitor"
+      }
+    },
+    {
+      "pair_id": "pair_005",
+      "input_path": "data/candidates/competitor_小户型毛坯房_75beca8f.jpg",
+      "output_path": "output/20260507_124352_f77e5375_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 日式 interior.\n\n## ATMOSPHERE & VIBE: Zen, tranquil, and authentically Japanese with mindful simplicity\n\nCRITICAL STRUC",
+      "style": "japanese_traditional",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "competitor",
+      "metadata": {
+        "source_filename": "competitor_小户型毛坯房_75beca8f.jpg",
+        "original_category": "competitor"
+      }
+    },
+    {
+      "pair_id": "pair_006",
+      "input_path": "data/candidates/competitor_小户型毛坯房_979d4483.jpg",
+      "output_path": "output/20260507_124425_51e0a8bd_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 原木风 interior.\n\n## ATMOSPHERE & VIBE: Warm, organic, and naturally calming with Scandinavian influences\n\nCRITICAL STRU",
+      "style": "natural_wood",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "competitor",
+      "metadata": {
+        "source_filename": "competitor_小户型毛坯房_979d4483.jpg",
+        "original_category": "competitor"
+      }
+    },
+    {
+      "pair_id": "pair_007",
+      "input_path": "data/candidates/competitor_小户型毛坯房_979ff839.jpg",
+      "output_path": "output/20260507_124454_29c228ed_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 日式 interior.\n\n## ATMOSPHERE & VIBE: Zen, tranquil, and authentically Japanese with mindful simplicity\n\nCRITICAL STRUC",
+      "style": "japanese_traditional",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "competitor",
+      "metadata": {
+        "source_filename": "competitor_小户型毛坯房_979ff839.jpg",
+        "original_category": "competitor"
+      }
+    },
+    {
+      "pair_id": "pair_008",
+      "input_path": "data/candidates/competitor_小户型毛坯房_9e41611c.jpg",
+      "output_path": "output/20260507_191304_20a7bd27_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 现代轻奢 interior.\n\n## ATMOSPHERE & VIBE: Sophisticated, refined, and high-end with a sense of understated elegance\n\nCRIT",
+      "style": "modern_luxury",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "competitor",
+      "metadata": {
+        "source_filename": "competitor_小户型毛坯房_9e41611c.jpg",
+        "original_category": "competitor"
+      }
+    },
+    {
+      "pair_id": "pair_009",
+      "input_path": "data/candidates/competitor_小户型毛坯房_af720a4d.jpg",
+      "output_path": "output/20260507_124545_b969fc75_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 美式风格 interior.\n\n## ATMOSPHERE & VIBE: Warm, inviting, and comfortable with classic American charm\n\nCRITICAL STRUCTURA",
+      "style": "american_transitional",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "competitor",
+      "metadata": {
+        "source_filename": "competitor_小户型毛坯房_af720a4d.jpg",
+        "original_category": "competitor"
+      }
+    },
+    {
+      "pair_id": "pair_010",
+      "input_path": "data/candidates/competitor_小户型毛坯房_f3ef198d.jpg",
+      "output_path": "output/20260507_124615_44044dd4_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 原木风 interior.\n\n## ATMOSPHERE & VIBE: Warm, organic, and naturally calming with Scandinavian influences\n\nCRITICAL STRU",
+      "style": "natural_wood",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "competitor",
+      "metadata": {
+        "source_filename": "competitor_小户型毛坯房_f3ef198d.jpg",
+        "original_category": "competitor"
+      }
+    },
+    {
+      "pair_id": "pair_011",
+      "input_path": "data/candidates/competitor_极简风格毛坯房_15edebaa.jpg",
+      "output_path": "output/20260507_191340_ffcd4b28_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 波西米亚 interior.\n\n## ATMOSPHERE & VIBE: Free-spirited, eclectic, and artistically layered with global influences\n\nCRITI",
+      "style": "bohemian",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "competitor",
+      "metadata": {
+        "source_filename": "competitor_极简风格毛坯房_15edebaa.jpg",
+        "original_category": "competitor"
+      }
+    },
+    {
+      "pair_id": "pair_012",
+      "input_path": "data/candidates/competitor_极简风格毛坯房_95b3fc0a.jpg",
+      "output_path": "output/20260507_124653_e792eb8d_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 波西米亚 interior.\n\n## ATMOSPHERE & VIBE: Free-spirited, eclectic, and artistically layered with global influences\n\nCRITI",
+      "style": "bohemian",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "competitor",
+      "metadata": {
+        "source_filename": "competitor_极简风格毛坯房_95b3fc0a.jpg",
+        "original_category": "competitor"
+      }
+    },
+    {
+      "pair_id": "pair_013",
+      "input_path": "data/candidates/competitor_极简风格毛坯房_c1caff52.jpg",
+      "output_path": "output/20260507_124725_fe3ee852_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 现代简约 interior.\n\n## ATMOSPHERE & VIBE: Clean, airy, and architecturally pure with intentional negative space\n\nCRITICAL",
+      "style": "modern_minimalist",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "competitor",
+      "metadata": {
+        "source_filename": "competitor_极简风格毛坯房_c1caff52.jpg",
+        "original_category": "competitor"
+      }
+    },
+    {
+      "pair_id": "pair_014",
+      "input_path": "data/candidates/competitor_毛坯房复式_3d6bf166.jpg",
+      "output_path": "output/20260507_124757_30765b1a_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 现代简约 interior.\n\n## ATMOSPHERE & VIBE: Clean, airy, and architecturally pure with intentional negative space\n\nCRITICAL",
+      "style": "modern_minimalist",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "competitor",
+      "metadata": {
+        "source_filename": "competitor_毛坯房复式_3d6bf166.jpg",
+        "original_category": "competitor"
+      }
+    },
+    {
+      "pair_id": "pair_015",
+      "input_path": "data/candidates/competitor_毛坯房复式_899e84b4.jpg",
+      "output_path": "output/20260507_124833_f4e5584c_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 原木风 interior.\n\n## ATMOSPHERE & VIBE: Warm, organic, and naturally calming with Scandinavian influences\n\nCRITICAL STRU",
+      "style": "natural_wood",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "competitor",
+      "metadata": {
+        "source_filename": "competitor_毛坯房复式_899e84b4.jpg",
+        "original_category": "competitor"
+      }
+    },
+    {
+      "pair_id": "pair_016",
+      "input_path": "data/candidates/competitor_毛坯房复式_8b434449.jpg",
+      "output_path": "output/20260507_124904_aa328816_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 美式风格 interior.\n\n## ATMOSPHERE & VIBE: Warm, inviting, and comfortable with classic American charm\n\nCRITICAL STRUCTURA",
+      "style": "american_transitional",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "competitor",
+      "metadata": {
+        "source_filename": "competitor_毛坯房复式_8b434449.jpg",
+        "original_category": "competitor"
+      }
+    },
+    {
+      "pair_id": "pair_017",
+      "input_path": "data/candidates/competitor_毛坯房复式_9a7be67f.jpg",
+      "output_path": "output/20260507_124932_9fd87cc4_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 现代轻奢 interior.\n\n## ATMOSPHERE & VIBE: Sophisticated, refined, and high-end with a sense of understated elegance\n\nCRIT",
+      "style": "modern_luxury",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "competitor",
+      "metadata": {
+        "source_filename": "competitor_毛坯房复式_9a7be67f.jpg",
+        "original_category": "competitor"
+      }
+    },
+    {
+      "pair_id": "pair_018",
+      "input_path": "data/candidates/competitor_毛坯房复式_b8b448b5.jpg",
+      "output_path": "output/20260507_125008_53e4a015_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 新中式 interior.\n\n## ATMOSPHERE & VIBE: Serene, balanced, and culturally rooted with modern simplicity\n\nCRITICAL STRUCTU",
+      "style": "chinese_modern",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "competitor",
+      "metadata": {
+        "source_filename": "competitor_毛坯房复式_b8b448b5.jpg",
+        "original_category": "competitor"
+      }
+    },
+    {
+      "pair_id": "pair_019",
+      "input_path": "data/candidates/competitor_毛坯房复式_de8a2281.jpg",
+      "output_path": "output/20260507_125034_c50bd421_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 日式 interior.\n\n## ATMOSPHERE & VIBE: Zen, tranquil, and authentically Japanese with mindful simplicity\n\nCRITICAL STRUC",
+      "style": "japanese_traditional",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "competitor",
+      "metadata": {
+        "source_filename": "competitor_毛坯房复式_de8a2281.jpg",
+        "original_category": "competitor"
+      }
+    },
+    {
+      "pair_id": "pair_020",
+      "input_path": "data/candidates/competitor_毛坯房异形户型_03f3cd3f.jpg",
+      "output_path": "output/20260507_125106_8628545b_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 现代简约 interior.\n\n## ATMOSPHERE & VIBE: Clean, airy, and architecturally pure with intentional negative space\n\nCRITICAL",
+      "style": "modern_minimalist",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "competitor",
+      "metadata": {
+        "source_filename": "competitor_毛坯房异形户型_03f3cd3f.jpg",
+        "original_category": "competitor"
+      }
+    },
+    {
+      "pair_id": "pair_021",
+      "input_path": "data/candidates/competitor_毛坯房异形户型_09c63cf7.jpg",
+      "output_path": "output/20260507_125134_abf688d7_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 原木风 interior.\n\n## ATMOSPHERE & VIBE: Warm, organic, and naturally calming with Scandinavian influences\n\nCRITICAL STRU",
+      "style": "natural_wood",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "competitor",
+      "metadata": {
+        "source_filename": "competitor_毛坯房异形户型_09c63cf7.jpg",
+        "original_category": "competitor"
+      }
+    },
+    {
+      "pair_id": "pair_022",
+      "input_path": "data/candidates/competitor_毛坯房异形户型_13c8b608.jpg",
+      "output_path": "output/20260507_191415_734f9d12_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 现代简约 interior.\n\n## ATMOSPHERE & VIBE: Clean, airy, and architecturally pure with intentional negative space\n\nCRITICAL",
+      "style": "modern_minimalist",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "competitor",
+      "metadata": {
+        "source_filename": "competitor_毛坯房异形户型_13c8b608.jpg",
+        "original_category": "competitor"
+      }
+    },
+    {
+      "pair_id": "pair_023",
+      "input_path": "data/candidates/competitor_毛坯房异形户型_2c8314a0.jpg",
+      "output_path": "output/20260507_191452_88a066bc_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 欧式风格 interior.\n\n## ATMOSPHERE & VIBE: Elegant, timeless, and romantically European with classical proportions\n\nCRITIC",
+      "style": "european_neoclassical",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "competitor",
+      "metadata": {
+        "source_filename": "competitor_毛坯房异形户型_2c8314a0.jpg",
+        "original_category": "competitor"
+      }
+    },
+    {
+      "pair_id": "pair_024",
+      "input_path": "data/candidates/competitor_毛坯房异形户型_45a98508.jpg",
+      "output_path": "output/20260507_191524_7d3a1bcf_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 欧式风格 interior.\n\n## ATMOSPHERE & VIBE: Elegant, timeless, and romantically European with classical proportions\n\nCRITIC",
+      "style": "european_neoclassical",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "competitor",
+      "metadata": {
+        "source_filename": "competitor_毛坯房异形户型_45a98508.jpg",
+        "original_category": "competitor"
+      }
+    },
+    {
+      "pair_id": "pair_025",
+      "input_path": "data/candidates/competitor_毛坯房异形户型_d972fbe7.jpg",
+      "output_path": "output/20260507_191558_1f7104d3_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 包豪斯 interior.\n\n## ATMOSPHERE & VIBE: Functional, geometric, and artistically modernist with primary color accents\n\nCR",
+      "style": "bauhaus",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "competitor",
+      "metadata": {
+        "source_filename": "competitor_毛坯房异形户型_d972fbe7.jpg",
+        "original_category": "competitor"
+      }
+    },
+    {
+      "pair_id": "pair_026",
+      "input_path": "data/candidates/competitor_毛坯房异形户型_ee37dbc6.jpg",
+      "output_path": "output/20260507_191636_1eaa3446_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 波西米亚 interior.\n\n## ATMOSPHERE & VIBE: Free-spirited, eclectic, and artistically layered with global influences\n\nCRITI",
+      "style": "bohemian",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "competitor",
+      "metadata": {
+        "source_filename": "competitor_毛坯房异形户型_ee37dbc6.jpg",
+        "original_category": "competitor"
+      }
+    },
+    {
+      "pair_id": "pair_027",
+      "input_path": "data/candidates/competitor_毛坯房异形户型_fab1f651.jpg",
+      "output_path": "output/20260507_191714_b564deb8_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 新中式 interior.\n\n## ATMOSPHERE & VIBE: Serene, balanced, and culturally rooted with modern simplicity\n\nCRITICAL STRUCTU",
+      "style": "chinese_modern",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "competitor",
+      "metadata": {
+        "source_filename": "competitor_毛坯房异形户型_fab1f651.jpg",
+        "original_category": "competitor"
+      }
+    },
+    {
+      "pair_id": "pair_028",
+      "input_path": "data/candidates/competitor_毛坯房横梁_2f8c4501.jpg",
+      "output_path": "output/20260507_191751_8f375d6e_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 现代轻奢 interior.\n\n## ATMOSPHERE & VIBE: Sophisticated, refined, and high-end with a sense of understated elegance\n\nCRIT",
+      "style": "modern_luxury",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "competitor",
+      "metadata": {
+        "source_filename": "competitor_毛坯房横梁_2f8c4501.jpg",
+        "original_category": "competitor"
+      }
+    },
+    {
+      "pair_id": "pair_029",
+      "input_path": "data/candidates/competitor_毛坯房横梁_32d9df30.jpg",
+      "output_path": "output/20260507_191828_cd58ed41_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 欧式风格 interior.\n\n## ATMOSPHERE & VIBE: Elegant, timeless, and romantically European with classical proportions\n\nCRITIC",
+      "style": "european_neoclassical",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "competitor",
+      "metadata": {
+        "source_filename": "competitor_毛坯房横梁_32d9df30.jpg",
+        "original_category": "competitor"
+      }
+    },
+    {
+      "pair_id": "pair_030",
+      "input_path": "data/candidates/competitor_毛坯房横梁_849480fd.jpg",
+      "output_path": "output/20260507_191924_171021cf_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 新中式 interior.\n\n## ATMOSPHERE & VIBE: Serene, balanced, and culturally rooted with modern simplicity\n\nCRITICAL STRUCTU",
+      "style": "chinese_modern",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "competitor",
+      "metadata": {
+        "source_filename": "competitor_毛坯房横梁_849480fd.jpg",
+        "original_category": "competitor"
+      }
+    },
+    {
+      "pair_id": "pair_031",
+      "input_path": "data/candidates/corner_case_unfinished_basement_1e8db33e.jpg",
+      "output_path": "output/20260507_191957_361713a1_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 新中式 interior.\n\n## ATMOSPHERE & VIBE: Serene, balanced, and culturally rooted with modern simplicity\n\nCRITICAL STRUCTU",
+      "style": "chinese_modern",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "corner_case",
+      "metadata": {
+        "source_filename": "corner_case_unfinished_basement_1e8db33e.jpg",
+        "original_category": "corner_case"
+      }
+    },
+    {
+      "pair_id": "pair_032",
+      "input_path": "data/candidates/corner_case_unfinished_basement_61db2239.jpg",
+      "output_path": "output/20260507_192042_1def4649_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 现代简约 interior.\n\n## ATMOSPHERE & VIBE: Clean, airy, and architecturally pure with intentional negative space\n\nCRITICAL",
+      "style": "modern_minimalist",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "corner_case",
+      "metadata": {
+        "source_filename": "corner_case_unfinished_basement_61db2239.jpg",
+        "original_category": "corner_case"
+      }
+    },
+    {
+      "pair_id": "pair_033",
+      "input_path": "data/candidates/corner_case_unfinished_basement_e2559747.jpg",
+      "output_path": "output/20260507_192118_40086fc9_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 包豪斯 interior.\n\n## ATMOSPHERE & VIBE: Functional, geometric, and artistically modernist with primary color accents\n\nCR",
+      "style": "bauhaus",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "corner_case",
+      "metadata": {
+        "source_filename": "corner_case_unfinished_basement_e2559747.jpg",
+        "original_category": "corner_case"
+      }
+    },
+    {
+      "pair_id": "pair_034",
+      "input_path": "data/candidates/corner_case_暗光毛坯房_0f74bbbd.jpg",
+      "output_path": "output/20260507_192154_99b4ca0e_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 日式 interior.\n\n## ATMOSPHERE & VIBE: Zen, tranquil, and authentically Japanese with mindful simplicity\n\nCRITICAL STRUC",
+      "style": "japanese_traditional",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "corner_case",
+      "metadata": {
+        "source_filename": "corner_case_暗光毛坯房_0f74bbbd.jpg",
+        "original_category": "corner_case"
+      }
+    },
+    {
+      "pair_id": "pair_035",
+      "input_path": "data/candidates/corner_case_杂物毛坯房_411649f3.jpg",
+      "output_path": "output/20260507_192232_130ea909_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 波西米亚 interior.\n\n## ATMOSPHERE & VIBE: Free-spirited, eclectic, and artistically layered with global influences\n\nCRITI",
+      "style": "bohemian",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "corner_case",
+      "metadata": {
+        "source_filename": "corner_case_杂物毛坯房_411649f3.jpg",
+        "original_category": "corner_case"
+      }
+    },
+    {
+      "pair_id": "pair_036",
+      "input_path": "data/candidates/corner_case_杂物毛坯房_5a7a19e9.jpg",
+      "output_path": "output/20260507_192309_e37afba8_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 美式风格 interior.\n\n## ATMOSPHERE & VIBE: Warm, inviting, and comfortable with classic American charm\n\nCRITICAL STRUCTURA",
+      "style": "american_transitional",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "corner_case",
+      "metadata": {
+        "source_filename": "corner_case_杂物毛坯房_5a7a19e9.jpg",
+        "original_category": "corner_case"
+      }
+    },
+    {
+      "pair_id": "pair_037",
+      "input_path": "data/candidates/corner_case_杂物毛坯房_d0cce877.jpg",
+      "output_path": "output/20260507_192343_546e0a4d_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 日式 interior.\n\n## ATMOSPHERE & VIBE: Zen, tranquil, and authentically Japanese with mindful simplicity\n\nCRITICAL STRUC",
+      "style": "japanese_traditional",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "corner_case",
+      "metadata": {
+        "source_filename": "corner_case_杂物毛坯房_d0cce877.jpg",
+        "original_category": "corner_case"
+      }
+    },
+    {
+      "pair_id": "pair_038",
+      "input_path": "data/candidates/corner_case_杂物毛坯房_ec364564.jpg",
+      "output_path": "output/20260507_192419_bf9eb19c_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 欧式风格 interior.\n\n## ATMOSPHERE & VIBE: Elegant, timeless, and romantically European with classical proportions\n\nCRITIC",
+      "style": "european_neoclassical",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "corner_case",
+      "metadata": {
+        "source_filename": "corner_case_杂物毛坯房_ec364564.jpg",
+        "original_category": "corner_case"
+      }
+    },
+    {
+      "pair_id": "pair_039",
+      "input_path": "data/candidates/corner_case_毛坯房阁楼_09acdab1.jpg",
+      "output_path": "output/20260507_192452_032ec6b5_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 包豪斯 interior.\n\n## ATMOSPHERE & VIBE: Functional, geometric, and artistically modernist with primary color accents\n\nCR",
+      "style": "bauhaus",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "corner_case",
+      "metadata": {
+        "source_filename": "corner_case_毛坯房阁楼_09acdab1.jpg",
+        "original_category": "corner_case"
+      }
+    },
+    {
+      "pair_id": "pair_040",
+      "input_path": "data/candidates/standard_bare_room_renovation_2815fa65.jpg",
+      "output_path": "output/20260507_192529_034095b8_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 原木风 interior.\n\n## ATMOSPHERE & VIBE: Warm, organic, and naturally calming with Scandinavian influences\n\nCRITICAL STRU",
+      "style": "natural_wood",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_bare_room_renovation_2815fa65.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_041",
+      "input_path": "data/candidates/standard_bare_room_renovation_4c265fa8.jpg",
+      "output_path": "output/20260507_192605_d9d7e54b_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 包豪斯 interior.\n\n## ATMOSPHERE & VIBE: Functional, geometric, and artistically modernist with primary color accents\n\nCR",
+      "style": "bauhaus",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_bare_room_renovation_4c265fa8.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_042",
+      "input_path": "data/candidates/standard_bare_room_renovation_fe59a9a2.jpg",
+      "output_path": "output/20260507_192640_b982b28d_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 美式风格 interior.\n\n## ATMOSPHERE & VIBE: Warm, inviting, and comfortable with classic American charm\n\nCRITICAL STRUCTURA",
+      "style": "american_transitional",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_bare_room_renovation_fe59a9a2.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_043",
+      "input_path": "data/candidates/standard_raw_concrete_room_8363c07d.jpg",
+      "output_path": "output/20260507_192717_90f344b4_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 波西米亚 interior.\n\n## ATMOSPHERE & VIBE: Free-spirited, eclectic, and artistically layered with global influences\n\nCRITI",
+      "style": "bohemian",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_raw_concrete_room_8363c07d.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_044",
+      "input_path": "data/candidates/standard_unfinished_room_interior_08275371.jpg",
+      "output_path": "output/20260507_192751_d38b984b_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 工业风 interior.\n\n## ATMOSPHERE & VIBE: Raw, edgy, and urban with refined industrial aesthetics\n\nCRITICAL STRUCTURAL CON",
+      "style": "industrial_loft",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_unfinished_room_interior_08275371.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_045",
+      "input_path": "data/candidates/standard_unfinished_room_interior_14561874.jpg",
+      "output_path": "output/20260507_192948_394909f9_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 欧式风格 interior.\n\n## ATMOSPHERE & VIBE: Elegant, timeless, and romantically European with classical proportions\n\nCRITIC",
+      "style": "european_neoclassical",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_unfinished_room_interior_14561874.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_046",
+      "input_path": "data/candidates/standard_unfinished_room_interior_37ee6b9b.jpg",
+      "output_path": "output/20260507_193023_28899de9_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 美式风格 interior.\n\n## ATMOSPHERE & VIBE: Warm, inviting, and comfortable with classic American charm\n\nCRITICAL STRUCTURA",
+      "style": "american_transitional",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_unfinished_room_interior_37ee6b9b.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_047",
+      "input_path": "data/candidates/standard_unfinished_room_interior_3f856ce1.jpg",
+      "output_path": "output/20260507_193057_7242f7e9_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 日式 interior.\n\n## ATMOSPHERE & VIBE: Zen, tranquil, and authentically Japanese with mindful simplicity\n\nCRITICAL STRUC",
+      "style": "japanese_traditional",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_unfinished_room_interior_3f856ce1.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_048",
+      "input_path": "data/candidates/standard_unfinished_room_interior_415a6067.jpg",
+      "output_path": "output/20260507_193221_f06deea6_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 包豪斯 interior.\n\n## ATMOSPHERE & VIBE: Functional, geometric, and artistically modernist with primary color accents\n\nCR",
+      "style": "bauhaus",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_unfinished_room_interior_415a6067.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_049",
+      "input_path": "data/candidates/standard_unfinished_room_interior_cd46403b.jpg",
+      "output_path": "output/20260507_193255_514c0657_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 现代轻奢 interior.\n\n## ATMOSPHERE & VIBE: Sophisticated, refined, and high-end with a sense of understated elegance\n\nCRIT",
+      "style": "modern_luxury",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_unfinished_room_interior_cd46403b.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_050",
+      "input_path": "data/candidates/standard_unfinished_room_interior_d57b44aa.jpg",
+      "output_path": "output/20260507_193331_f110c03d_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 美式风格 interior.\n\n## ATMOSPHERE & VIBE: Warm, inviting, and comfortable with classic American charm\n\nCRITICAL STRUCTURA",
+      "style": "american_transitional",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_unfinished_room_interior_d57b44aa.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_051",
+      "input_path": "data/candidates/standard_unfinished_room_interior_d6c6cc5f.jpg",
+      "output_path": "output/20260507_193402_5039e4e1_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 包豪斯 interior.\n\n## ATMOSPHERE & VIBE: Functional, geometric, and artistically modernist with primary color accents\n\nCR",
+      "style": "bauhaus",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_unfinished_room_interior_d6c6cc5f.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_052",
+      "input_path": "data/candidates/standard_unfinished_room_interior_fa3d6c43.jpg",
+      "output_path": "output/20260507_193434_9b95d991_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 工业风 interior.\n\n## ATMOSPHERE & VIBE: Raw, edgy, and urban with refined industrial aesthetics\n\nCRITICAL STRUCTURAL CON",
+      "style": "industrial_loft",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_unfinished_room_interior_fa3d6c43.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_053",
+      "input_path": "data/candidates/standard_毛坯房书房_9c26fd45.jpg",
+      "output_path": "output/20260507_193508_2c923ac4_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 原木风 interior.\n\n## ATMOSPHERE & VIBE: Warm, organic, and naturally calming with Scandinavian influences\n\nCRITICAL STRU",
+      "style": "natural_wood",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_毛坯房书房_9c26fd45.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_054",
+      "input_path": "data/candidates/standard_毛坯房书房_a948fff4.jpg",
+      "output_path": "output/20260507_193540_bb9dedcd_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 日式 interior.\n\n## ATMOSPHERE & VIBE: Zen, tranquil, and authentically Japanese with mindful simplicity\n\nCRITICAL STRUC",
+      "style": "japanese_traditional",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_毛坯房书房_a948fff4.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_055",
+      "input_path": "data/candidates/standard_毛坯房卧室_284402f6.jpg",
+      "output_path": "output/20260507_193615_c1e233b6_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 现代轻奢 interior.\n\n## ATMOSPHERE & VIBE: Sophisticated, refined, and high-end with a sense of understated elegance\n\nCRIT",
+      "style": "modern_luxury",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_毛坯房卧室_284402f6.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_056",
+      "input_path": "data/candidates/standard_毛坯房卧室_2a09b816.jpg",
+      "output_path": "output/20260507_193651_b8b317da_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 包豪斯 interior.\n\n## ATMOSPHERE & VIBE: Functional, geometric, and artistically modernist with primary color accents\n\nCR",
+      "style": "bauhaus",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_毛坯房卧室_2a09b816.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_057",
+      "input_path": "data/candidates/standard_毛坯房卧室_32dcd737.jpg",
+      "output_path": "output/20260507_193727_4b7975c0_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 美式风格 interior.\n\n## ATMOSPHERE & VIBE: Warm, inviting, and comfortable with classic American charm\n\nCRITICAL STRUCTURA",
+      "style": "american_transitional",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_毛坯房卧室_32dcd737.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_058",
+      "input_path": "data/candidates/standard_毛坯房卧室_70c6ecdd.jpg",
+      "output_path": "output/20260507_193803_f7af7351_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 现代简约 interior.\n\n## ATMOSPHERE & VIBE: Clean, airy, and architecturally pure with intentional negative space\n\nCRITICAL",
+      "style": "modern_minimalist",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_毛坯房卧室_70c6ecdd.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_059",
+      "input_path": "data/candidates/standard_毛坯房卧室_7f37d9fe.jpg",
+      "output_path": "output/20260507_193836_a3b3d10c_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 欧式风格 interior.\n\n## ATMOSPHERE & VIBE: Elegant, timeless, and romantically European with classical proportions\n\nCRITIC",
+      "style": "european_neoclassical",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_毛坯房卧室_7f37d9fe.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_060",
+      "input_path": "data/candidates/standard_毛坯房卧室_89f6a9a5.jpg",
+      "output_path": "output/20260507_193908_b6891d1e_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 新中式 interior.\n\n## ATMOSPHERE & VIBE: Serene, balanced, and culturally rooted with modern simplicity\n\nCRITICAL STRUCTU",
+      "style": "chinese_modern",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_毛坯房卧室_89f6a9a5.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_061",
+      "input_path": "data/candidates/standard_毛坯房卧室_a420d73f.jpg",
+      "output_path": "output/20260507_193938_8c5505f6_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 工业风 interior.\n\n## ATMOSPHERE & VIBE: Raw, edgy, and urban with refined industrial aesthetics\n\nCRITICAL STRUCTURAL CON",
+      "style": "industrial_loft",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_毛坯房卧室_a420d73f.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_062",
+      "input_path": "data/candidates/standard_毛坯房卧室_c8d2c355.jpg",
+      "output_path": "output/20260507_194012_554e1b86_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 工业风 interior.\n\n## ATMOSPHERE & VIBE: Raw, edgy, and urban with refined industrial aesthetics\n\nCRITICAL STRUCTURAL CON",
+      "style": "industrial_loft",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_毛坯房卧室_c8d2c355.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_063",
+      "input_path": "data/candidates/standard_毛坯房卧室_fcc0c383.jpg",
+      "output_path": "output/20260507_194045_64a10c8a_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 现代轻奢 interior.\n\n## ATMOSPHERE & VIBE: Sophisticated, refined, and high-end with a sense of understated elegance\n\nCRIT",
+      "style": "modern_luxury",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_毛坯房卧室_fcc0c383.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_064",
+      "input_path": "data/candidates/standard_毛坯房卫生间_b35f14d5.jpg",
+      "output_path": "output/20260507_194121_650206fb_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 现代轻奢 interior.\n\n## ATMOSPHERE & VIBE: Sophisticated, refined, and high-end with a sense of understated elegance\n\nCRIT",
+      "style": "modern_luxury",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_毛坯房卫生间_b35f14d5.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_065",
+      "input_path": "data/candidates/standard_毛坯房卫生间_e30a970f.jpg",
+      "output_path": "output/20260507_194155_e1e301f8_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 日式 interior.\n\n## ATMOSPHERE & VIBE: Zen, tranquil, and authentically Japanese with mindful simplicity\n\nCRITICAL STRUC",
+      "style": "japanese_traditional",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_毛坯房卫生间_e30a970f.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_066",
+      "input_path": "data/candidates/standard_毛坯房厨房_27feb81e.jpg",
+      "output_path": "output/20260507_194230_e64a3043_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 波西米亚 interior.\n\n## ATMOSPHERE & VIBE: Free-spirited, eclectic, and artistically layered with global influences\n\nCRITI",
+      "style": "bohemian",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_毛坯房厨房_27feb81e.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_067",
+      "input_path": "data/candidates/standard_毛坯房厨房_594c0e77.jpg",
+      "output_path": "output/20260507_194304_f9aeaa9c_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 工业风 interior.\n\n## ATMOSPHERE & VIBE: Raw, edgy, and urban with refined industrial aesthetics\n\nCRITICAL STRUCTURAL CON",
+      "style": "industrial_loft",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_毛坯房厨房_594c0e77.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_068",
+      "input_path": "data/candidates/standard_毛坯房厨房_745ac877.jpg",
+      "output_path": "output/20260507_194340_09adc486_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 欧式风格 interior.\n\n## ATMOSPHERE & VIBE: Elegant, timeless, and romantically European with classical proportions\n\nCRITIC",
+      "style": "european_neoclassical",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_毛坯房厨房_745ac877.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_069",
+      "input_path": "data/candidates/standard_毛坯房厨房_a5d6ac53.jpg",
+      "output_path": "output/20260507_194414_2bf75a15_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 现代简约 interior.\n\n## ATMOSPHERE & VIBE: Clean, airy, and architecturally pure with intentional negative space\n\nCRITICAL",
+      "style": "modern_minimalist",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_毛坯房厨房_a5d6ac53.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_070",
+      "input_path": "data/candidates/standard_毛坯房厨房_b4d1ddb2.jpg",
+      "output_path": "output/20260507_194446_61589eb1_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 原木风 interior.\n\n## ATMOSPHERE & VIBE: Warm, organic, and naturally calming with Scandinavian influences\n\nCRITICAL STRU",
+      "style": "natural_wood",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_毛坯房厨房_b4d1ddb2.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_071",
+      "input_path": "data/candidates/standard_毛坯房客厅_5209f15b.jpg",
+      "output_path": "output/20260507_194524_d4606c50_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 日式 interior.\n\n## ATMOSPHERE & VIBE: Zen, tranquil, and authentically Japanese with mindful simplicity\n\nCRITICAL STRUC",
+      "style": "japanese_traditional",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_毛坯房客厅_5209f15b.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_072",
+      "input_path": "data/candidates/standard_毛坯房客厅_7780b503.jpg",
+      "output_path": "output/20260507_194601_b889497e_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 工业风 interior.\n\n## ATMOSPHERE & VIBE: Raw, edgy, and urban with refined industrial aesthetics\n\nCRITICAL STRUCTURAL CON",
+      "style": "industrial_loft",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_毛坯房客厅_7780b503.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_073",
+      "input_path": "data/candidates/standard_毛坯房客厅_97fb2ade.jpg",
+      "output_path": "output/20260507_194634_d48c9485_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 现代简约 interior.\n\n## ATMOSPHERE & VIBE: Clean, airy, and architecturally pure with intentional negative space\n\nCRITICAL",
+      "style": "modern_minimalist",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_毛坯房客厅_97fb2ade.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_074",
+      "input_path": "data/candidates/standard_毛坯房客厅_a661ffad.jpg",
+      "output_path": "output/20260507_194707_c2f8ffe2_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 波西米亚 interior.\n\n## ATMOSPHERE & VIBE: Free-spirited, eclectic, and artistically layered with global influences\n\nCRITI",
+      "style": "bohemian",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_毛坯房客厅_a661ffad.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_075",
+      "input_path": "data/candidates/standard_毛坯房客厅_d4ac6023.jpg",
+      "output_path": "output/20260507_194741_5c627188_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 现代轻奢 interior.\n\n## ATMOSPHERE & VIBE: Sophisticated, refined, and high-end with a sense of understated elegance\n\nCRIT",
+      "style": "modern_luxury",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_毛坯房客厅_d4ac6023.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_076",
+      "input_path": "data/candidates/standard_毛坯房客厅_ddb25462.jpg",
+      "output_path": "output/20260507_194816_84ffb183_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 波西米亚 interior.\n\n## ATMOSPHERE & VIBE: Free-spirited, eclectic, and artistically layered with global influences\n\nCRITI",
+      "style": "bohemian",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_毛坯房客厅_ddb25462.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_077",
+      "input_path": "data/candidates/standard_毛坯房阳台_16f74f1c.jpg",
+      "output_path": "output/20260507_194852_6014a433_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 工业风 interior.\n\n## ATMOSPHERE & VIBE: Raw, edgy, and urban with refined industrial aesthetics\n\nCRITICAL STRUCTURAL CON",
+      "style": "industrial_loft",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_毛坯房阳台_16f74f1c.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_078",
+      "input_path": "data/candidates/standard_毛坯房阳台_9cd06538.jpg",
+      "output_path": "output/20260507_194925_01b457b8_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 工业风 interior.\n\n## ATMOSPHERE & VIBE: Raw, edgy, and urban with refined industrial aesthetics\n\nCRITICAL STRUCTURAL CON",
+      "style": "industrial_loft",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_毛坯房阳台_9cd06538.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_079",
+      "input_path": "data/candidates/standard_毛坯房阳台_bbb072f4.jpg",
+      "output_path": "output/20260507_195002_b108ed82_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 原木风 interior.\n\n## ATMOSPHERE & VIBE: Warm, organic, and naturally calming with Scandinavian influences\n\nCRITICAL STRU",
+      "style": "natural_wood",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_毛坯房阳台_bbb072f4.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_080",
+      "input_path": "data/candidates/standard_毛坯房阳台_c04af9ac.jpg",
+      "output_path": "output/20260507_195056_2a2c5a5a_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 新中式 interior.\n\n## ATMOSPHERE & VIBE: Serene, balanced, and culturally rooted with modern simplicity\n\nCRITICAL STRUCTU",
+      "style": "chinese_modern",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_毛坯房阳台_c04af9ac.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_081",
+      "input_path": "data/candidates/standard_毛坯房餐厅_1db915c5.jpg",
+      "output_path": "output/20260507_195200_c85f3323_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 现代简约 interior.\n\n## ATMOSPHERE & VIBE: Clean, airy, and architecturally pure with intentional negative space\n\nCRITICAL",
+      "style": "modern_minimalist",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_毛坯房餐厅_1db915c5.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_082",
+      "input_path": "data/candidates/standard_毛坯房餐厅_2f140812.jpg",
+      "output_path": "output/20260507_195254_307e116a_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 欧式风格 interior.\n\n## ATMOSPHERE & VIBE: Elegant, timeless, and romantically European with classical proportions\n\nCRITIC",
+      "style": "european_neoclassical",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_毛坯房餐厅_2f140812.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_083",
+      "input_path": "data/candidates/standard_毛坯房餐厅_99264716.jpg",
+      "output_path": "output/20260507_195409_e6e3f787_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 波西米亚 interior.\n\n## ATMOSPHERE & VIBE: Free-spirited, eclectic, and artistically layered with global influences\n\nCRITI",
+      "style": "bohemian",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_毛坯房餐厅_99264716.jpg",
+        "original_category": "standard"
+      }
+    },
+    {
+      "pair_id": "pair_084",
+      "input_path": "data/candidates/standard_毛坯房餐厅_c8f866a1.jpg",
+      "output_path": "output/20260507_195520_d3013872_output_0.png",
+      "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 包豪斯 interior.\n\n## ATMOSPHERE & VIBE: Functional, geometric, and artistically modernist with primary color accents\n\nCR",
+      "style": "bauhaus",
+      "room_type": "",
+      "tags": [],
+      "dataset_split": "standard",
+      "metadata": {
+        "source_filename": "standard_毛坯房餐厅_c8f866a1.jpg",
+        "original_category": "standard"
+      }
+    }
+  ]
+}

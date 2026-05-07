@@ -87,3 +87,10 @@ frontend/test-*.html
 
 # RAG知识库向量数据（运行时生成）
 backend/data/chroma/
+
+# 评测平台 - 大文件排除
+evals/data/candidates/
+evals/data/images/
+evals/data/test_input/
+output/
+.claude/

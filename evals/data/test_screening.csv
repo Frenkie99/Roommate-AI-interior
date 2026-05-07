@@ -1,0 +1,5 @@
+﻿filename,file_path,status,is_indoor,is_raw_or_simple,room_type,lighting,raw_state,has_complete_view,suitable_for_eval,recommended_split,corner_case_type,quality_note,error
+test_room.jpg,evals\data\test_input\test_room.jpg,,,,,,,,,,,,"Client error '401 Unauthorized' for url 'https://api.apiyi.com/v1beta/models/gemini-2.5-flash-preview:generateContent'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401"
+毛坯1.png,evals\data\test_input\毛坯1.png,,,,,,,,,,,,The read operation timed out
+毛坯2.png,evals\data\test_input\毛坯2.png,,,,,,,,,,,,The read operation timed out
