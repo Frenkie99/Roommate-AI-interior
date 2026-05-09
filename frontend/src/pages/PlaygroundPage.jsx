@@ -60,6 +60,10 @@ const detectStyleFromText = (text) => {
 // 后端API地址（生产环境使用相对路径，由Nginx代理）
 const API_BASE = '';
 
+// 后端长任务（图像生成 / 分割 / inpaint / RAG）单次请求超时上限
+// 避免上游 stuck 时 spinner 永久转、isGenerating 卡死、用户必须刷新
+const API_TIMEOUT_MS = 180_000;
+
 export default function PlaygroundPage() {
   const [selectedRoom, setSelectedRoom] = useState('living_room');
   const [selectedStyle, setSelectedStyle] = useState('modern_minimalist');
@@ -174,6 +178,7 @@ export default function PlaygroundPage() {
       const segResponse = await fetch(`${API_BASE}/api/v1/segment/by-box`, {
         method: 'POST',
         body: formData,
+        signal: AbortSignal.timeout(API_TIMEOUT_MS),
       });
       
       const result = await segResponse.json();
@@ -276,6 +281,7 @@ export default function PlaygroundPage() {
         const inpaintResponse = await fetch(`${API_BASE}/api/v1/segment/inpaint`, {
           method: 'POST',
           body: formData,
+          signal: AbortSignal.timeout(API_TIMEOUT_MS),
         });
         
         const result = await inpaintResponse.json();
@@ -352,12 +358,13 @@ export default function PlaygroundPage() {
       
       setProgress(20);
       setStatusText('正在提交生成任务...');
-      
+
       const response = await fetch(`${API_BASE}/api/v1/generate`, {
         method: 'POST',
         body: formData,
+        signal: AbortSignal.timeout(API_TIMEOUT_MS),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || errorData.msg || `服务器错误 ${response.status}`);
@@ -426,7 +433,8 @@ export default function PlaygroundPage() {
           style: style,
           room_type: roomType,
           n_results: 5
-        })
+        }),
+        signal: AbortSignal.timeout(API_TIMEOUT_MS),
       });
 
       if (!response.ok) {
@@ -530,12 +538,13 @@ export default function PlaygroundPage() {
       
       setProgress(20);
       setStatusText('AI 正在创作中...');
-      
+
       const response = await fetch(`${API_BASE}/api/v1/generate`, {
         method: 'POST',
         body: formData,
+        signal: AbortSignal.timeout(API_TIMEOUT_MS),
       });
-      
+
       if (!response.ok) {
         throw new Error(`服务器错误 ${response.status}`);
       }
