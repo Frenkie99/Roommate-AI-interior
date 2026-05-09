@@ -9,5 +9,11 @@ python-multipart==0.0.6
 aiofiles==23.2.1
 numpy==1.26.3
 
+# scipy: 显式声明依赖（routes/segment.py 直接 import scipy.ndimage，
+# 之前靠 chromadb 传递依赖才没炸；严格 pip install 环境下会 ImportError）
+scipy==1.13.1
+
 # RAG知识库相关
-chromadb>=0.4.22
+# pin 到精确版本，避免 chromadb 0.5/0.6 的 API 不兼容更新（Settings 形态、
+# get_or_create_collection 参数等）破坏现有 data/chroma/ 数据
+chromadb==0.4.22
