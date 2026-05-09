@@ -125,7 +125,9 @@ class LLMClient:
                 "message": f"LLM API 请求失败: {e.response.text}",
                 "data": None
             }
-        except Exception as e:
+        except (httpx.HTTPError, ValueError, KeyError, TypeError) as e:
+            # 仅捕获网络与响应解析类异常；CancelledError / KeyboardInterrupt
+            # 等控制流异常不应被吞掉
             return {
                 "code": -1,
                 "message": f"LLM 分析异常: {str(e)}",

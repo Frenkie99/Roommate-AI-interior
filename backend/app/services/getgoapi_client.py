@@ -227,9 +227,12 @@ class GetGoAPIClient:
                 logger.warning(f"[API易] 网络错误: {str(e)}")
                 last_error = f"网络错误: {str(e)}"
                 continue
-            except Exception as e:
-                logger.error(f"[API易] 未知错误: {str(e)}")
-                last_error = f"未知错误: {str(e)}"
+            except (ValueError, KeyError, TypeError) as e:
+                # 仅捕获响应解析类的可预期异常；asyncio.CancelledError、
+                # KeyboardInterrupt、SystemExit 等控制流异常不应被吞掉，
+                # 让它们正常向上传递以保证 graceful shutdown
+                logger.exception("[API易] 响应解析错误")
+                last_error = f"响应解析错误: {str(e)}"
                 continue
         
         # 所有重试都失败

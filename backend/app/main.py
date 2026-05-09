@@ -3,7 +3,16 @@ AI 毛坯房精装修效果图生成器 - 主入口
 """
 
 import os
+import warnings
 from pathlib import Path
+
+from PIL import Image
+
+# 防御 PIL 解压炸弹：限制单图最大像素数，超出阈值的解码会抛异常而非警告
+# 16M 像素 ≈ 4096x4096，足够覆盖所有常规室内照片
+Image.MAX_IMAGE_PIXELS = 16 * 1024 * 1024
+warnings.simplefilter("error", Image.DecompressionBombWarning)
+
 
 def load_env_file(env_path: Path) -> bool:
     """手动加载.env文件，确保兼容性"""
@@ -32,19 +41,9 @@ if load_env_file(env_path):
 else:
     print(f"[WARN] .env not found at: {env_path}")
 
-# 验证关键环境变量
-api_key = os.getenv('APIYI_KEY')
-if api_key:
-    print(f"[INFO] API易 Key (图像生成): {api_key[:15]}...")
-else:
-    print("[WARN] APIYI_KEY not set!")
-
-# LLM API Key (智能提示词)
-llm_api_key = os.getenv('LLM_APIYI_KEY')
-if llm_api_key:
-    print(f"[INFO] API易 Key (LLM): {llm_api_key[:15]}...")
-else:
-    print("[WARN] LLM_APIYI_KEY not set!")
+# 验证关键环境变量（仅记录是否配置，永远不打印任何 key 内容/前缀以防日志泄漏）
+print(f"[INFO] APIYI_KEY: {'configured' if os.getenv('APIYI_KEY') else 'NOT SET'}")
+print(f"[INFO] LLM_APIYI_KEY: {'configured' if os.getenv('LLM_APIYI_KEY') else 'NOT SET'}")
 
 # LLM 功能开关
 use_llm = os.getenv('USE_LLM_PROMPT', 'true')
@@ -62,10 +61,17 @@ from app.routes import knowledge
 OUTPUT_DIR = Path(__file__).parent.parent.parent / "output"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
+# 在生产环境关闭 /docs、/redoc、/openapi.json，避免对外暴露完整 API map
+# 通过 ENABLE_API_DOCS=true 在开发环境开启；不设或非 true 则关闭
+_docs_enabled = os.getenv("ENABLE_API_DOCS", "false").lower() == "true"
+
 app = FastAPI(
     title="AI 装修效果图生成器",
     description="基于 API易平台 的智能装修效果图生成服务",
-    version="1.0.0"
+    version="1.0.0",
+    docs_url="/docs" if _docs_enabled else None,
+    redoc_url="/redoc" if _docs_enabled else None,
+    openapi_url="/openapi.json" if _docs_enabled else None,
 )
 
 # CORS 配置 - 允许所有来源（开发环境）

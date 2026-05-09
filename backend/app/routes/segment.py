@@ -8,6 +8,7 @@ import os
 import io
 import uuid
 import base64
+import logging
 import httpx
 from typing import List, Optional
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Request
@@ -18,6 +19,8 @@ import numpy as np
 from scipy import ndimage
 
 from app.services.sam_service import sam3_service, create_rgba_mask, extract_masked_region
+
+logger = logging.getLogger(__name__)
 
 
 def extract_mask_from_segmented_image(segmented_img: Image.Image) -> np.ndarray:
@@ -158,10 +161,11 @@ async def segment_by_point(
             }
         })
         
-    except Exception as e:
+    except Exception:
+        logger.exception("分割失败")
         return JSONResponse({
             "code": -1,
-            "message": f"分割失败: {str(e)}",
+            "message": "服务器内部错误，请稍后重试",
             "data": None
         }, status_code=500)
 
@@ -226,10 +230,11 @@ async def segment_by_text(
             }
         })
         
-    except Exception as e:
+    except Exception:
+        logger.exception("分割失败")
         return JSONResponse({
             "code": -1,
-            "message": f"分割失败: {str(e)}",
+            "message": "服务器内部错误，请稍后重试",
             "data": None
         }, status_code=500)
 
@@ -307,10 +312,11 @@ async def segment_by_box(
             }
         })
         
-    except Exception as e:
+    except Exception:
+        logger.exception("分割失败")
         return JSONResponse({
             "code": -1,
-            "message": f"分割失败: {str(e)}",
+            "message": "服务器内部错误，请稍后重试",
             "data": None
         }, status_code=500)
 
@@ -348,10 +354,11 @@ async def preview_mask(
             }
         })
         
-    except Exception as e:
+    except Exception:
+        logger.exception("预览失败")
         return JSONResponse({
             "code": -1,
-            "message": f"预览失败: {str(e)}",
+            "message": "服务器内部错误，请稍后重试",
             "data": None
         }, status_code=500)
 
@@ -400,10 +407,11 @@ async def inpaint_region(
             }
         })
         
-    except Exception as e:
+    except Exception:
+        logger.exception("替换失败")
         return JSONResponse({
             "code": -1,
-            "message": f"替换失败: {str(e)}",
+            "message": "服务器内部错误，请稍后重试",
             "data": None
         }, status_code=500)
 
@@ -448,10 +456,11 @@ async def replace_furniture(
             }
         })
         
-    except Exception as e:
+    except Exception:
+        logger.exception("替换失败")
         return JSONResponse({
             "code": -1,
-            "message": f"替换失败: {str(e)}",
+            "message": "服务器内部错误，请稍后重试",
             "data": None
         }, status_code=500)
 
@@ -496,10 +505,11 @@ async def replace_decoration(
             }
         })
         
-    except Exception as e:
+    except Exception:
+        logger.exception("替换失败")
         return JSONResponse({
             "code": -1,
-            "message": f"替换失败: {str(e)}",
+            "message": "服务器内部错误，请稍后重试",
             "data": None
         }, status_code=500)
 
