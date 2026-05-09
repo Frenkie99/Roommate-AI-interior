@@ -13,7 +13,7 @@ from fastapi.responses import JSONResponse
 from app.services.getgoapi_client import getgoapi_client, GetGoModel, AspectRatio, ImageSize, DEFAULT_MODEL_PRIORITY
 from app.services.llm_client import llm_client, LLMModel, DEFAULT_LLM_MODEL_PRIORITY
 from app.services.image_processor import image_processor
-from app.utils.prompt_builder import build_prompt
+from app.utils.prompt_builder import build_prompt, STYLE_PROMPTS, ROOM_TYPE_PROMPTS
 
 router = APIRouter()
 
@@ -42,6 +42,20 @@ async def generate_renovation_image(
     2. 选择装修风格
     3. 调用API易平台生成效果图
     """
+    # 0. 严格校验 style / room_type 白名单，未知值会让 prompt_builder
+    # 静默退化为空白 prompt（详见 issue #84），下游 Gemini 看到的是几乎
+    # 不含风格信息的指令，生成出毫无风格特色的房间——错向且难以诊断
+    if style not in STYLE_PROMPTS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"不支持的风格: {style}。可选值: {sorted(STYLE_PROMPTS.keys())}",
+        )
+    if room_type and room_type not in ROOM_TYPE_PROMPTS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"不支持的房间类型: {room_type}。可选值: {sorted(ROOM_TYPE_PROMPTS.keys())}",
+        )
+
     # 1. 读取并验证图片
     image_data = await image.read()
     is_valid, error_msg = image_processor.validate_image(image_data)
