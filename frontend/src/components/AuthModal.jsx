@@ -1,9 +1,33 @@
+import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { X } from 'lucide-react';
 
 export default function AuthModal({ isOpen, onClose }) {
   const navigate = useNavigate();
+  const dialogRef = useRef(null);
+
+  // Escape 关闭 + body scroll 锁定 + 焦点托管
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+
+    // 锁定 body 滚动，避免移动端背景仍可滚动
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    // modal 打开后把焦点移入，方便键盘用户操作
+    dialogRef.current?.focus();
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -13,7 +37,10 @@ export default function AuthModal({ isOpen, onClose }) {
   };
 
   const modalContent = (
-    <div 
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="auth-modal-title"
       style={{
         position: 'fixed',
         top: 0,
@@ -29,43 +56,53 @@ export default function AuthModal({ isOpen, onClose }) {
       }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div 
+      <div
+        ref={dialogRef}
+        tabIndex={-1}
         style={{
+          // position: relative 让绝对定位的 X 按钮锚定到本卡片而不是外层全屏遮罩
+          position: 'relative',
           backgroundColor: 'white',
           borderRadius: '12px',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
           width: '420px',
           maxWidth: '90vw',
           padding: '40px 32px',
-          textAlign: 'center'
+          textAlign: 'center',
+          outline: 'none'
         }}
       >
-        <button 
-          onClick={onClose} 
-          style={{ 
+        <button
+          type="button"
+          aria-label="关闭"
+          onClick={onClose}
+          style={{
             position: 'absolute',
             top: '16px',
             right: '16px',
-            color: '#999', 
-            cursor: 'pointer', 
-            background: 'none', 
-            border: 'none' 
+            color: '#999',
+            cursor: 'pointer',
+            background: 'none',
+            border: 'none'
           }}
         >
           <X size={24} />
         </button>
 
-        <h2 style={{ 
-          fontSize: '28px', 
-          fontWeight: 'bold', 
-          color: '#1a1a1a',
-          marginBottom: '16px'
-        }}>
+        <h2
+          id="auth-modal-title"
+          style={{
+            fontSize: '28px',
+            fontWeight: 'bold',
+            color: '#1a1a1a',
+            marginBottom: '16px'
+          }}
+        >
           欢迎试用 Roommate
         </h2>
 
-        <p style={{ 
-          fontSize: '16px', 
+        <p style={{
+          fontSize: '16px',
           color: '#6b7280',
           marginBottom: '32px',
           lineHeight: '1.6'

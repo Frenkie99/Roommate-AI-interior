@@ -19,7 +19,6 @@ export default function Navbar() {
     home: lang === 'zh' ? '首页' : 'Home',
     newDesign: lang === 'zh' ? '新建设计' : 'New Design',
     history: lang === 'zh' ? '历史记录' : 'History',
-    pricing: lang === 'zh' ? '定价' : 'Pricing',
     loginSignup: lang === 'zh' ? '登录/注册' : 'Login/Sign Up',
   };
 
@@ -47,18 +46,15 @@ export default function Navbar() {
           >
             {t.newDesign}
           </Link>
-          <Link 
-            to="/history" 
+          <Link
+            to="/history"
             className={`text-sm font-medium transition-colors ${isActive('/history') ? 'text-warm-gold' : 'text-charcoal/80 hover:text-warm-gold'}`}
           >
             {t.history}
           </Link>
-          <button 
-            onClick={() => setShowAuthModal(true)}
-            className="text-sm font-medium transition-colors text-charcoal/80 hover:text-warm-gold"
-          >
-            {t.pricing}
-          </button>
+          {/* 定价入口暂时移除：之前的实现是点击"定价"打开 AuthModal（试用引导弹窗），
+              既无定价页面也无真实认证流程，会让用户期待与实际不符。等 /pricing 路由
+              落地后再恢复此入口。详见 issue #69。 */}
         </div>
 
         {/* Right Actions */}
@@ -94,10 +90,9 @@ export default function Navbar() {
             <Link to="/" className="block text-charcoal/80 hover:text-warm-gold py-2" onClick={() => setIsOpen(false)}>{t.home}</Link>
             <Link to="/playground" className="block text-charcoal/80 hover:text-warm-gold py-2" onClick={() => setIsOpen(false)}>{t.newDesign}</Link>
             <Link to="/history" className="block text-charcoal/80 hover:text-warm-gold py-2" onClick={() => setIsOpen(false)}>{t.history}</Link>
-            <button onClick={() => { setIsOpen(false); setShowAuthModal(true); }} className="block text-charcoal/80 hover:text-warm-gold py-2 text-left w-full">{t.pricing}</button>
             <div className="pt-4 border-t border-warm-gold/10 space-y-3">
-              <button 
-                onClick={() => setShowAuthModal(true)}
+              <button
+                onClick={() => { setIsOpen(false); setShowAuthModal(true); }}
                 className="block w-full gold-gradient text-white text-center py-3 rounded-sm"
               >
                 {t.loginSignup}

@@ -499,9 +499,12 @@ export default function PlaygroundPage() {
     
     if (detectedStyle && detectedStyle !== selectedStyle) {
       actualStyle = detectedStyle;
-      setSelectedStyle(detectedStyle);  // 同步更新左侧按钮状态
+      // 仅本次生成使用 detectedStyle，**不再** setSelectedStyle 静默改写
+      // 全局选择。否则用户在左侧选了"现代轻奢"后随口说"试试工业风"，
+      // 左侧选择会被悄悄改掉，下次点生成按钮还以为是原选风格但实际已变。
+      // 详见 issue #68。
       const styleName = styles.find(s => s.id === detectedStyle)?.label || detectedStyle;
-      styleChangeMsg = `（已识别并切换到「${styleName}」风格）`;
+      styleChangeMsg = `（本次按「${styleName}」风格生成；如需固定切换请点击左侧风格）`;
     }
     
     // 添加用户消息
