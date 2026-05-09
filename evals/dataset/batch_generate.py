@@ -21,7 +21,16 @@ print = partial(print, flush=True)
 # ===== 配置 =====
 API_BASE = "https://roommate-ai.cn"
 GENERATE_URL = f"{API_BASE}/api/v1/generate"
-VERIFY_SSL = False
+# TLS 校验默认开启；如证书有问题应该修证书，而不是禁验证。
+# 仅在显式设置 EVALS_INSECURE_TLS=1 的开发场景下临时关闭，
+# 关闭时会在 stderr 打印警告以提醒不要在生产环境使用。
+import os as _os
+import sys as _sys
+VERIFY_SSL = True
+if _os.getenv("EVALS_INSECURE_TLS") == "1":
+    VERIFY_SSL = False
+    print("[WARN] EVALS_INSECURE_TLS=1 detected; TLS verification DISABLED. "
+          "DO NOT use this in production.", file=_sys.stderr)
 
 STYLES = [
     "modern_luxury", "chinese_modern", "american_transitional",
