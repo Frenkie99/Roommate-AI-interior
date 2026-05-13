@@ -22,6 +22,11 @@ class InpaintService:
         # 使用API易平台 - 与基础生图相同的配置
         self.api_key = os.getenv("APIYI_KEY", "sk-5Cd5C9UJNSYfblvr375057376f6746Eb9b3818D27b3e00A3")
         self.api_url = "https://api.apiyi.com"
+        self.client = httpx.AsyncClient(timeout=300.0)
+
+    async def close(self):
+        """关闭客户端连接"""
+        await self.client.aclose()
         self.model = "gemini-3-pro-image-preview"
         
     def _image_to_base64(self, image: Image.Image, format: str = "PNG") -> str:
@@ -38,6 +43,11 @@ class InpaintService:
         mask_image = Image.fromarray(mask_array, mode="L")
         return self._image_to_base64(mask_image)
     
+def _aspect_ratio_for_size(width: int, height: int) -> str:
+    """根据图片尺寸计算最接近的宽高比"""
+    ratio = width / height
+    candidates = {"1:1": 1.0, "4:3": 4/3, "3:4": 3/4, "16:9": 16/9, "9:16": 9/16}
+    return min(candidates.items(), key=lambda kv: abs(kv[1] - ratio))[0]
     async def inpaint(
         self,
         image: Image.Image,
@@ -81,59 +91,73 @@ Important requirements:
 
 Generate a new interior design image with the masked area replaced."""
         
-        async with httpx.AsyncClient(timeout=300.0) as client:
-            # 使用API易的generateContent接口 - 发送原图+mask两张图
-            payload = {
-                "contents": [{
-                    "parts": [
-                        {
-                            "inlineData": {
-                                "mimeType": "image/jpeg",
-                                "data": image_b64
+        # 重试机制
+        MAX_RETRIES = 3
+        for attempt in range(MAX_RETRIES):
+            try:
+                # 使用API易的generateContent接口 - 发送原图+mask两张图
+                payload = {
+                    "contents": [{
+                        "parts": [
+                            {
+                                "inlineData": {
+                                    "mimeType": "image/jpeg",
+                                    "data": image_b64
+                                }
+                            },
+                            {
+                                "inlineData": {
+                                    "mimeType": "image/png",
+                                    "data": mask_b64
+                                }
+                            },
+                            {
+                                "text": edit_prompt
                             }
-                        },
-                        {
-                            "inlineData": {
-                                "mimeType": "image/png",
-                                "data": mask_b64
-                            }
-                        },
-                        {
-                            "text": edit_prompt
+                        ]
+                    }],
+                    "generationConfig": {
+                        "responseModalities": ["IMAGE"],
+                        "imageConfig": {
+                            "aspectRatio": _aspect_ratio_for_size(image.size[0], image.size[1]),
+                            "imageSize": "1K"
                         }
-                    ]
-                }],
-                "generationConfig": {
-                    "responseModalities": ["IMAGE"],
-                    "imageConfig": {
-                        "aspectRatio": "4:3",
-                        "imageSize": "1K"
                     }
                 }
-            }
-            
-            headers = {
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json"
-            }
-            
-            api_url = f"{self.api_url}/v1beta/models/{self.model}:generateContent"
-            response = await client.post(api_url, headers=headers, json=payload)
-            
-            if response.status_code == 200:
-                result = response.json()
-                # 解析返回的图片（与基础生图相同格式）
-                candidates = result.get("candidates", [])
-                if candidates:
-                    parts = candidates[0].get("content", {}).get("parts", [])
-                    for part in parts:
-                        if "inlineData" in part:
-                            img_data = part["inlineData"].get("data", "")
-                            if img_data:
-                                return Image.open(io.BytesIO(base64.b64decode(img_data)))
-                raise Exception("API返回中未找到图片")
-            else:
-                raise Exception(f"API错误: {response.status_code} - {response.text}")
+                
+                headers = {
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json"
+                }
+                
+                api_url = f"{self.api_url}/v1beta/models/{self.model}:generateContent"
+                response = await self.client.post(api_url, headers=headers, json=payload)
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    # 解析返回的图片（与基础生图相同格式）
+                    candidates = result.get("candidates", [])
+                    if candidates:
+                        parts = candidates[0].get("content", {}).get("parts", [])
+                        for part in parts:
+                            if "inlineData" in part:
+                                img_data = part["inlineData"].get("data", "")
+                                if img_data:
+                                    return Image.open(io.BytesIO(base64.b64decode(img_data)))
+                    raise Exception("API返回中未找到图片")
+                elif response.status_code >= 500 and attempt < MAX_RETRIES - 1:
+                    # 服务器错误，重试
+                    import asyncio
+                    await asyncio.sleep(2 * (attempt + 1))
+                    continue
+                else:
+                    raise Exception(f"API错误: {response.status_code} - {response.text}")
+            except Exception as e:
+                if attempt < MAX_RETRIES - 1:
+                    import asyncio
+                    await asyncio.sleep(2 * (attempt + 1))
+                    continue
+                raise
     
     async def replace_furniture(
         self,

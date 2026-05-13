@@ -48,6 +48,11 @@ class SAM3Service:
     
     def __init__(self):
         self.api_key = os.getenv("SEGMIND_API_KEY", "SG_63bab65c13127931")
+        self.client = httpx.AsyncClient(timeout=60.0)
+
+    async def close(self):
+        """关闭客户端连接"""
+        await self.client.aclose()
         self.api_url = "https://api.segmind.com/v1/sam3-image"
         
     def _image_to_base64(self, image: Image.Image) -> str:
@@ -68,22 +73,21 @@ class SAM3Service:
         Returns:
             二进制PNG图片数据
         """
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            headers = {
-                "x-api-key": self.api_key,
-                "Content-Type": "application/json"
-            }
-            
-            response = await client.post(
-                self.api_url,
-                headers=headers,
-                json=payload
-            )
-            
-            if response.status_code == 200:
-                return response.content
-            else:
-                raise Exception(f"Segmind API error: {response.status_code} - {response.text}")
+        headers = {
+            "x-api-key": self.api_key,
+            "Content-Type": "application/json"
+        }
+        
+        response = await self.client.post(
+            self.api_url,
+            headers=headers,
+            json=payload
+        )
+        
+        if response.status_code == 200:
+            return response.content
+        else:
+            raise Exception(f"Segmind API error: {response.status_code} - {response.text}")
     
     async def segment_by_text(
         self, 

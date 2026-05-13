@@ -8,9 +8,11 @@ room_type 不传，由产品内部 LLM 自动分析。
 """
 
 import json
+import os
 import random
 import sys
 import time
+import warnings
 from pathlib import Path
 from functools import partial
 
@@ -21,7 +23,15 @@ print = partial(print, flush=True)
 # ===== 配置 =====
 API_BASE = "https://roommate-ai.cn"
 GENERATE_URL = f"{API_BASE}/api/v1/generate"
-VERIFY_SSL = False
+
+# TLS 校验：默认启用，仅在显式设置 EVALS_INSECURE_TLS=1 时禁用
+VERIFY_SSL = os.environ.get("EVALS_INSECURE_TLS", "0") != "1"
+if not VERIFY_SSL:
+    warnings.warn(
+        "TLS verification disabled via EVALS_INSECURE_TLS=1. "
+        "This is insecure and should only be used in development.",
+        stacklevel=2,
+    )
 
 STYLES = [
     "modern_luxury", "chinese_modern", "american_transitional",

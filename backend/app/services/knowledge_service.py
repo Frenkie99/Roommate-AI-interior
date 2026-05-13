@@ -1,41 +1,178 @@
 """
 知识库服务 - RAG查询核心
-提供装修知识的向量检索和智能问答功能
+混合检索 (向量 + BM25) + 重排序
 """
 
+import logging
 import os
+import sys
+import math
+import re
 from typing import List, Dict, Optional
 from chromadb import PersistentClient
 from chromadb.config import Settings
 
+logger = logging.getLogger(__name__)
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+
+
+def _tokenize_chinese(text: str) -> List[str]:
+    """中文分词（jieba 精确模式 + 单字 fallback）"""
+    try:
+        import jieba
+        return [w for w in jieba.cut(text) if len(w.strip()) > 0]
+    except ImportError:
+        # jieba 未安装时用简单字符切分
+        return list(text)
+
 
 class KnowledgeService:
-    """装修知识库服务 - 基于Chroma向量数据库的RAG实现"""
+    """装修知识库服务 - 混合检索 + 重排序"""
 
     def __init__(self, persist_directory: str = "./data/chroma"):
-        """
-        初始化知识库服务
-
-        Args:
-            persist_directory: Chroma数据库持久化目录
-        """
-        # 确保数据目录存在
         os.makedirs(persist_directory, exist_ok=True)
 
-        # 初始化Chroma客户端（持久化模式）
         self.chroma_client = PersistentClient(
             path=persist_directory,
             settings=Settings(
-                anonymized_telemetry=False,  # 关闭匿名遥测
+                anonymized_telemetry=False,
                 allow_reset=True
             )
         )
 
-        # 获取或创建集合
-        self.collection = self.chroma_client.get_or_create_collection(
-            name="renovation_knowledge",
-            metadata={"hnsw:space": "cosine", "description": "装修设计知识库"}
+        from embedding.chinese_embedding import ChineseEmbeddingFunction
+        ef = ChineseEmbeddingFunction()
+
+        try:
+            self.collection = self.chroma_client.get_or_create_collection(
+                name="renovation_knowledge",
+                metadata={"hnsw:space": "cosine", "description": "装修设计知识库"},
+                embedding_function=ef
+            )
+        except ValueError:
+            self.chroma_client.delete_collection("renovation_knowledge")
+            self.collection = self.chroma_client.create_collection(
+                name="renovation_knowledge",
+                metadata={"hnsw:space": "cosine", "description": "装修设计知识库"},
+                embedding_function=ef
+            )
+
+        # BM25 索引（延迟构建）
+        self._bm25 = None
+        self._bm25_ids = []
+        self._bm25_docs = []
+        self._bm25_metas = []
+
+    def _ensure_bm25_index(self):
+        """确保 BM25 索引已构建"""
+        if self._bm25 is not None:
+            return
+
+        from rank_bm25 import BM25Okapi
+
+        count = self.collection.count()
+        if count == 0:
+            self._bm25 = BM25Okapi([])
+            return
+
+        # 从 ChromaDB 加载所有文档
+        all_docs = self.collection.get(limit=count)
+        self._bm25_ids = all_docs['ids']
+        self._bm25_docs = all_docs['documents']
+        self._bm25_metas = all_docs['metadatas']
+
+        # 分词
+        tokenized = [_tokenize_chinese(doc) for doc in self._bm25_docs]
+        self._bm25 = BM25Okapi(tokenized)
+
+    def _bm25_search(self, query: str, top_k: int = 20) -> List[Dict]:
+        """BM25 关键词检索"""
+        self._ensure_bm25_index()
+
+        if not self._bm25_docs:
+            return []
+
+        tokens = _tokenize_chinese(query)
+        scores = self._bm25.get_scores(tokens)
+
+        # 取 top_k
+        ranked = sorted(enumerate(scores), key=lambda x: x[1], reverse=True)[:top_k]
+
+        results = []
+        for idx, score in ranked:
+            results.append({
+                "id": self._bm25_ids[idx],
+                "content": self._bm25_docs[idx],
+                "metadata": self._bm25_metas[idx],
+                "bm25_score": float(score),
+                "bm25_rank": len(results) + 1,
+            })
+        return results
+
+    def _vector_search(self, query: str, top_k: int = 20) -> List[Dict]:
+        """向量语义检索"""
+        results = self.collection.query(
+            query_texts=[query],
+            n_results=min(top_k, self.collection.count())
         )
+
+        if not results or not results['documents'] or not results['documents'][0]:
+            return []
+
+        docs = []
+        for i, doc in enumerate(results['documents'][0]):
+            metadata = results['metadatas'][0][i] if results['metadatas'] else {}
+            distance = results['distances'][0][i] if results.get('distances') else None
+            docs.append({
+                "id": results['ids'][0][i],
+                "content": doc,
+                "metadata": metadata,
+                "vector_distance": distance,
+                "vector_rank": i + 1,
+            })
+        return docs
+
+    def _rrf_fusion(
+        self,
+        vector_results: List[Dict],
+        bm25_results: List[Dict],
+        k: int = 60
+    ) -> List[Dict]:
+        """Reciprocal Rank Fusion 融合两路检索结果"""
+        # 构建 id -> doc 映射
+        doc_map = {}
+
+        # 向量检索分数
+        for doc in vector_results:
+            doc_id = doc['id']
+            rrf_score = 1.0 / (k + doc['vector_rank'])
+            doc_map[doc_id] = {**doc, 'rrf_score': rrf_score}
+
+        # BM25 检索分数（累加）
+        for doc in bm25_results:
+            doc_id = doc['id']
+            rrf_score = 1.0 / (k + doc['bm25_rank'])
+            if doc_id in doc_map:
+                doc_map[doc_id]['rrf_score'] += rrf_score
+                doc_map[doc_id]['bm25_score'] = doc['bm25_score']
+            else:
+                doc_map[doc_id] = {**doc, 'rrf_score': rrf_score}
+
+        # 按 RRF 分数排序
+        fused = sorted(doc_map.values(), key=lambda x: x['rrf_score'], reverse=True)
+        return fused
+
+    def _build_source_path(self, metadata: Dict) -> str:
+        """构建层级来源路径"""
+        source_path = metadata.get('source', '知识库')
+        if metadata.get('part'):
+            source_path += f" > {metadata['part']}"
+        if metadata.get('section'):
+            source_path += f" > {metadata['section']}"
+        if metadata.get('subsection'):
+            source_path += f" > {metadata['subsection']}"
+        return source_path
 
     async def query(
         self,
@@ -45,77 +182,78 @@ class KnowledgeService:
         n_results: int = 5
     ) -> Dict:
         """
-        查询装修知识库
+        混合检索 + 重排序
 
-        Args:
-            question: 用户问题
-            style: 可选的风格过滤条件
-            room_type: 可选的房间类型过滤条件
-            n_results: 返回结果数量
-
-        Returns:
-            {
-                "answer": "AI生成的回答",
-                "sources": ["来源1", "来源2"],
-                "relevant_docs": [...],
-                "context_used": "使用的上下文"
-            }
+        Pipeline:
+        1. 向量检索 top-20
+        2. BM25 检索 top-20
+        3. RRF 融合
+        4. Reranker 重排序取 top-n_results
         """
-        # 1. 构建过滤条件
-        where = {}
-        if style:
-            where["style"] = style
-        if room_type:
-            where["room_type"] = room_type
-
-        # 2. 向量检索
         try:
-            results = self.collection.query(
-                query_texts=[question],
-                n_results=n_results,
-                where=where if where else None
-            )
+            count = self.collection.count()
+            if count == 0:
+                return self._empty_result("知识库为空，请先运行初始化脚本。")
+
+            retrieve_k = min(20, count)
+
+            # Step 1 + 2: 双路检索
+            vector_results = self._vector_search(question, top_k=retrieve_k)
+            bm25_results = self._bm25_search(question, top_k=retrieve_k)
+
+            # Step 3: RRF 融合
+            fused = self._rrf_fusion(vector_results, bm25_results)
+            fused = fused[:retrieve_k]
+
+            # Step 4: 重排序
+            try:
+                from embedding.reranker import get_reranker
+                reranker = get_reranker()
+                reranked = reranker.rerank(question, fused, top_k=n_results)
+            except Exception:
+                # 重排序器不可用时，直接用 RRF 排序结果
+                reranked = fused[:n_results]
+
         except Exception as e:
-            # 如果查询失败（如知识库为空），返回空结果
-            return {
-                "answer": "知识库尚未初始化，请先运行初始化脚本。",
-                "sources": [],
-                "relevant_docs": [],
-                "context_used": ""
-            }
+            logger.exception(f"知识库检索失败: {e}")
+            return self._empty_result(f"检索失败: {str(e)}")
 
-        # 3. 检查是否有结果
-        if not results or not results['documents'] or not results['documents'][0]:
-            return {
-                "answer": "未找到相关知识。请尝试其他问题或联系管理员扩充知识库。",
-                "sources": [],
-                "relevant_docs": [],
-                "context_used": ""
-            }
+        if not reranked:
+            return self._empty_result("未找到相关知识。")
 
-        # 4. 构建上下文
+        # 构建结构化上下文
         context_parts = []
         sources = []
         relevant_docs = []
 
-        for i, doc in enumerate(results['documents'][0]):
-            context_parts.append(f"[知识{i+1}] {doc}")
-            relevant_docs.append(doc)
+        for i, doc in enumerate(reranked):
+            metadata = doc.get('metadata', {})
+            source_path = self._build_source_path(metadata)
 
-            # 提取来源（优先使用metadata中的source，否则使用ID）
-            if results['metadatas'] and results['metadatas'][0]:
-                source = results['metadatas'][0][i].get('source', '知识库')
-            else:
-                source = "知识库"
-            sources.append(source)
+            context_parts.append(f"--- 知识片段 {i+1} ---\n来源: {source_path}\n{doc['content']}")
+            sources.append(source_path)
+            relevant_docs.append({
+                "content": doc['content'],
+                "metadata": metadata,
+                "distance": doc.get('vector_distance'),
+                "rrf_score": doc.get('rrf_score'),
+            })
 
         context = "\n\n".join(context_parts)
 
         return {
-            "answer": "",  # 将由调用方使用LLM生成
-            "sources": list(set(sources)),  # 去重
+            "answer": "",
+            "sources": list(dict.fromkeys(sources)),
             "relevant_docs": relevant_docs,
             "context_used": context
+        }
+
+    def _empty_result(self, message: str = "") -> Dict:
+        return {
+            "answer": message,
+            "sources": [],
+            "relevant_docs": [],
+            "context_used": ""
         }
 
     def add_documents(
@@ -124,23 +262,18 @@ class KnowledgeService:
         metadatas: List[Dict],
         ids: List[str]
     ) -> bool:
-        """
-        批量添加文档到知识库
-
-        Args:
-            documents: 文档内容列表
-            metadatas: 元数据列表
-            ids: 文档ID列表
-
-        Returns:
-            是否添加成功
-        """
+        """批量添加文档到知识库"""
         try:
-            self.collection.add(
-                documents=documents,
-                metadatas=metadatas,
-                ids=ids
-            )
+            batch_size = 50
+            for i in range(0, len(documents), batch_size):
+                end = min(i + batch_size, len(documents))
+                self.collection.add(
+                    documents=documents[i:end],
+                    metadatas=metadatas[i:end],
+                    ids=ids[i:end]
+                )
+            # 新增文档后重置 BM25 索引
+            self._bm25 = None
             return True
         except Exception as e:
             print(f"添加文档失败: {e}")
@@ -162,19 +295,30 @@ class KnowledgeService:
                 "status": f"error: {e}"
             }
 
+    def document_exists(self, doc_id: str) -> bool:
+        """检查文档是否已存在"""
+        try:
+            result = self.collection.get(ids=[doc_id])
+            return len(result['ids']) > 0
+        except Exception:
+            return False
+
     def reset_collection(self) -> bool:
-        """清空并重新创建集合（用于重置知识库）"""
+        """清空并重新创建集合"""
         try:
             self.chroma_client.delete_collection("renovation_knowledge")
+            from embedding.chinese_embedding import ChineseEmbeddingFunction
+            ef = ChineseEmbeddingFunction()
             self.collection = self.chroma_client.create_collection(
                 name="renovation_knowledge",
-                metadata={"hnsw:space": "cosine", "description": "装修设计知识库"}
+                metadata={"hnsw:space": "cosine", "description": "装修设计知识库"},
+                embedding_function=ef
             )
+            self._bm25 = None
             return True
         except Exception as e:
             print(f"重置集合失败: {e}")
             return False
 
 
-# 全局知识库服务实例
 knowledge_service = KnowledgeService()

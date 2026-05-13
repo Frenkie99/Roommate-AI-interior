@@ -1,6 +1,7 @@
 """评测结果存储"""
 
 import json
+import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -21,8 +22,21 @@ class ResultStore:
             "metadata": metadata or {},
             "results": [r.to_dict() for r in results],
         }
-        with open(self.path, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
+
+        # 原子写入：先写临时文件，再 rename
+        tmp_path = self.path + ".tmp"
+        try:
+            with open(tmp_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+            os.replace(tmp_path, self.path)  # POSIX rename 是原子的
+        except Exception:
+            # 清理临时文件
+            if os.path.exists(tmp_path):
+                try:
+                    os.remove(tmp_path)
+                except OSError:
+                    pass
+            raise
 
     def load(self) -> Dict[str, Any]:
         with open(self.path, "r", encoding="utf-8") as f:

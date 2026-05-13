@@ -13,7 +13,7 @@ from fastapi.responses import JSONResponse
 from app.services.getgoapi_client import getgoapi_client, GetGoModel, AspectRatio, ImageSize, DEFAULT_MODEL_PRIORITY
 from app.services.llm_client import llm_client, LLMModel, DEFAULT_LLM_MODEL_PRIORITY
 from app.services.image_processor import image_processor
-from app.utils.prompt_builder import build_prompt
+from app.utils.prompt_builder import build_prompt, STYLE_PROMPTS, ROOM_TYPE_PROMPTS
 
 router = APIRouter()
 
@@ -37,11 +37,25 @@ async def generate_renovation_image(
 ):
     """
     生成装修效果图
-    
+
     1. 上传毛坯房图片
     2. 选择装修风格
     3. 调用API易平台生成效果图
     """
+    # 0. 校验 style 和 room_type
+    if style not in STYLE_PROMPTS:
+        available_styles = list(STYLE_PROMPTS.keys())
+        raise HTTPException(
+            status_code=400,
+            detail=f"未知风格: {style}，可选值: {', '.join(available_styles)}"
+        )
+    if room_type and room_type not in ROOM_TYPE_PROMPTS:
+        available_room_types = list(ROOM_TYPE_PROMPTS.keys())
+        raise HTTPException(
+            status_code=400,
+            detail=f"未知房间类型: {room_type}，可选值: {', '.join(available_room_types)}"
+        )
+
     # 1. 读取并验证图片
     image_data = await image.read()
     is_valid, error_msg = image_processor.validate_image(image_data)
@@ -53,11 +67,18 @@ async def generate_renovation_image(
     task_id = str(uuid.uuid4())[:8]
     input_filename = f"{timestamp}_{task_id}_input.jpg"
     input_path = os.path.join(INPUT_DIR, input_filename)
+    input_saved = False
     
     # 预处理图片
     processed_image = image_processor.preprocess(image_data)
-    async with aiofiles.open(input_path, 'wb') as f:
-        await f.write(processed_image)
+    # 保存原始图片
+    try:
+        async with aiofiles.open(input_path, "wb") as f:
+            await f.write(processed_image)
+        input_saved = True
+    except Exception as e:
+        print(f"[ERROR] 保存输入图片失败: {e}")
+        raise HTTPException(status_code=500, detail="保存输入图片失败")
     
     # 3. 使用 LLM 智能分析并生成提示词
     use_llm = os.getenv("USE_LLM_PROMPT", "true").lower() == "true"
@@ -108,7 +129,14 @@ async def generate_renovation_image(
     )
     
     # 6. 处理结果
+    # 6. 处理结果
     if result.get("code") != 0:
+        # 生成失败，清理 input 文件
+        if input_saved:
+            try:
+                os.remove(input_path)
+            except OSError:
+                pass
         return JSONResponse({
             "code": -1,
             "message": result.get("msg", "生成失败"),
@@ -120,6 +148,12 @@ async def generate_renovation_image(
     images = data.get("images", [])
     
     if not images:
+        # 生成失败，清理 input 文件
+        if input_saved:
+            try:
+                os.remove(input_path)
+            except OSError:
+                pass
         return JSONResponse({
             "code": -1,
             "message": "未获取到生成结果",

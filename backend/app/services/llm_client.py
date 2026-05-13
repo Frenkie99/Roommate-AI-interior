@@ -175,6 +175,21 @@ Output a single valid JSON object."""
         
         return prompt
     
+    def _extract_first_json_block(self, text: str) -> Optional[str]:
+        """使用 stack-based 平衡括号匹配提取第一个完整的 JSON 块"""
+        start = text.find("{")
+        if start == -1:
+            return None
+        depth = 0
+        for i in range(start, len(text)):
+            if text[i] == "{":
+                depth += 1
+            elif text[i] == "}":
+                depth -= 1
+                if depth == 0:
+                    return text[start:i+1]
+        return None
+
     def _parse_llm_response(
         self,
         content: str,
@@ -183,7 +198,7 @@ Output a single valid JSON object."""
         custom_prompt: Optional[str]
     ) -> Dict[str, Any]:
         """解析 LLM 响应并使用 build_prompt_v2 构建最终提示词"""
-        
+
         try:
             # 尝试解析 JSON（开启 JSON Mode 后应该直接是 JSON）
             if "```json" in content:
@@ -193,10 +208,11 @@ Output a single valid JSON object."""
             elif content.strip().startswith("{"):
                 json_str = content.strip()
             else:
-                json_start = content.find("{")
-                json_end = content.rfind("}") + 1
-                json_str = content[json_start:json_end]
-            
+                # 使用 stack-based 匹配提取第一个完整的 JSON 块
+                json_str = self._extract_first_json_block(content)
+                if not json_str:
+                    raise ValueError("无法在响应中找到有效的 JSON 块")
+
             analysis_data = json.loads(json_str)
             
             # 使用 build_prompt_v2 构建最终提示词（统一架构）
@@ -246,7 +262,8 @@ Output a single valid JSON object."""
     async def chat_text(
         self,
         prompt: str,
-        model: LLMModel = LLMModel.DEEPSEEK_CHAT
+        model: LLMModel = LLMModel.DEEPSEEK_CHAT,
+        system_prompt: str = "你是专业室内设计顾问。"
     ) -> str:
         """
         纯文本对话（用于RAG问答）- 支持 OpenAI 兼容格式
@@ -254,6 +271,7 @@ Output a single valid JSON object."""
         Args:
             prompt: 完整的对话提示词
             model: LLM模型（默认使用 DeepSeek）
+            system_prompt: 系统提示词（可自定义）
 
         Returns:
             AI生成的文本回复
@@ -266,7 +284,7 @@ Output a single valid JSON object."""
             payload = {
                 "model": model.value,
                 "messages": [
-                    {"role": "system", "content": "你是专业室内设计顾问。"},
+                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": prompt}
                 ],
                 "temperature": 0.7,
@@ -304,17 +322,17 @@ Output a single valid JSON object."""
                 if "choices" in result and len(result["choices"]) > 0:
                     return result["choices"][0]["message"]["content"]
                 else:
-                    return "抱歉，我暂时无法回答这个问题。"
+                    raise ValueError("DeepSeek 响应格式错误：缺少 choices")
             else:
                 # Gemini 格式响应
                 if "candidates" in result and len(result["candidates"]) > 0:
                     return result["candidates"][0]["content"]["parts"][0]["text"]
                 else:
-                    return "抱歉，我暂时无法回答这个问题。"
+                    raise ValueError("Gemini 响应格式错误：缺少 candidates")
         except httpx.HTTPStatusError as e:
-            return f"API请求失败: {e.response.text}"
+            raise Exception(f"LLM API 请求失败: {e.response.status_code}") from e
         except Exception as e:
-            return f"回答生成失败: {str(e)}"
+            raise Exception(f"LLM 调用失败: {str(e)}") from e
 
     async def close(self):
         """关闭客户端连接"""

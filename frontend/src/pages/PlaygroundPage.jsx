@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Upload, Zap, Download, Send, Lightbulb, MessageSquare, Eye, Wand2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
+import { useChatEngine } from '../chat/useChatEngine';
+import { IMAGE_PROMPTS, KNOWLEDGE_PROMPTS, REFINE_PROMPTS } from '../chat/quickPrompts';
 
 // 房间类型映射 v2.0：按距离家门口远近排序（玄关→主卧）
 const roomTypes = [
@@ -30,33 +32,6 @@ const styles = [
   { id: 'modern_minimalist', label: '现代简约', img: '/styles/现代简约.png' },
 ];
 
-// 风格关键词映射（支持泛化识别）
-const styleKeywords = {
-  modern_luxury: ['轻奢', '现代轻奢', '奢华', 'luxury'],
-  chinese_modern: ['中式', '新中式', '中国风', '国风', 'chinese'],
-  american_transitional: ['美式', '美国', '美风', 'american'],
-  european_neoclassical: ['欧式', '欧洲', '法式', '新古典', '古典', 'european', 'french'],
-  industrial_loft: ['工业', '工业风', 'loft', 'industrial', '水泥', '工厂'],
-  natural_wood: ['原木', '木质', '自然风', 'japandi', 'wood', '北欧'],
-  japanese_traditional: ['日式', '日本', '和风', '日风', 'japanese', '榻榻米'],
-  bohemian: ['波西米亚', 'boho', 'bohemian', '波希米亚'],
-  bauhaus: ['包豪斯', 'bauhaus'],
-  modern_minimalist: ['简约', '极简', 'minimalist', '现代简约', '简洁'],
-};
-
-// 从文本中检测风格关键词
-const detectStyleFromText = (text) => {
-  const lowerText = text.toLowerCase();
-  for (const [styleId, keywords] of Object.entries(styleKeywords)) {
-    for (const keyword of keywords) {
-      if (lowerText.includes(keyword.toLowerCase())) {
-        return styleId;
-      }
-    }
-  }
-  return null;
-};
-
 // 后端API地址（生产环境使用相对路径，由Nginx代理）
 const API_BASE = '';
 
@@ -66,15 +41,12 @@ export default function PlaygroundPage() {
   const [progress, setProgress] = useState(0);
   const [statusText, setStatusText] = useState('');
   const [uploadedImage, setUploadedImage] = useState(null);
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
   const [generatedImage, setGeneratedImage] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [notes, setNotes] = useState('');
-  const [chatMessages, setChatMessages] = useState([
-    { type: 'ai', text: '您好！我是您的 AI 设计助手。上传房间照片后，我可以帮您：分析空间结构、推荐配色方案、建议家具布局。有任何问题都可以问我！' }
-  ]);
-  const [chatInput, setChatInput] = useState('');
   const fileInputRef = useRef(null);
-  const chatContainerRef = useRef(null);
   const [isDragover, setIsDragover] = useState(false);
   
   // 精修模式相关状态
@@ -92,12 +64,19 @@ export default function PlaygroundPage() {
   const imageContainerRef = useRef(null);
   const chatInputRef = useRef(null);
 
-  // 自动滚动到聊天底部
-  useEffect(() => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-    }
-  }, [chatMessages]);
+  // 聊天引擎 hook
+  const {
+    chatMessages, setChatMessages,
+    chatInput, setChatInput,
+    chatContainerRef,
+    sendMessage, sendMessageWithMask,
+    knowledgeStatus,
+  } = useChatEngine({
+    uploadedFile, generatedImage, selectedMask, viewMode,
+    selectedStyle, selectedRoom, styles,
+    setIsGenerating, setProgress, setStatusText,
+    setGeneratedImage, setSelectedMask, setSelectedStyle,
+  });
 
   // 框选/点选模式 - 鼠标按下开始绘制
   const handleMouseDown = useCallback((e) => {
@@ -243,82 +222,21 @@ export default function PlaygroundPage() {
     }
   };
 
-  // 带mask的生成请求
-  const handleSendChatWithMask = async (customPrompt = null) => {
-    const messageText = customPrompt || chatInput.trim();
-    if (!messageText) return;
-    if (!generatedImage) {
-      setChatMessages(prev => [...prev, { type: 'ai', text: '请先生成一张设计图，才能进行精修。' }]);
-      return;
-    }
-    
-    setChatMessages(prev => [...prev, { type: 'user', text: messageText }]);
-    setChatInput('');
-    
-    // 如果有选中的mask，使用inpaint API
-    if (selectedMask && viewMode === 'refine') {
-      setChatMessages(prev => [...prev, { type: 'ai', text: '正在对选中区域进行精修，请稍候...' }]);
-      setIsGenerating(true);
-      setProgress(10);
-      setStatusText('正在处理局部修改...');
-      
-      try {
-        const response = await fetch(generatedImage);
-        const blob = await response.blob();
-        
-        const formData = new FormData();
-        formData.append('image', blob, 'image.jpg');
-        formData.append('mask_base64', selectedMask.mask);  // 使用黑白mask
-        formData.append('prompt', messageText);
-        formData.append('strength', 0.85);
-        
-        setProgress(30);
-        const inpaintResponse = await fetch(`${API_BASE}/api/v1/segment/inpaint`, {
-          method: 'POST',
-          body: formData,
-        });
-        
-        const result = await inpaintResponse.json();
-        setProgress(90);
-        
-        if (result.code === 0 && result.data?.result_image) {
-          setGeneratedImage(result.data.result_image);
-          setProgress(100);
-          setStatusText('精修完成!');
-          setChatMessages(prev => {
-            const newMessages = [...prev];
-            newMessages[newMessages.length - 1] = { type: 'ai', text: '局部精修完成！如需继续修改，请点击其他区域或描述新的需求。' };
-            return newMessages;
-          });
-          // 清除选中状态
-          setSelectedMask(null);
-        } else {
-          throw new Error(result.message || '精修失败');
-        }
-      } catch (error) {
-        console.error('Inpaint error:', error);
-        setChatMessages(prev => {
-          const newMessages = [...prev];
-          newMessages[newMessages.length - 1] = { type: 'ai', text: `精修失败：${error.message}。请重试。` };
-          return newMessages;
-        });
-        setProgress(0);
-      } finally {
-        setIsGenerating(false);
-      }
-    } else {
-      // 普通聊天生成
-      await handleSendChat(messageText);
-    }
+  const handleFileSelect = (file) => {
+    if (!file?.type.startsWith('image/')) return;
+    // 清理旧的 preview URL
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setUploadedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+    setUploadedImage(file); // 存储 File 对象而非 data URL
   };
 
-  const handleFileSelect = (file) => {
-    if (file && file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (e) => setUploadedImage(e.target.result);
-      reader.readAsDataURL(file);
-    }
-  };
+  // 组件卸载时清理 preview URL
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
 
   const handleDrop = (e) => {
     e.preventDefault();
@@ -329,23 +247,20 @@ export default function PlaygroundPage() {
   };
 
   const handleGenerate = async () => {
-    if (!uploadedImage) return;
+    if (!uploadedFile) return;
     setIsGenerating(true);
     setGeneratedImage(null);
     setProgress(0);
     setStatusText('正在准备...');
-    
+
     try {
       // 1. 提交生成任务
       setProgress(10);
       setStatusText('正在上传图片...');
-      
-      // 将base64图片转为Blob
-      const base64Data = uploadedImage.split(',')[1];
-      const blob = await fetch(uploadedImage).then(r => r.blob());
-      
+
+      // 直接使用 File 对象，无需转换
       const formData = new FormData();
-      formData.append('image', blob, 'upload.jpg');
+      formData.append('image', uploadedFile, uploadedFile.name);
       formData.append('style', selectedStyle);
       formData.append('room_type', selectedRoom);
       if (notes) formData.append('custom_prompt', notes);
@@ -391,190 +306,6 @@ export default function PlaygroundPage() {
     }
   };
 
-  // 预设快捷问题
-  const quickPrompts = [
-    { label: '再来一张', prompt: '请基于相同的房间结构和视角，生成一个新的设计方案' },
-    { label: '换个配色', prompt: '保持当前布局和家具位置，更换不同的配色方案' },
-    { label: '换沙发', prompt: '保持房间结构不变，更换不同样式的沙发' },
-    { label: '更多绿植', prompt: '保持当前布局，增加更多绿色植物装饰' },
-    { label: '暖色调', prompt: '保持当前结构和布局，调整为更温暖的色调' },
-    { label: '更简约', prompt: '保持房间结构不变，设计得更加简约现代' },
-  ];
-
-  // ===== RAG 知识库相关函数 =====
-
-  // 检测是否为知识类问题的关键词
-  const isKnowledgeQuestion = (message) => {
-    const knowledgeKeywords = [
-      '什么', '如何', '怎么', '为什么', '建议', '推荐',
-      '材料', '颜色', '搭配', '风格', '设计', '适合',
-      '特点', '区别', '选择', '注意事项', '预算',
-      '介绍', '什么是', '如何选择', '怎么搭配', '哪些',
-      '好不好', '优缺点', '哪种', '怎么样'
-    ];
-    return knowledgeKeywords.some(keyword => message.includes(keyword));
-  };
-
-  // 查询知识库
-  const queryKnowledgeBase = async (message, style, roomType) => {
-    try {
-      const response = await fetch(`${API_BASE}/api/v1/knowledge/query`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          question: message,
-          style: style,
-          room_type: roomType,
-          n_results: 5
-        })
-      });
-
-      if (!response.ok) {
-        console.error('知识库查询失败:', response.status);
-        return null;
-      }
-
-      const data = await response.json();
-      return data.code === 0 ? data.data : null;
-    } catch (error) {
-      console.error('知识库查询异常:', error);
-      return null;
-    }
-  };
-
-  const handleSendChat = async (customPrompt = null) => {
-    const messageText = customPrompt || chatInput.trim();
-    if (!messageText) return;
-
-    // 检测是否为知识类问题（不需要图片也能回答）
-    if (isKnowledgeQuestion(messageText)) {
-      // 添加用户消息
-      setChatMessages(prev => [...prev, { type: 'user', text: messageText }]);
-      setChatInput('');
-
-      // 显示正在查询
-      setChatMessages(prev => [...prev, { type: 'ai', text: '正在查询知识库...' }]);
-
-      // 调用RAG知识库
-      const result = await queryKnowledgeBase(messageText, selectedStyle, selectedRoom);
-
-      if (result && result.answer) {
-        // 替换等待消息为实际回答
-        setChatMessages(prev => {
-          const newMessages = [...prev];
-          newMessages[newMessages.length - 1] = {
-            type: 'ai',
-            text: result.answer,
-            sources: result.sources,
-            isKnowledgeAnswer: true
-          };
-          return newMessages;
-        });
-      } else {
-        // 知识库查询失败
-        setChatMessages(prev => {
-          const newMessages = [...prev];
-          newMessages[newMessages.length - 1] = {
-            type: 'ai',
-            text: result?.need_init
-              ? '知识库尚未初始化。请联系管理员运行初始化脚本。'
-              : '抱歉，我暂时无法回答这个问题。您可以尝试上传图片生成设计方案。'
-          };
-          return newMessages;
-        });
-      }
-      return;
-    }
-
-    // 原有的图片生成逻辑
-    if (!uploadedImage) {
-      setChatMessages(prev => [...prev, { type: 'ai', text: '请先上传一张房间照片，我才能为您生成设计方案。' }]);
-      return;
-    }
-    
-    // 智能识别风格关键词
-    const detectedStyle = detectStyleFromText(messageText);
-    let actualStyle = selectedStyle;
-    let styleChangeMsg = '';
-    
-    if (detectedStyle && detectedStyle !== selectedStyle) {
-      actualStyle = detectedStyle;
-      setSelectedStyle(detectedStyle);  // 同步更新左侧按钮状态
-      const styleName = styles.find(s => s.id === detectedStyle)?.label || detectedStyle;
-      styleChangeMsg = `（已识别并切换到「${styleName}」风格）`;
-    }
-    
-    // 添加用户消息
-    setChatMessages(prev => [...prev, { type: 'user', text: messageText }]);
-    setChatInput('');
-    
-    // 添加AI等待消息
-    const waitingMsg = styleChangeMsg 
-      ? `${styleChangeMsg} 正在为您生成新的设计方案，请稍候...`
-      : '正在为您生成新的设计方案，请稍候...';
-    setChatMessages(prev => [...prev, { type: 'ai', text: waitingMsg }]);
-    
-    // 调用API生成新图片
-    setIsGenerating(true);
-    setProgress(10);
-    setStatusText('正在处理您的需求...');
-    
-    try {
-      const blob = await fetch(uploadedImage).then(r => r.blob());
-      const formData = new FormData();
-      formData.append('image', blob, 'upload.jpg');
-      formData.append('style', actualStyle);  // 使用识别到的风格
-      formData.append('room_type', selectedRoom);
-      // 将聊天内容作为自定义提示词
-      formData.append('custom_prompt', messageText);
-      
-      setProgress(20);
-      setStatusText('AI 正在创作中...');
-      
-      const response = await fetch(`${API_BASE}/api/v1/generate`, {
-        method: 'POST',
-        body: formData,
-      });
-      
-      if (!response.ok) {
-        throw new Error(`服务器错误 ${response.status}`);
-      }
-      
-      const result = await response.json();
-      
-      if (result.code !== 0) {
-        throw new Error(result.message || '生成失败');
-      }
-      
-      setProgress(90);
-      const outputUrls = result.data?.output_urls || [];
-      if (outputUrls.length > 0) {
-        setGeneratedImage(outputUrls[0]);
-        setProgress(100);
-        setStatusText('生成完成!');
-        // 更新AI回复
-        setChatMessages(prev => {
-          const newMessages = [...prev];
-          newMessages[newMessages.length - 1] = { type: 'ai', text: '已为您生成新的设计方案，请查看预览区域！如需调整，请继续告诉我。' };
-          return newMessages;
-        });
-      } else {
-        throw new Error('未获取到生成的图片');
-      }
-    } catch (error) {
-      console.error('Chat generate error:', error);
-      setChatMessages(prev => {
-        const newMessages = [...prev];
-        newMessages[newMessages.length - 1] = { type: 'ai', text: `抱歉，生成失败：${error.message}。请重试。` };
-        return newMessages;
-      });
-      setProgress(0);
-      setStatusText('');
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-ivory">
       <Navbar />
@@ -590,7 +321,7 @@ export default function PlaygroundPage() {
                   <span className="w-5 h-5 bg-warm-gold/10 rounded-full flex items-center justify-center text-xs text-warm-gold font-bold">1</span>
                   <span>上传房间照片</span>
                 </h3>
-                {!uploadedImage ? (
+                {!previewUrl ? (
                   <div 
                     className={`upload-zone rounded-lg p-6 text-center cursor-pointer ${isDragover ? 'dragover' : ''}`}
                     onClick={() => fileInputRef.current?.click()}
@@ -611,9 +342,9 @@ export default function PlaygroundPage() {
                   </div>
                 ) : (
                   <div className="relative">
-                    <img src={uploadedImage} alt="Preview" className="w-full rounded-lg" />
+                    <img src={previewUrl} alt="Preview" className="w-full rounded-lg" />
                     <button 
-                      onClick={() => setUploadedImage(null)}
+                      onClick={() => { if (previewUrl) URL.revokeObjectURL(previewUrl); setPreviewUrl(null); setUploadedFile(null); setUploadedImage(null); }}
                       className="absolute top-2 right-2 w-7 h-7 bg-white/90 rounded-full flex items-center justify-center shadow-md hover:bg-white"
                     >
                       <span className="text-charcoal text-sm">×</span>
@@ -680,7 +411,7 @@ export default function PlaygroundPage() {
               {/* Generate Button */}
               <button 
                 onClick={handleGenerate}
-                disabled={!uploadedImage || isGenerating}
+                disabled={!uploadedFile || isGenerating}
                 className="w-full gold-gradient text-white py-3 rounded-lg text-sm font-medium tracking-wide hover:opacity-90 transition-opacity shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <Zap className="w-4 h-4" />
@@ -867,7 +598,7 @@ export default function PlaygroundPage() {
                   </div>
                   <div>
                     <h3 className="font-medium text-charcoal text-sm">AI 设计助手</h3>
-                    <p className="text-xs text-charcoal/50">与 AI 交流，优化您的设计方案</p>
+                    <p className="text-xs text-charcoal/50">{previewUrl ? '与 AI 交流，优化您的设计方案' : '装修知识问答 & 设计助手'}</p>
                   </div>
                 </div>
 
@@ -891,27 +622,30 @@ export default function PlaygroundPage() {
                   ))}
                 </div>
 
-                {/* Quick Prompts - 根据模式显示不同快捷按钮 */}
+                {/* Quick Prompts - 根据上下文显示不同快捷按钮 */}
                 <div className="px-3 py-2 border-t border-warm-gold/10 flex-shrink-0">
                   <div className="flex flex-wrap gap-1.5">
                     {viewMode === 'refine' && selectedMask ? (
                       // 精修模式快捷按钮
                       <>
-                        <button onClick={() => handleSendChatWithMask('换成现代风格的沙发')} disabled={isGenerating} className="px-2 py-1 text-xs bg-warm-gold/10 text-charcoal/80 rounded-full hover:bg-warm-gold/20 transition-colors disabled:opacity-50">换沙发</button>
-                        <button onClick={() => handleSendChatWithMask('换成绿色植物')} disabled={isGenerating} className="px-2 py-1 text-xs bg-warm-gold/10 text-charcoal/80 rounded-full hover:bg-warm-gold/20 transition-colors disabled:opacity-50">换绿植</button>
-                        <button onClick={() => handleSendChatWithMask('换成蓝色')} disabled={isGenerating} className="px-2 py-1 text-xs bg-warm-gold/10 text-charcoal/80 rounded-full hover:bg-warm-gold/20 transition-colors disabled:opacity-50">换颜色</button>
-                        <button onClick={() => handleSendChatWithMask('移除这个物体')} disabled={isGenerating} className="px-2 py-1 text-xs bg-warm-gold/10 text-charcoal/80 rounded-full hover:bg-warm-gold/20 transition-colors disabled:opacity-50">移除</button>
+                        {REFINE_PROMPTS.map((item, index) => (
+                          <button key={index} onClick={() => sendMessageWithMask(item.prompt)} disabled={isGenerating} className="px-2 py-1 text-xs bg-warm-gold/10 text-charcoal/80 rounded-full hover:bg-warm-gold/20 transition-colors disabled:opacity-50">
+                            {item.label}
+                          </button>
+                        ))}
                         <button onClick={() => setSelectedMask(null)} className="px-2 py-1 text-xs bg-red-100 text-red-600 rounded-full hover:bg-red-200 transition-colors">取消选择</button>
                       </>
+                    ) : previewUrl ? (
+                      // 有图片时：生成快捷按钮
+                      IMAGE_PROMPTS.map((item, index) => (
+                        <button key={index} onClick={() => sendMessage(item.prompt)} disabled={isGenerating} className="px-2 py-1 text-xs bg-warm-gold/10 text-charcoal/80 rounded-full hover:bg-warm-gold/20 transition-colors disabled:opacity-50">
+                          {item.label}
+                        </button>
+                      ))
                     ) : (
-                      // 普通模式快捷按钮
-                      quickPrompts.map((item, index) => (
-                        <button
-                          key={index}
-                          onClick={() => handleSendChat(item.prompt)}
-                          disabled={isGenerating}
-                          className="px-2 py-1 text-xs bg-warm-gold/10 text-charcoal/80 rounded-full hover:bg-warm-gold/20 transition-colors disabled:opacity-50"
-                        >
+                      // 无图片时：知识问答快捷按钮
+                      KNOWLEDGE_PROMPTS.map((item, index) => (
+                        <button key={index} onClick={() => sendMessage(item.prompt)} disabled={isGenerating} className="px-2 py-1 text-xs bg-warm-gold/10 text-charcoal/80 rounded-full hover:bg-warm-gold/20 transition-colors disabled:opacity-50">
                           {item.label}
                         </button>
                       ))
@@ -927,15 +661,15 @@ export default function PlaygroundPage() {
                       type="text"
                       value={chatInput}
                       onChange={(e) => setChatInput(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && !isGenerating && (selectedMask ? handleSendChatWithMask() : handleSendChat())}
+                      onKeyPress={(e) => e.key === 'Enter' && !isGenerating && (selectedMask ? sendMessageWithMask() : sendMessage())}
                       disabled={isGenerating}
                       className={`flex-1 border rounded-lg px-3 py-2 text-xs focus:outline-none transition-colors disabled:opacity-50 ${
                         selectedMask ? 'border-warm-gold bg-warm-gold/5 focus:border-warm-gold' : 'border-warm-gold/20 focus:border-warm-gold'
                       }`}
-                      placeholder={selectedMask ? "描述对选中区域的修改..." : "输入您的设计需求，如：换个颜色、加点装饰..."}
+                      placeholder={selectedMask ? "描述对选中区域的修改..." : previewUrl ? "描述设计需求或问我装修问题..." : "问我任何装修问题，如：小户型怎么布局？"}
                     />
-                    <button 
-                      onClick={() => selectedMask ? handleSendChatWithMask() : handleSendChat()}
+                    <button
+                      onClick={() => selectedMask ? sendMessageWithMask() : sendMessage()}
                       disabled={isGenerating || !chatInput.trim()}
                       className="gold-gradient text-white px-3 py-2 rounded-lg text-xs font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
                     >

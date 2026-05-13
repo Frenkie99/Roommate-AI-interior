@@ -1,9 +1,29 @@
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 
 export default function AuthModal({ isOpen, onClose }) {
   const navigate = useNavigate();
+  const dialogRef = useRef(null);
+
+  // Escape 键关闭 + body scroll lock + 焦点移入
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const onKey = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+
+    document.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    dialogRef.current?.focus();
+
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+    };
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -13,7 +33,12 @@ export default function AuthModal({ isOpen, onClose }) {
   };
 
   const modalContent = (
-    <div 
+    <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="auth-modal-title"
+      tabIndex={-1}
       style={{
         position: 'fixed',
         top: 0,
@@ -29,8 +54,9 @@ export default function AuthModal({ isOpen, onClose }) {
       }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div 
+      <div
         style={{
+          position: 'relative',
           backgroundColor: 'white',
           borderRadius: '12px',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
@@ -40,32 +66,37 @@ export default function AuthModal({ isOpen, onClose }) {
           textAlign: 'center'
         }}
       >
-        <button 
-          onClick={onClose} 
-          style={{ 
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="关闭"
+          style={{
             position: 'absolute',
             top: '16px',
             right: '16px',
-            color: '#999', 
-            cursor: 'pointer', 
-            background: 'none', 
-            border: 'none' 
+            color: '#999',
+            cursor: 'pointer',
+            background: 'none',
+            border: 'none'
           }}
         >
           <X size={24} />
         </button>
 
-        <h2 style={{ 
-          fontSize: '28px', 
-          fontWeight: 'bold', 
-          color: '#1a1a1a',
-          marginBottom: '16px'
-        }}>
+        <h2
+          id="auth-modal-title"
+          style={{
+            fontSize: '28px',
+            fontWeight: 'bold',
+            color: '#1a1a1a',
+            marginBottom: '16px'
+          }}
+        >
           欢迎试用 Roommate
         </h2>
 
-        <p style={{ 
-          fontSize: '16px', 
+        <p style={{
+          fontSize: '16px',
           color: '#6b7280',
           marginBottom: '32px',
           lineHeight: '1.6'
@@ -74,6 +105,7 @@ export default function AuthModal({ isOpen, onClose }) {
         </p>
 
         <button
+          type="button"
           onClick={handleTrial}
           style={{
             width: '100%',

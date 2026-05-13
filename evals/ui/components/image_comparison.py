@@ -1,5 +1,6 @@
 """图像对比可视化组件"""
 
+import logging
 from pathlib import Path
 
 import streamlit as st
@@ -7,14 +8,36 @@ from PIL import Image
 
 from evals.config import METRIC_RANGES, METRIC_LABELS, EVALS_DIR, PROJECT_ROOT
 
+logger = logging.getLogger(__name__)
+
 
 def _resolve(path: str) -> Path:
+    """
+    安全地解析路径，防止路径遍历攻击：
+    1. 不接受绝对路径
+    2. resolve() 后必须仍在允许的目录内
+    """
     p = Path(path)
+
+    # 不接受绝对路径
     if p.is_absolute():
-        return p
+        logger.warning(f"REJECTED absolute path: {path!r}")
+        raise ValueError(f"绝对路径不允许: {path}")
+
+    # 解析路径
     if path.startswith("data/"):
-        return EVALS_DIR / p
-    return PROJECT_ROOT / p
+        resolved = (EVALS_DIR / p).resolve()
+        allowed_root = EVALS_DIR.resolve()
+    else:
+        resolved = (PROJECT_ROOT / p).resolve()
+        allowed_root = PROJECT_ROOT.resolve()
+
+    # 确保解析后仍在允许范围内
+    if not resolved.is_relative_to(allowed_root):
+        logger.warning(f"REJECTED path escape: {path!r} -> {resolved}")
+        raise ValueError(f"路径逃逸: {path}")
+
+    return resolved
 
 
 def render_image_comparison(store, loader) -> None:
