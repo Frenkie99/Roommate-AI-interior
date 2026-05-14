@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Upload, Zap, Download, Send, Lightbulb, MessageSquare, Eye, Wand2 } from 'lucide-react';
+import { Upload, Zap, Download, Send, MessageSquare, Eye, Wand2 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import Navbar from '../components/Navbar';
 import { useChatEngine } from '../chat/useChatEngine';
 import { IMAGE_PROMPTS, KNOWLEDGE_PROMPTS, REFINE_PROMPTS } from '../chat/quickPrompts';
@@ -70,7 +71,6 @@ export default function PlaygroundPage() {
     chatInput, setChatInput,
     chatContainerRef,
     sendMessage, sendMessageWithMask,
-    knowledgeStatus,
   } = useChatEngine({
     uploadedFile, generatedImage, selectedMask, viewMode,
     selectedStyle, selectedRoom, styles,
@@ -608,15 +608,12 @@ export default function PlaygroundPage() {
                     <div key={index} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
                       <div className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'} max-w-[90%]`}>
                         <div className={`px-3 py-2 rounded-2xl text-xs ${msg.type === 'user' ? 'chat-bubble-user rounded-tr-sm' : 'chat-bubble-ai rounded-tl-sm'}`}>
-                          {msg.text}
+                          {msg.type === 'ai' ? (
+                            <div className="chat-markdown">
+                              <ReactMarkdown>{msg.text}</ReactMarkdown>
+                            </div>
+                          ) : msg.text}
                         </div>
-                        {/* 知识来源标注 */}
-                        {msg.type === 'ai' && msg.isKnowledgeAnswer && msg.sources && msg.sources.length > 0 && (
-                          <div className="mt-1 text-xs text-charcoal/50 flex items-center gap-1 px-2">
-                            <Lightbulb className="w-3 h-3" />
-                            <span>参考: {msg.sources.slice(0, 2).join(', ')}</span>
-                          </div>
-                        )}
                       </div>
                     </div>
                   ))}

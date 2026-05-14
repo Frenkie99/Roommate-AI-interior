@@ -3,16 +3,17 @@
  *
  * 路由优先级：
  * 1. 精修模式 + mask → inpaint
- * 2. 无图片 → knowledge（无条件）
- * 3. 有图片 + 问句 → knowledge
- * 4. 有图片 + 设计动词 → generate
- * 5. 兜底 → knowledge（安全默认）
+ * 2. 无图片 + 设计动词 → upload_hint（提示先上传）
+ * 3. 无图片 → knowledge（知识问答 / LLM 兜底）
+ * 4. 有图片 + 问句 → knowledge
+ * 5. 有图片 + 设计动词 → generate
+ * 6. 兜底 → knowledge（安全默认）
  */
 
 // 设计指令动词 —— 表示"修改/生成这张图"
 const DESIGN_ACTION_VERBS = [
   '换', '调整', '变成', '改成', '改为', '增加', '减少', '去掉',
-  '生成', '设计', '加点', '加些', '移除', '删除', '更', '弄',
+  '生成', '设计', '加', '加点', '加些', '移除', '删除', '更', '弄',
   '做', '来一', '配', '放', '摆', '放些',
 ];
 
@@ -27,14 +28,17 @@ const QUESTION_PATTERNS = [
  * 根据消息内容和上下文决定路由目标
  * @param {string} message - 用户输入的消息
  * @param {{ hasImage: boolean, hasMask: boolean, viewMode: string }} context
- * @returns {'inpaint' | 'generate' | 'knowledge'}
+ * @returns {'inpaint' | 'generate' | 'knowledge' | 'upload_hint'}
  */
 export function routeChatMessage(message, { hasImage, hasMask, viewMode }) {
   // 优先级1：精修模式 + 选中 mask → 局部修改
   if (hasMask && viewMode === 'refine') return 'inpaint';
 
-  // 优先级2：无图片 → 无条件走知识问答
-  if (!hasImage) return 'knowledge';
+  // 无图片分支：设计动词 → 提示上传，其余 → 知识问答
+  if (!hasImage) {
+    if (DESIGN_ACTION_VERBS.some(v => message.includes(v))) return 'upload_hint';
+    return 'knowledge';
+  }
 
   // 优先级3：有图片 + 是问句 → 知识问答
   if (QUESTION_PATTERNS.some(p => message.includes(p))) return 'knowledge';

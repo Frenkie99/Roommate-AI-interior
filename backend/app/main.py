@@ -50,6 +50,7 @@ else:
 use_llm = os.getenv('USE_LLM_PROMPT', 'true')
 print(f"[INFO] LLM 智能提示词: {'启用' if use_llm.lower() == 'true' else '禁用'}")
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -57,15 +58,35 @@ from fastapi.staticfiles import StaticFiles
 from app.routes import image
 from app.routes import segment
 from app.routes import knowledge
+from app.services.knowledge_service import knowledge_service
 
 # 输出目录
 OUTPUT_DIR = Path(__file__).parent.parent.parent / "output"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
+
+@asynccontextmanager
+async def lifespan(app):
+    # 启动时：知识库自检
+    stats = knowledge_service.get_collection_stats()
+    doc_count = stats.get("total_documents", 0)
+    status = stats.get("status", "unknown")
+
+    if not knowledge_service._initialized:
+        print(f"[WARN] 知识库未初始化 ({status})，问答将降级为 LLM 兜底")
+    elif doc_count == 0:
+        print(f"[WARN] 知识库为空 (0 篇文档)，请运行 python scripts/init_knowledge_base.py 初始化")
+    else:
+        print(f"[INFO] 知识库就绪 ({doc_count} 篇文档)")
+
+    yield
+
+
 app = FastAPI(
     title="AI 装修效果图生成器",
     description="基于 API易平台 的智能装修效果图生成服务",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan,
 )
 
 # CORS 配置 - 允许所有来源（开发环境）

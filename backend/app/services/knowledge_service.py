@@ -31,38 +31,45 @@ class KnowledgeService:
     """装修知识库服务 - 混合检索 + 重排序"""
 
     def __init__(self, persist_directory: str = "./data/chroma"):
-        os.makedirs(persist_directory, exist_ok=True)
-
-        self.chroma_client = PersistentClient(
-            path=persist_directory,
-            settings=Settings(
-                anonymized_telemetry=False,
-                allow_reset=True
-            )
-        )
-
-        from embedding.chinese_embedding import ChineseEmbeddingFunction
-        ef = ChineseEmbeddingFunction()
-
-        try:
-            self.collection = self.chroma_client.get_or_create_collection(
-                name="renovation_knowledge",
-                metadata={"hnsw:space": "cosine", "description": "装修设计知识库"},
-                embedding_function=ef
-            )
-        except ValueError:
-            self.chroma_client.delete_collection("renovation_knowledge")
-            self.collection = self.chroma_client.create_collection(
-                name="renovation_knowledge",
-                metadata={"hnsw:space": "cosine", "description": "装修设计知识库"},
-                embedding_function=ef
-            )
-
-        # BM25 索引（延迟构建）
+        self._initialized = False
+        self._init_error = None
         self._bm25 = None
         self._bm25_ids = []
         self._bm25_docs = []
         self._bm25_metas = []
+
+        try:
+            os.makedirs(persist_directory, exist_ok=True)
+
+            self.chroma_client = PersistentClient(
+                path=persist_directory,
+                settings=Settings(
+                    anonymized_telemetry=False,
+                    allow_reset=True
+                )
+            )
+
+            from embedding.chinese_embedding import ChineseEmbeddingFunction
+            ef = ChineseEmbeddingFunction()
+
+            try:
+                self.collection = self.chroma_client.get_or_create_collection(
+                    name="renovation_knowledge",
+                    metadata={"hnsw:space": "cosine", "description": "装修设计知识库"},
+                    embedding_function=ef
+                )
+            except ValueError:
+                self.chroma_client.delete_collection("renovation_knowledge")
+                self.collection = self.chroma_client.create_collection(
+                    name="renovation_knowledge",
+                    metadata={"hnsw:space": "cosine", "description": "装修设计知识库"},
+                    embedding_function=ef
+                )
+
+            self._initialized = True
+        except Exception as e:
+            self._init_error = str(e)
+            logger.error(f"知识库初始化失败: {e}，将降级为 LLM 兜底模式")
 
     def _ensure_bm25_index(self):
         """确保 BM25 索引已构建"""
@@ -190,6 +197,9 @@ class KnowledgeService:
         3. RRF 融合
         4. Reranker 重排序取 top-n_results
         """
+        if not self._initialized:
+            return self._empty_result(f"知识库未初始化: {self._init_error}")
+
         try:
             count = self.collection.count()
             if count == 0:
@@ -281,6 +291,12 @@ class KnowledgeService:
 
     def get_collection_stats(self) -> Dict:
         """获取知识库统计信息"""
+        if not self._initialized:
+            return {
+                "total_documents": 0,
+                "collection_name": "renovation_knowledge",
+                "status": f"uninitialized: {self._init_error}"
+            }
         try:
             count = self.collection.count()
             return {

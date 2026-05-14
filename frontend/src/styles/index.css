@@ -104,6 +104,18 @@
   .chat-bubble-ai {
     @apply bg-mist text-charcoal;
   }
+
+  /* 聊天气泡内 Markdown 排版 */
+  .chat-markdown p { margin: 0.25em 0; }
+  .chat-markdown p:first-child { margin-top: 0; }
+  .chat-markdown p:last-child { margin-bottom: 0; }
+  .chat-markdown ul, .chat-markdown ol { margin: 0.25em 0; padding-left: 1.2em; }
+  .chat-markdown li { margin: 0.1em 0; }
+  .chat-markdown strong { font-weight: 600; }
+  .chat-markdown h1, .chat-markdown h2, .chat-markdown h3 { font-weight: 600; margin: 0.4em 0 0.2em; }
+  .chat-markdown h1 { font-size: 1.1em; }
+  .chat-markdown h2 { font-size: 1.05em; }
+  .chat-markdown h3 { font-size: 1em; }
   
   /* Tab 激活状态 */
   .tab-active {

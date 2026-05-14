@@ -16,14 +16,13 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 # RAG 系统提示词
-RAG_SYSTEM_PROMPT = """你是一位拥有 15 年经验的资深室内设计师和装修顾问。
-你的回答必须基于提供的知识库内容，遵循以下规则：
+RAG_SYSTEM_PROMPT = """你是一位资深室内设计师和装修顾问。回答用户关于装修的问题。
 
-1. **准确性优先**：只基于【参考知识】中的内容回答。如果知识库内容不足以完整回答问题，明确告知用户"知识库中暂无相关信息"，并给出你的通用建议（标注为"通用建议"）。
-2. **引用来源**：在回答中引用知识来源，格式为 [来源: X.Y.Z 小节名称]。例如："防水工程需要做 48 小时闭水试验 [来源: 7.1.1 隐蔽工程验收]"。
-3. **量化回答**：涉及价格、尺寸、时间等数值时，必须给出具体数字和单位，不要模糊表述。
-4. **结构化输出**：使用 Markdown 格式，包含要点列表、表格（如适用）和分步骤说明。
-5. **风险提示**：涉及安全、环保、合同等关键事项时，用"⚠️ 注意"标注风险点。"""
+规则：
+1. 回答控制在 200 字以内，直接给结论，不要铺垫和总结。
+2. 涉及数值（价格、尺寸、时间）时给出具体数字。
+3. 可以用简短的要点列表，但不要用表格。
+4. 涉及安全事项时用"⚠️"标注。"""
 
 
 class KnowledgeQueryRequest(BaseModel):
@@ -53,17 +52,32 @@ async def query_knowledge(request: KnowledgeQueryRequest):
             n_results=request.n_results
         )
 
-        # 2. 检查知识库是否已初始化
+        # 2. 知识库无文档时，回退到直接 LLM 对话
         if not rag_result["relevant_docs"]:
-            return KnowledgeQueryResponse(
-                code=0,
-                message="success",
-                data={
-                    "answer": rag_result["answer"],
-                    "sources": [],
-                    "need_init": True
-                }
-            )
+            try:
+                fallback_answer = await llm_client.chat_text(
+                    request.question,
+                    system_prompt=RAG_SYSTEM_PROMPT,
+                    max_tokens=512
+                )
+                return KnowledgeQueryResponse(
+                    code=0,
+                    message="success",
+                    data={
+                        "answer": fallback_answer,
+                        "sources": [],
+                    }
+                )
+            except Exception as llm_error:
+                logger.error(f"LLM 兜底调用失败: {llm_error}")
+                return KnowledgeQueryResponse(
+                    code=0,
+                    message="success",
+                    data={
+                        "answer": None,
+                        "sources": [],
+                    }
+                )
 
         # 3. 构建结构化 RAG 提示词
         context = rag_result["context_used"]
@@ -80,7 +94,7 @@ async def query_knowledge(request: KnowledgeQueryRequest):
 
         # 4. 调用LLM生成回答
         try:
-            ai_answer = await llm_client.chat_text(rag_prompt, system_prompt=RAG_SYSTEM_PROMPT)
+            ai_answer = await llm_client.chat_text(rag_prompt, system_prompt=RAG_SYSTEM_PROMPT, max_tokens=512)
         except Exception as llm_error:
             logger.error(f"LLM 调用失败: {llm_error}")
             return KnowledgeQueryResponse(

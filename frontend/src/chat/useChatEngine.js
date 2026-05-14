@@ -53,7 +53,6 @@ export function useChatEngine({
     { type: 'ai', text: getWelcomeMessage(false) }
   ]);
   const [chatInput, setChatInput] = useState('');
-  const [knowledgeStatus, setKnowledgeStatus] = useState('loading');
   const chatContainerRef = useRef(null);
 
   // 自动滚动到底部
@@ -62,17 +61,6 @@ export function useChatEngine({
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
   }, [chatMessages]);
-
-  // mount 时检查知识库健康状态
-  useEffect(() => {
-    fetch(`${API_BASE}/api/v1/knowledge/health`)
-      .then(r => r.json())
-      .then(data => {
-        const docCount = data?.stats?.total_documents ?? 0;
-        setKnowledgeStatus(docCount > 0 ? 'ready' : 'empty');
-      })
-      .catch(() => setKnowledgeStatus('error'));
-  }, []);
 
   // 查询知识库
   const queryKnowledgeBase = useCallback(async (message, style, roomType) => {
@@ -97,23 +85,7 @@ export function useChatEngine({
 
   // 处理知识问答路径
   const handleKnowledgeQuery = useCallback(async (messageText) => {
-    // 检查知识库状态
-    if (knowledgeStatus === 'empty') {
-      setChatMessages(prev => [...prev, {
-        type: 'ai',
-        text: '知识库尚未初始化。您可以直接上传房间照片开始设计，或联系管理员初始化知识库。',
-      }]);
-      return;
-    }
-    if (knowledgeStatus === 'error') {
-      setChatMessages(prev => [...prev, {
-        type: 'ai',
-        text: '知识库暂时不可用。您可以上传房间照片开始设计。',
-      }]);
-      return;
-    }
-
-    setChatMessages(prev => [...prev, { type: 'ai', text: '正在查询知识库...' }]);
+    setChatMessages(prev => [...prev, { type: 'ai', text: '正在思考...' }]);
 
     const result = await queryKnowledgeBase(messageText, selectedStyle, selectedRoom);
 
@@ -123,8 +95,6 @@ export function useChatEngine({
         msgs[msgs.length - 1] = {
           type: 'ai',
           text: result.answer,
-          sources: result.sources,
-          isKnowledgeAnswer: true,
         };
         return msgs;
       });
@@ -133,14 +103,12 @@ export function useChatEngine({
         const msgs = [...prev];
         msgs[msgs.length - 1] = {
           type: 'ai',
-          text: result?.need_init
-            ? '知识库尚未初始化。请联系管理员运行初始化脚本。'
-            : '抱歉，我暂时无法回答这个问题。您可以尝试上传图片生成设计方案。',
+          text: 'AI 助手正在休息中，请稍后再来问我吧～',
         };
         return msgs;
       });
     }
-  }, [knowledgeStatus, selectedStyle, selectedRoom, queryKnowledgeBase]);
+  }, [selectedStyle, selectedRoom, queryKnowledgeBase]);
 
   // 处理图片生成路径
   const handleGenerate = useCallback(async (messageText) => {
@@ -246,6 +214,11 @@ export function useChatEngine({
 
     if (route === 'knowledge') {
       await handleKnowledgeQuery(messageText);
+    } else if (route === 'upload_hint') {
+      setChatMessages(prev => [...prev, {
+        type: 'ai',
+        text: '请先上传一张房间照片，我才能为您生成设计方案。',
+      }]);
     } else if (route === 'generate') {
       await handleGenerate(messageText);
     }
@@ -335,6 +308,5 @@ export function useChatEngine({
     chatContainerRef,
     sendMessage,
     sendMessageWithMask,
-    knowledgeStatus,
   };
 }

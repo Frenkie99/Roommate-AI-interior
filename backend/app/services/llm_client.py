@@ -25,11 +25,18 @@ class LLMModel(str, Enum):
 
 class LLMClient:
     """LLM 客户端 - API易平台"""
-    
+
     def __init__(self):
         self.BASE_URL = "https://api.apiyi.com"
-        self.client = httpx.AsyncClient(timeout=60.0)
+        self._client = None
         self._api_key = None
+
+    @property
+    def client(self):
+        """懒初始化 httpx client，reload 后自动重建"""
+        if self._client is None or self._client.is_closed:
+            self._client = httpx.AsyncClient(timeout=60.0)
+        return self._client
     
     @property
     def api_key(self) -> str:
@@ -263,7 +270,8 @@ Output a single valid JSON object."""
         self,
         prompt: str,
         model: LLMModel = LLMModel.DEEPSEEK_CHAT,
-        system_prompt: str = "你是专业室内设计顾问。"
+        system_prompt: str = "你是专业室内设计顾问。",
+        max_tokens: int = 2048
     ) -> str:
         """
         纯文本对话（用于RAG问答）- 支持 OpenAI 兼容格式
@@ -272,6 +280,7 @@ Output a single valid JSON object."""
             prompt: 完整的对话提示词
             model: LLM模型（默认使用 DeepSeek）
             system_prompt: 系统提示词（可自定义）
+            max_tokens: 最大输出 token 数
 
         Returns:
             AI生成的文本回复
@@ -288,7 +297,7 @@ Output a single valid JSON object."""
                     {"role": "user", "content": prompt}
                 ],
                 "temperature": 0.7,
-                "max_tokens": 2048
+                "max_tokens": max_tokens
             }
             api_url = f"{self.BASE_URL}/v1/chat/completions"
         else:
@@ -301,7 +310,7 @@ Output a single valid JSON object."""
                     "responseModalities": ["TEXT"],
                     "responseMimeType": "text/plain",
                     "temperature": 0.7,
-                    "maxOutputTokens": 2048
+                    "maxOutputTokens": max_tokens
                 }
             }
             model_name = model.value if hasattr(model, 'value') else str(model)
