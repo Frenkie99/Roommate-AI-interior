@@ -14,10 +14,6 @@
   <img src="frontend/public/screenshots/screenshot1.jpg" alt="功能截图1" width="900"/>
   <br/>
   <img src="frontend/public/screenshots/screenshot2.jpg" alt="功能截图2" width="900"/>
-  <br/>
-  <img src="frontend/public/screenshots/screenshot3.jpg" alt="功能截图3" width="900"/>
-  <br/>
-  <img src="frontend/public/screenshots/screenshot4.jpg" alt="功能截图4" width="900"/>
 </div>
 
 ---
@@ -178,7 +174,11 @@ AI-装修效果图生成器/
 │   │   ├── routes/           # 路由
 │   │   │   └── image.py      # 图片处理路由
 │   │   ├── services/         # 服务层
-│   │   │   ├── nano_banana.py    # Nano Banana API封装
+│   │   │   ├── getgoapi_client.py # API易 Gemini 图像生成封装
+│   │   │   ├── llm_client.py      # LLM 智能提示词（API易）
+│   │   │   ├── sam_service.py     # Segmind SAM3 分割封装
+│   │   │   ├── inpaint_service.py # 局部精修服务
+│   │   │   ├── knowledge_service.py # RAG 知识问答
 │   │   │   └── image_processor.py # 图片处理服务
 │   │   ├── models/           # 数据模型
 │   │   └── utils/            # 工具函数
@@ -232,7 +232,7 @@ AI-装修效果图生成器/
         ↓
 4. 后端预处理图片（压缩、格式转换）
         ↓
-5. 调用 Nano Banana Pro API
+5. 调用 API易 Gemini 图像生成 API
    - 传入原图
    - 传入装修风格参数
    - 传入生成提示词(Prompt)
@@ -261,13 +261,16 @@ def generate_renovation_image(original_image, style, room_type):
         preserve_structure=True  # 保持原始房间结构
     )
     
-    # 3. 调用 Grsai Nano Banana API
-    result = nano_banana_api.generate(
-        image=processed_image,
+    # 3. 调用 API易 Gemini 图像生成 API
+    result = await getgoapi_client.generate_with_fallback(
         prompt=prompt,
-        model="nano-banana"
+        reference_image=processed_image,
+        model_priority=[
+            "gemini-3-pro-image-preview",
+            "gemini-2.5-flash-image",
+        ],
     )
-    
+
     return result
 ```
 
@@ -378,54 +381,67 @@ human, person, people, animals
 
 ## 🔌 API 接口设计
 
-### 1. 图片上传并生成效果图
+> 当前接口为**同步实现**：请求会阻塞直到效果图生成完成（或失败），无需轮询 `task_id`。
+> 完整接口文档见 [docs/api-reference.md](docs/api-reference.md)。
+
+### 1. 生成效果图（同步）
 
 ```
 POST /api/v1/generate
+Content-Type: multipart/form-data
 ```
 
 **请求参数:**
 
 | 参数 | 类型 | 必填 | 描述 |
 |-----|------|-----|------|
-| image | File | 是 | 毛坯房图片文件(PNG/JPG) |
-| style | String | 是 | 装修风格标识 |
-| room_type | String | 否 | 房间类型(客厅/卧室/厨房等) |
-| custom_prompt | String | 否 | 自定义提示词 |
+| image | File | 是 | 毛坯房图片(PNG/JPG，≤10MB) |
+| style | String | 是 | 装修风格标识，见 `GET /api/v1/styles` |
+| room_type | String | 否 | 房间类型，见 `GET /api/v1/room-types` |
+| custom_prompt | String | 否 | 用户自定义补充提示词 |
+| aspect_ratio | String | 否 | 输出比例：`auto` / `1:1` / `16:9` / `9:16` / `4:3` / `3:4`（默认 `auto`） |
+| image_size | String | 否 | 输出尺寸：`1K` / `2K` / `4K`（默认 `1K`） |
 
-**响应示例:**
+**响应示例（成功）:**
 
 ```json
 {
-  "code": 200,
+  "code": 0,
   "message": "success",
   "data": {
-    "task_id": "abc123",
-    "status": "processing",
-    "estimated_time": 30
+    "task_id": "abc12345",
+    "status": "succeeded",
+    "input_image": "20260101_120000_abc12345_input.jpg",
+    "output_urls": ["/output/20260101_120000_abc12345_output_0.png"],
+    "style": "modern_minimalist",
+    "prompt": "<最终发给模型的提示词>",
+    "used_model": "gemini-3-pro-image-preview",
+    "llm_analysis": "<LLM 对毛坯房的结构识别结果>",
+    "llm_enabled": true
   }
 }
 ```
 
-### 2. 查询生成状态
-
-```
-GET /api/v1/task/{task_id}
-```
-
-**响应示例:**
+**响应示例（失败）:**
 
 ```json
 {
-  "code": 200,
-  "data": {
-    "task_id": "abc123",
-    "status": "completed",
-    "result_url": "https://xxx.com/result/abc123.png",
-    "created_at": "2025-01-19T16:00:00Z"
-  }
+  "code": -1,
+  "message": "<错误描述>",
+  "data": null
 }
 ```
+
+### 2. 辅助接口
+
+| 接口 | 说明 |
+|------|------|
+| `GET /api/v1/styles` | 列出所有支持的装修风格 |
+| `GET /api/v1/room-types` | 列出所有支持的房间类型 |
+| `GET /api/v1/models` | 列出当前可用的 Gemini 图像模型 |
+| `POST /api/v1/segment/box` | SAM3 框选分割（局部精修） |
+| `POST /api/v1/inpaint` | 选区局部重绘 |
+| `POST /api/v1/knowledge/ask` | RAG 装修知识问答 |
 
 ---
 
@@ -493,14 +509,15 @@ npm run dev
 
 - Node.js >= 18.0
 - Python >= 3.10
-- Nano Banana Pro API Key
+- API易 平台 API Key（用于 Gemini 图像生成 + LLM 提示词分析）
+- Segmind API Key（用于 SAM3 分割）
 
 ### 安装步骤
 
 ```bash
 # 1. 克隆项目
 git clone <repository-url>
-cd AI-装修效果图生成器
+cd Roommate-AI-interior
 
 # 2. 安装前端依赖
 cd frontend
@@ -512,7 +529,7 @@ pip install -r requirements.txt
 
 # 4. 配置环境变量
 cp .env.example .env
-# 编辑 .env 文件，填入 Nano Banana Pro API Key
+# 编辑 .env 文件，填入 APIYI_KEY / LLM_APIYI_KEY / SEGMIND_API_KEY
 
 # 5. 启动后端服务
 python -m uvicorn app.main:app --reload --port 8000
@@ -524,73 +541,45 @@ npm run dev
 
 ---
 
-## 📝 开发计划
-
-### Phase 1: 基础功能 (MVP)
-- [ ] 搭建前后端项目框架
-- [ ] 实现图片上传功能
-- [ ] 集成 Nano Banana Pro API
-- [ ] 实现基础效果图生成
-- [ ] 效果图预览和下载
-
-### Phase 2: 功能增强
-- [ ] 多种装修风格支持
-- [ ] 房间类型识别
-- [ ] 批量生成功能
-- [ ] 历史记录管理
-
-### Phase 3: 体验优化
-- [ ] 生成进度实时展示
-- [ ] 结果对比功能(Before/After)
-- [ ] 局部重新生成
-- [ ] 用户反馈收集
-
-### Phase 4: 商业化
-- [ ] 用户账户系统
-- [ ] 付费功能模块
-- [ ] 高级风格定制
-- [ ] API开放平台
-
----
-
 ## ⚙️ 环境变量配置
 
-```env
-# Grsai Nano Banana API 配置
-# 在 https://grsaiapi.com 获取API Key
-GRSAI_API_KEY=your_api_key_here
+> 环境变量的**单一来源**为 [`backend/.env.example`](backend/.env.example)。
+> 部署时复制为 `backend/.env` 并填入真实值，**不要把 `.env` 提交到 Git**。
 
-# API地址（二选一）
-# 海外: https://grsaiapi.com
-# 国内直连: https://grsai.dakka.com.cn
-GRSAI_API_URL=https://grsai.dakka.com.cn
+下表列出当前代码实际读取（`os.getenv`）的关键变量：
 
-# 默认模型: nano-banana, nano-banana-fast, nano-banana-pro 等
-DEFAULT_MODEL=nano-banana
+| 变量名 | 必填 | 用途 | 读取位置 |
+|--------|------|------|----------|
+| `APIYI_KEY` | 是 | API易 Gemini 图像生成 API Key | `services/getgoapi_client.py`, `services/inpaint_service.py` |
+| `LLM_APIYI_KEY` | 是 | API易 LLM 智能提示词分析 Key（可与 `APIYI_KEY` 同值） | `services/llm_client.py` |
+| `SEGMIND_API_KEY` | 是 | Segmind SAM3 分割 API Key | `services/sam_service.py` |
+| `USE_LLM_PROMPT` | 否 | 是否启用 LLM 提示词增强（默认 `true`） | `routes/image.py`, `main.py` |
+| `SERVER_PORT` | 否 | 后端端口（默认 `8000`） | 启动脚本 |
+| `FRONTEND_URL` | 否 | 前端地址（用于 CORS） | `main.py` |
+| `BASE_URL` | 否 | 后端外部访问 URL（用于拼接 output 图片链接） | `routes/segment.py` |
+| `INPUT_DIR` / `OUTPUT_DIR` | 否 | 上传/输出目录 | `routes/image.py`, `routes/segment.py` |
+| `MAX_FILE_SIZE` | 否 | 上传体积上限（字节，默认 10MB） | 上传校验 |
 
-# 服务配置
-SERVER_PORT=8000
-FRONTEND_URL=http://localhost:5173
-
-# 存储配置
-INPUT_DIR=./input
-OUTPUT_DIR=./output
-MAX_FILE_SIZE=10485760  # 10MB
-```
+完整模板请见 [`backend/.env.example`](backend/.env.example)。
 
 ---
 
 ## 🔌 支持的模型
 
-| 模型ID | 名称 | 说明 |
-|-------|------|------|
-| nano-banana-fast | 快速版 | 生成速度快，适合预览 |
-| nano-banana | 标准版 | 平衡速度和质量（推荐） |
-| nano-banana-pro | 专业版 | 更高质量，支持1K/2K/4K |
-| nano-banana-pro-vt | 专业增强版 | 视觉增强 |
-| nano-banana-pro-cl | 色彩增强版 | 色彩更丰富 |
-| nano-banana-pro-vip | VIP版 | 支持1K/2K |
-| nano-banana-pro-4k-vip | 4K VIP版 | 4K超高清 |
+图像生成走 API易（apiyi.com）的 Gemini 多模态系列，代码内置**自动降级**机制：优先调用 Pro，失败时回退到 Flash。模型清单见 [`backend/app/services/getgoapi_client.py`](backend/app/services/getgoapi_client.py) 中的 `GetGoModel` 枚举。
+
+| 模型 ID | 用途 | 说明 |
+|---------|------|------|
+| `gemini-3-pro-image-preview` | 默认首选 | 质量最高，支持 1K / 2K / 4K 输出 |
+| `gemini-2.5-flash-image` | 自动降级 | 速度更快，作为 Pro 失败时的兜底 |
+| `gemini-2.5-flash-image-preview` | 备用 | Flash 系列预览版本 |
+
+> 不再使用 `nano-banana` 系列。历史文档中如有遗留，以本节为准。
+
+辅助模型：
+
+- **分割**：Segmind SAM3（`services/sam_service.py`）
+- **提示词分析 / 知识问答**：API易 LLM 通道 + DeepSeek V3（RAG）
 
 ---
 
