@@ -12,6 +12,11 @@ from evals.config import METRIC_RANGES, EVALS_DIR, PROJECT_ROOT
 from evals.scorer.base import BaseScorer
 
 
+# 评分语义版本号：v2 起 SSIM->百分制 直接映射 [0,1]->[0,100]，
+# 不再使用 (ssim+1)/2 的对称映射；与 v1 历史结果不可直接比较。
+__metric_version__ = 2
+
+
 def _resolve(path: str) -> Path:
     p = Path(path)
     if p.is_absolute():
@@ -22,10 +27,20 @@ def _resolve(path: str) -> Path:
 
 
 def _load_gray(path: str, size=(256, 256)) -> np.ndarray:
-    img = Image.open(_resolve(path)).convert("RGB")
-    img = img.resize(size)
-    arr = np.array(img)
-    return cv2.cvtColor(arr, cv2.COLOR_RGB2GRAY)
+    """以保持纵横比的方式加载灰度图：thumbnail + 中灰 letterbox 填充。
+
+    之前 Image.resize((256,256)) 会强制拉伸非方形图，
+    将横向/纵向墙线扭曲后再做 Canny+SSIM，把 resize 噪声混入"结构差异"。
+    现在使用 LANCZOS 重采样按比例缩放到 fit，剩余区域用中灰 (128) 填充，
+    使 input 与 output 经历相同的 letterbox 变换、SSIM 比较等价画布。
+    """
+    img = Image.open(_resolve(path)).convert("L")
+    img.thumbnail(size, Image.LANCZOS)  # 按比例缩放，最长边 = size 对应边
+    canvas = Image.new("L", size, 128)
+    x = (size[0] - img.width) // 2
+    y = (size[1] - img.height) // 2
+    canvas.paste(img, (x, y))
+    return np.array(canvas)
 
 
 class MockStructuralFidelityScorer(BaseScorer):
@@ -67,7 +82,10 @@ class RealStructuralFidelityScorer(BaseScorer):
         ssim_edge = ssim(edge_in, edge_out, data_range=255)
         ssim_gray = ssim(gray_in, gray_out, data_range=255)
 
-        score = (ssim_edge * 0.6 + ssim_gray * 0.4 + 1) / 2 * 100  # → [0, 100]
+        # v2: SSIM 在自然图像上几乎总落在 [0, 1]，直接映射到 [0, 100]。
+        # 之前 (ssim+1)/2*100 把 SSIM=0 也算 50/100，灾难性失败仍像及格。
+        weighted = max(0.0, ssim_edge * 0.6 + ssim_gray * 0.4)
+        score = weighted * 100
         return round(max(0.0, min(100.0, score)), 2)
 
 

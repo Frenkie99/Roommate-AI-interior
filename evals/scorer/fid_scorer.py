@@ -1,9 +1,12 @@
 """FID 评分器"""
 
+import logging
 import random
 
 from evals.config import METRIC_RANGES
 from evals.scorer.base import BaseScorer
+
+logger = logging.getLogger(__name__)
 
 
 class MockFIDScorer(BaseScorer):
@@ -24,17 +27,29 @@ class MockFIDScorer(BaseScorer):
 
 
 class RealFIDScorer(BaseScorer):
+    _warned = False
+
+    def __init__(self) -> None:
+        if not RealFIDScorer._warned:
+            logger.warning(
+                "RealFIDScorer is not yet implemented; score() will return None. "
+                "Track issue #32."
+            )
+            RealFIDScorer._warned = True
+
     @property
     def name(self) -> str:
         return "fid"
 
     @property
     def description(self) -> str:
-        return "FID - 生成图像真实感 (real)"
+        return "FID - 生成图像真实感 (real, 未实现)"
 
     def score(self, input_path: str, output_path: str,
-              prompt: str = "", **kwargs) -> float:
-        raise NotImplementedError("Real FID scorer not yet implemented")
+              prompt: str = "", **kwargs):
+        # 返回 None 而不是 raise，让 runner 在 USE_MOCK=False 时不再
+        # 首对图片就 crash；缺失值由 runner / result_store 处理。
+        return None
 
 
 def create_fid_scorer(use_mock: bool = True) -> BaseScorer:
