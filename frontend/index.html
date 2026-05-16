@@ -8,8 +8,12 @@
     <title>Roommate | AI Interior Design</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/alibaba-puhuiti-webfont@1.0.0/css/alibaba-puhuiti.min.css" rel="stylesheet">
+    <!-- TODO #50: 添加 integrity="sha384-..." SRI 校验，或将字体下载到 /public/fonts/ 自托管。
+         compute SRI: curl -s <url> | openssl dgst -sha384 -binary | openssl base64 -A -->
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" crossorigin="anonymous">
+    <!-- TODO #50: 添加 integrity="sha384-..." SRI 校验，或将字体下载到 /public/fonts/ 自托管。
+         compute SRI: curl -s <url> | openssl dgst -sha384 -binary | openssl base64 -A -->
+    <link href="https://cdn.jsdelivr.net/npm/alibaba-puhuiti-webfont@1.0.0/css/alibaba-puhuiti.min.css" rel="stylesheet" crossorigin="anonymous">
   </head>
   <body class="font-sans text-obsidian antialiased">
     <div id="root"></div>

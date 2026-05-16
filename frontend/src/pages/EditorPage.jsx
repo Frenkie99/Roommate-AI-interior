@@ -31,6 +31,17 @@ const DECORATION_TYPES = [
   { id: 'rug', name: '地毯', emoji: '🧶' },
 ];
 
+// issue #46: 与 Dropzone 路径保持一致的客户端校验，避免 50MB HEIC 等大文件触发 FileReader OOM
+const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
+
+function validateImageFile(file) {
+  if (!file) return '请选择图片';
+  if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) return '仅支持 JPG / PNG / WebP 格式';
+  if (file.size > MAX_IMAGE_SIZE) return '图片不能超过 10MB';
+  return null;
+}
+
 export default function EditorPage() {
   const [image, setImage] = useState(null);
   const [currentTool, setCurrentTool] = useState('point');
@@ -48,31 +59,47 @@ export default function EditorPage() {
 
   const handleImageLoad = useCallback((e) => {
     const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setImage({
-          file,
-          src: event.target.result,
-          name: file.name
-        });
-        setMasks([]);
-        setSelectedMask(null);
-        setHistory([{ image: event.target.result, masks: [] }]);
-        setHistoryIndex(0);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+    // issue #46: 在 readAsDataURL 之前先做 MIME / 体积白名单校验
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      toast.error(validationError);
+      e.target.value = '';
+      return;
     }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setImage({
+        file,
+        src: event.target.result,
+        name: file.name
+      });
+      setMasks([]);
+      setSelectedMask(null);
+      setHistory([{ image: event.target.result, masks: [] }]);
+      setHistoryIndex(0);
+    };
+    reader.onerror = () => {
+      toast.error('图片读取失败');
+    };
+    reader.readAsDataURL(file);
   }, []);
 
   const handleCanvasClick = useCallback(async (e) => {
     if (!image || currentTool !== 'point' || isProcessing) return;
 
+    // issue #47: 图片尚未解码完成时 naturalWidth=0 会导致 scaleX=Infinity，
+    // 进而把 NaN 坐标发到 /segment/by-point，提前返回避免脏数据
+    const img = imageRef.current;
+    if (!img || !img.complete || img.naturalWidth === 0) return;
+
     const canvas = canvasRef.current;
+    if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
-    const scaleX = imageRef.current.naturalWidth / rect.width;
-    const scaleY = imageRef.current.naturalHeight / rect.height;
-    
+    if (rect.width === 0 || rect.height === 0) return;
+    const scaleX = img.naturalWidth / rect.width;
+    const scaleY = img.naturalHeight / rect.height;
+
     const x = Math.round((e.clientX - rect.left) * scaleX);
     const y = Math.round((e.clientY - rect.top) * scaleY);
 
@@ -236,13 +263,16 @@ export default function EditorPage() {
                     ))}
 
                     {/* Click Points */}
-                    {masks.filter(m => m.point).map(mask => (
+                    {/* issue #47: 仅当图片已解码完成（naturalWidth>0）才渲染点位，
+                        避免除以 0 产生 NaN% 的内联样式 */}
+                    {imageRef.current?.naturalWidth > 0 &&
+                      masks.filter(m => m.point).map(mask => (
                       <div
                         key={`point-${mask.id}`}
                         className="absolute w-4 h-4 bg-primary-500 rounded-full border-2 border-white shadow-lg transform -translate-x-1/2 -translate-y-1/2 pointer-events-none"
                         style={{
-                          left: `${(mask.point.x / imageRef.current?.naturalWidth) * 100}%`,
-                          top: `${(mask.point.y / imageRef.current?.naturalHeight) * 100}%`
+                          left: `${(mask.point.x / imageRef.current.naturalWidth) * 100}%`,
+                          top: `${(mask.point.y / imageRef.current.naturalHeight) * 100}%`
                         }}
                       />
                     ))}
