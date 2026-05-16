@@ -3,6 +3,7 @@
 import json
 import logging
 from pathlib import Path
+from typing import Optional
 
 import streamlit as st
 from PIL import Image
@@ -11,34 +12,41 @@ from evals.config import METRIC_RANGES, METRIC_LABELS, BADCASE_NOTES_PATH, EVALS
 
 logger = logging.getLogger(__name__)
 
+# 允许 st.image 读取的根目录白名单。与 image_comparison 中保持一致：
+# evals/ 下的评测数据 + PROJECT_ROOT/output 下的渲染结果。
+_ALLOWED_ROOTS = (
+    EVALS_DIR.resolve(),
+    (PROJECT_ROOT / "output").resolve(),
+)
 
-def _resolve(path: str) -> Path:
+
+def _resolve(path: str) -> Optional[Path]:
     """
-    安全地解析路径，防止路径遍历攻击：
-    1. 不接受绝对路径
-    2. resolve() 后必须仍在允许的目录内
+    安全地解析 metadata 中的图片路径，返回沙箱内的绝对路径；
+    若不安全或为空则返回 ``None``，由调用方跳过渲染。
+
+    规则：
+    1. 拒绝空值与绝对路径（绝对路径是 path-traversal sink，
+       恶意 metadata 写入 "/etc/passwd" 会被 st.image 直接渲染）。
+    2. 以 EVALS_DIR 为基准解析相对路径，resolve() 后必须仍位于
+       白名单（EVALS_DIR 或 PROJECT_ROOT/output）之内。
     """
+    if not path:
+        return None
+
     p = Path(path)
 
-    # 不接受绝对路径
     if p.is_absolute():
-        logger.warning(f"REJECTED absolute path: {path!r}")
-        raise ValueError(f"绝对路径不允许: {path}")
+        logger.warning("REJECTED absolute path: %r", path)
+        return None
 
-    # 解析路径
-    if path.startswith("data/"):
-        resolved = (EVALS_DIR / p).resolve()
-        allowed_root = EVALS_DIR.resolve()
-    else:
-        resolved = (PROJECT_ROOT / p).resolve()
-        allowed_root = PROJECT_ROOT.resolve()
+    candidate = (EVALS_DIR / p).resolve()
+    for root in _ALLOWED_ROOTS:
+        if candidate.is_relative_to(root):
+            return candidate
 
-    # 确保解析后仍在允许范围内
-    if not resolved.is_relative_to(allowed_root):
-        logger.warning(f"REJECTED path escape: {path!r} -> {resolved}")
-        raise ValueError(f"路径逃逸: {path}")
-
-    return resolved
+    logger.warning("REJECTED path escape: %r -> %s", path, candidate)
+    return None
 
 
 def _normalize_score(scores: dict) -> float:
@@ -122,14 +130,18 @@ def _render_case(pair, result: dict, notes: dict) -> None:
         st.write("**毛坯原图**")
         if pair:
             input_path = _resolve(pair.input_path)
-            if input_path.exists():
+            if input_path is None:
+                st.caption("(路径不安全或为空，已跳过)")
+            elif input_path.exists():
                 st.image(str(input_path), use_container_width=True)
 
     with col2:
         st.write("**AI 效果图**")
         if pair and pair.output_path:
             output_path = _resolve(pair.output_path)
-            if output_path.exists():
+            if output_path is None:
+                st.caption("(路径不安全或为空，已跳过)")
+            elif output_path.exists():
                 st.image(str(output_path), use_container_width=True)
 
     # 评分

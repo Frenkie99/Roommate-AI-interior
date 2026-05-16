@@ -39,8 +39,21 @@ class ResultStore:
             raise
 
     def load(self) -> Dict[str, Any]:
+        # FileNotFoundError 由调用方处理（上层会提示运行 runner）。
+        # JSONDecodeError 通常意味着写入过程被中断、磁盘损坏或外部
+        # 改动留下了不合法的 JSON。此时不让 UI 直接崩溃，而是降级
+        # 为空结果，让用户看到"暂无评测结果"并自行重跑评测。
         with open(self.path, "r", encoding="utf-8") as f:
-            return json.load(f)
+            try:
+                return json.load(f)
+            except json.JSONDecodeError:
+                return {
+                    "version": "1.0",
+                    "created_at": None,
+                    "total_results": 0,
+                    "metadata": {"corrupted": True, "source": self.path},
+                    "results": [],
+                }
 
     def get_results_list(self) -> List[EvalResult]:
         data = self.load()
