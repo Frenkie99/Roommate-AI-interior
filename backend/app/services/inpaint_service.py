@@ -5,6 +5,7 @@ Inpainting 局部替换服务
 
 import os
 import io
+import asyncio
 import base64
 import httpx
 from typing import Optional
@@ -12,29 +13,55 @@ from PIL import Image
 import numpy as np
 
 
+# #73: 支持的 aspectRatio 候选集（来自 API易 Gemini 文档）
+_SUPPORTED_ASPECT_RATIOS = {
+    "1:1": 1.0,
+    "4:3": 4 / 3,
+    "3:4": 3 / 4,
+    "16:9": 16 / 9,
+    "9:16": 9 / 16,
+}
+
+
+def _aspect_ratio_for_size(width: int, height: int) -> str:
+    """
+    #73: 根据原图尺寸映射到 API 支持的最接近宽高比。
+    避免硬编码 4:3 导致 16:9 / 1:1 输入被压缩变形，违反
+    "keep all other parts of the image exactly the same" 的契约。
+    """
+    if height <= 0 or width <= 0:
+        return "1:1"
+    ratio = width / height
+    return min(_SUPPORTED_ASPECT_RATIOS.items(), key=lambda kv: abs(kv[1] - ratio))[0]
+
+
 class InpaintService:
     """
     Inpainting 服务
     通过 API易平台 Gemini模型实现局部替换
     """
-    
+
+    # #74: 失败重试次数（对齐 getgoapi_client / llm_client）
+    MAX_RETRIES = 3
+
     def __init__(self):
         # 使用API易平台 - 与基础生图相同的配置
         self.api_key = os.getenv("APIYI_KEY", "sk-5Cd5C9UJNSYfblvr375057376f6746Eb9b3818D27b3e00A3")
         self.api_url = "https://api.apiyi.com"
+        self.model = "gemini-3-pro-image-preview"
+        # #75: 长生命 AsyncClient，复用 TLS 握手与连接池
         self.client = httpx.AsyncClient(timeout=300.0)
 
     async def close(self):
-        """关闭客户端连接"""
+        """关闭客户端连接（建议在 FastAPI shutdown hook 中调用）"""
         await self.client.aclose()
-        self.model = "gemini-3-pro-image-preview"
-        
+
     def _image_to_base64(self, image: Image.Image, format: str = "PNG") -> str:
         """将PIL Image转换为base64字符串"""
         buffer = io.BytesIO()
         image.save(buffer, format=format)
         return base64.b64encode(buffer.getvalue()).decode("utf-8")
-    
+
     def _mask_to_base64(self, mask: np.ndarray) -> str:
         """将mask数组转换为base64字符串"""
         mask_array = np.array(mask, dtype=np.uint8)
@@ -42,12 +69,7 @@ class InpaintService:
             mask_array = mask_array * 255
         mask_image = Image.fromarray(mask_array, mode="L")
         return self._image_to_base64(mask_image)
-    
-def _aspect_ratio_for_size(width: int, height: int) -> str:
-    """根据图片尺寸计算最接近的宽高比"""
-    ratio = width / height
-    candidates = {"1:1": 1.0, "4:3": 4/3, "3:4": 3/4, "16:9": 16/9, "9:16": 9/16}
-    return min(candidates.items(), key=lambda kv: abs(kv[1] - ratio))[0]
+
     async def inpaint(
         self,
         image: Image.Image,
@@ -91,48 +113,50 @@ Important requirements:
 
 Generate a new interior design image with the masked area replaced."""
         
-        # 重试机制
-        MAX_RETRIES = 3
-        for attempt in range(MAX_RETRIES):
-            try:
-                # 使用API易的generateContent接口 - 发送原图+mask两张图
-                payload = {
-                    "contents": [{
-                        "parts": [
-                            {
-                                "inlineData": {
-                                    "mimeType": "image/jpeg",
-                                    "data": image_b64
-                                }
-                            },
-                            {
-                                "inlineData": {
-                                    "mimeType": "image/png",
-                                    "data": mask_b64
-                                }
-                            },
-                            {
-                                "text": edit_prompt
-                            }
-                        ]
-                    }],
-                    "generationConfig": {
-                        "responseModalities": ["IMAGE"],
-                        "imageConfig": {
-                            "aspectRatio": _aspect_ratio_for_size(image.size[0], image.size[1]),
-                            "imageSize": "1K"
+        # 使用API易的generateContent接口 - 发送原图+mask两张图
+        payload = {
+            "contents": [{
+                "parts": [
+                    {
+                        "inlineData": {
+                            "mimeType": "image/jpeg",
+                            "data": image_b64
                         }
+                    },
+                    {
+                        "inlineData": {
+                            "mimeType": "image/png",
+                            "data": mask_b64
+                        }
+                    },
+                    {
+                        "text": edit_prompt
                     }
+                ]
+            }],
+            "generationConfig": {
+                "responseModalities": ["IMAGE"],
+                "imageConfig": {
+                    # #73: 按原图尺寸映射宽高比，不再硬编码 4:3
+                    "aspectRatio": _aspect_ratio_for_size(image.size[0], image.size[1]),
+                    "imageSize": "1K"
                 }
-                
-                headers = {
-                    "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json"
-                }
-                
-                api_url = f"{self.api_url}/v1beta/models/{self.model}:generateContent"
+            }
+        }
+
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+
+        api_url = f"{self.api_url}/v1beta/models/{self.model}:generateContent"
+
+        # #74: 5xx / Timeout 重试 3 次，4xx 直接抛错（对齐 getgoapi_client）
+        last_error: Optional[str] = None
+        for attempt in range(self.MAX_RETRIES):
+            try:
                 response = await self.client.post(api_url, headers=headers, json=payload)
-                
+
                 if response.status_code == 200:
                     result = response.json()
                     # 解析返回的图片（与基础生图相同格式）
@@ -145,19 +169,27 @@ Generate a new interior design image with the masked area replaced."""
                                 if img_data:
                                     return Image.open(io.BytesIO(base64.b64decode(img_data)))
                     raise Exception("API返回中未找到图片")
-                elif response.status_code >= 500 and attempt < MAX_RETRIES - 1:
-                    # 服务器错误，重试
-                    import asyncio
+
+                if response.status_code >= 500:
+                    # 服务端错误，重试
+                    last_error = f"HTTP {response.status_code}: {response.text}"
+                    if attempt < self.MAX_RETRIES - 1:
+                        await asyncio.sleep(2 * (attempt + 1))
+                        continue
+                    raise Exception(f"API错误（已重试 {self.MAX_RETRIES} 次）: {last_error}")
+
+                # 4xx：客户端错误，不重试
+                raise Exception(f"API错误: {response.status_code} - {response.text}")
+
+            except httpx.TimeoutException as e:
+                last_error = f"请求超时: {e}"
+                if attempt < self.MAX_RETRIES - 1:
                     await asyncio.sleep(2 * (attempt + 1))
                     continue
-                else:
-                    raise Exception(f"API错误: {response.status_code} - {response.text}")
-            except Exception as e:
-                if attempt < MAX_RETRIES - 1:
-                    import asyncio
-                    await asyncio.sleep(2 * (attempt + 1))
-                    continue
-                raise
+                raise Exception(f"API请求超时（已重试 {self.MAX_RETRIES} 次）: {last_error}")
+
+        # 理论上不应到达此处（循环内总会 return 或 raise），保底兜底
+        raise Exception(f"API请求失败: {last_error}")
     
     async def replace_furniture(
         self,

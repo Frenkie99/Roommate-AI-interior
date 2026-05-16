@@ -48,13 +48,14 @@ class SAM3Service:
     
     def __init__(self):
         self.api_key = os.getenv("SEGMIND_API_KEY", "SG_63bab65c13127931")
+        self.api_url = "https://api.segmind.com/v1/sam3-image"
+        # #75: 长生命 AsyncClient，复用 TLS 握手与连接池
         self.client = httpx.AsyncClient(timeout=60.0)
 
     async def close(self):
-        """关闭客户端连接"""
+        """关闭客户端连接（建议在 FastAPI shutdown hook 中调用）"""
         await self.client.aclose()
-        self.api_url = "https://api.segmind.com/v1/sam3-image"
-        
+
     def _image_to_base64(self, image: Image.Image) -> str:
         """将PIL Image转换为base64字符串"""
         buffer = io.BytesIO()
@@ -160,14 +161,17 @@ class SAM3Service:
         
         overlay_data = await self._call_api(payload)
         overlay_base64 = base64.b64encode(overlay_data).decode("utf-8")
-        
+
+        # #62: 不再返回与 overlay 相同的伪 mask_base64。
+        # 之前 mask_base64=overlay_base64 字段实际是带色 overlay PNG，
+        # 下游 inpaint 当 binary mask 使用会得到垃圾结果。
+        # 与 segment_by_box 保持一致：只返回 overlay_base64，由 route 层提取真 mask。
         return {
             "output": {
-                "overlay_base64": overlay_base64,
-                "mask_base64": overlay_base64
+                "overlay_base64": overlay_base64
             }
         }
-    
+
     async def segment_by_box(
         self, 
         image_url: str, 
