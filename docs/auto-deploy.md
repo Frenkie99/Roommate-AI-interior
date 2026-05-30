@@ -37,10 +37,10 @@ PR 合并到 main -> GitHub Actions 登录阿里云 -> 服务器拉取 main -> �
 sudo chown -R admin:admin /var/www/roommate
 ```
 
-允许 GitHub 自动部署时重启指定服务，不需要输入密码：
+允许 GitHub 自动部署时重启指定服务、重载 nginx，不需要输入密码：
 
 ```bash
-echo 'admin ALL=(root) NOPASSWD: /usr/bin/systemctl restart roommate-backend.service, /usr/bin/systemctl reload nginx' | sudo tee /etc/sudoers.d/roommate-deploy
+echo 'admin ALL=(root) NOPASSWD: /usr/bin/systemctl restart roommate-backend.service, /usr/bin/systemctl is-active --quiet nginx, /usr/bin/systemctl reload nginx, /usr/sbin/nginx -t, /usr/sbin/nginx -s reload' | sudo tee /etc/sudoers.d/roommate-deploy
 sudo chmod 440 /etc/sudoers.d/roommate-deploy
 sudo visudo -cf /etc/sudoers.d/roommate-deploy
 ```

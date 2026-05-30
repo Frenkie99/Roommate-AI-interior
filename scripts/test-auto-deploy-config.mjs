@@ -26,4 +26,10 @@ assert.match(deployScript, /git pull --ff-only origin "\$BRANCH"/, 'deploy scrip
 assert.match(deployScript, /npm ci/, 'deploy script should install exact frontend dependencies');
 assert.match(deployScript, /npm run build/, 'deploy script should build the frontend');
 assert.match(deployScript, /systemctl restart "\$BACKEND_SERVICE"/, 'deploy script should restart the backend service');
-assert.match(deployScript, /systemctl reload nginx/, 'deploy script should reload nginx');
+assert.match(deployScript, /reload_nginx\(\)/, 'deploy script should isolate nginx reload logic');
+assert.match(deployScript, /systemctl is-active --quiet nginx/, 'deploy script should prefer systemd nginx reload when active');
+assert.match(deployScript, /nginx -s reload/, 'deploy script should fall back to direct nginx reload');
+
+const guide = readFileSync(guidePath, 'utf8');
+assert.match(guide, /\/usr\/sbin\/nginx -t/, 'guide should allow nginx config test in sudoers');
+assert.match(guide, /\/usr\/sbin\/nginx -s reload/, 'guide should allow direct nginx reload in sudoers');

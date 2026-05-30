@@ -16,6 +16,17 @@ fail() {
   exit 1
 }
 
+reload_nginx() {
+  log "Reloading nginx"
+  if $SUDO systemctl is-active --quiet nginx; then
+    $SUDO systemctl reload nginx
+    return
+  fi
+
+  $SUDO /usr/sbin/nginx -t
+  $SUDO /usr/sbin/nginx -s reload
+}
+
 log "Entering ${APP_DIR}"
 cd "$APP_DIR"
 
@@ -50,7 +61,6 @@ npm run build
 log "Restarting backend: ${BACKEND_SERVICE}"
 $SUDO systemctl restart "$BACKEND_SERVICE"
 
-log "Reloading nginx"
-$SUDO systemctl reload nginx
+reload_nginx
 
 log "Deployment complete"
