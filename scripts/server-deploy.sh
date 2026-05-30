@@ -4,6 +4,7 @@ set -Eeuo pipefail
 APP_DIR="${APP_DIR:-/var/www/roommate}"
 BRANCH="${BRANCH:-main}"
 BACKEND_SERVICE="${BACKEND_SERVICE:-roommate-backend.service}"
+BACKEND_DIR="${APP_DIR}/backend"
 FRONTEND_DIR="${APP_DIR}/frontend"
 SUDO="${SUDO:-sudo -n}"
 
@@ -55,6 +56,14 @@ fi
 log "Pulling origin/${BRANCH}"
 git fetch origin "$BRANCH"
 git pull --ff-only origin "$BRANCH"
+
+log "Installing backend dependencies"
+cd "$BACKEND_DIR"
+if [ -x venv/bin/python ] && [ -f requirements.txt ]; then
+  venv/bin/python -m pip install -r requirements.txt
+elif [ -f requirements.txt ]; then
+  python3 -m pip install -r requirements.txt
+fi
 
 log "Installing frontend dependencies"
 cd "$FRONTEND_DIR"

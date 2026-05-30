@@ -23,6 +23,8 @@ assert.match(deployScript, /set -Eeuo pipefail/, 'deploy script should fail fast
 assert.match(deployScript, /APP_DIR="\$\{APP_DIR:-\/var\/www\/roommate\}"/, 'deploy script should default to the server app directory');
 assert.match(deployScript, /BACKEND_SERVICE="\$\{BACKEND_SERVICE:-roommate-backend\.service\}"/, 'deploy script should default to the backend service');
 assert.match(deployScript, /git pull --ff-only origin "\$BRANCH"/, 'deploy script should fast-forward pull main');
+assert.match(deployScript, /Installing backend dependencies/, 'deploy script should install backend dependencies');
+assert.match(deployScript, /venv\/bin\/python -m pip install -r requirements\.txt/, 'deploy script should use backend venv requirements');
 assert.match(deployScript, /npm ci/, 'deploy script should install exact frontend dependencies');
 assert.match(deployScript, /npm run build/, 'deploy script should build the frontend');
 assert.match(deployScript, /systemctl restart "\$BACKEND_SERVICE"/, 'deploy script should restart the backend service');
