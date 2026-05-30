@@ -1,30 +1,56 @@
-#!/bin/bash
-# 服务器端部署脚本 - 在服务器上执行
+#!/usr/bin/env bash
+set -Eeuo pipefail
 
-echo "开始更新生产环境..."
+APP_DIR="${APP_DIR:-/var/www/roommate}"
+BRANCH="${BRANCH:-main}"
+BACKEND_SERVICE="${BACKEND_SERVICE:-roommate-backend.service}"
+FRONTEND_DIR="${APP_DIR}/frontend"
+SUDO="${SUDO:-sudo -n}"
 
-# 进入项目目录
-cd /var/www/roommate
+log() {
+  printf '\n[%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*"
+}
 
-# 拉取最新代码
-echo "拉取最新代码..."
-git pull origin main
+fail() {
+  printf '\n[deploy failed] %s\n' "$*" >&2
+  exit 1
+}
 
-# 进入前端目录并安装依赖
-echo "安装前端依赖..."
-cd frontend
-npm install
+log "Entering ${APP_DIR}"
+cd "$APP_DIR"
 
-# 构建生产版本
-echo "构建前端..."
+git config --global --add safe.directory "$APP_DIR" >/dev/null 2>&1 || true
+
+if ! git diff --quiet || ! git diff --cached --quiet; then
+  git status -sb
+  fail "Server repository has local tracked changes. Clean them before deployment."
+fi
+
+untracked_files="$(git ls-files --others --exclude-standard)"
+if [ -n "$untracked_files" ]; then
+  printf '%s\n' "$untracked_files"
+  fail "Server repository has untracked files. Clean them before deployment."
+fi
+
+log "Pulling origin/${BRANCH}"
+git fetch origin "$BRANCH"
+git pull --ff-only origin "$BRANCH"
+
+log "Installing frontend dependencies"
+cd "$FRONTEND_DIR"
+if [ -f package-lock.json ]; then
+  npm ci
+else
+  npm install
+fi
+
+log "Building frontend"
 npm run build
 
-# 复制构建文件到 nginx 目录（如果需要）
-# cp -r dist/* /var/www/html/roommate/
+log "Restarting backend: ${BACKEND_SERVICE}"
+$SUDO systemctl restart "$BACKEND_SERVICE"
 
-# 重启 nginx
-echo "重启 nginx..."
-systemctl reload nginx
+log "Reloading nginx"
+$SUDO systemctl reload nginx
 
-echo "部署完成！"
-echo "访问 https://roommate-ai.cn/ 查看效果"
+log "Deployment complete"

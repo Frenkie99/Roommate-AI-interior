@@ -1,0 +1,59 @@
+name: Deploy to Aliyun
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure SSH
+        env:
+          ALIYUN_HOST: ${{ secrets.ALIYUN_HOST }}
+          ALIYUN_PORT: ${{ secrets.ALIYUN_PORT }}
+          ALIYUN_SSH_KEY: ${{ secrets.ALIYUN_SSH_KEY }}
+        run: |
+          set -Eeuo pipefail
+          : "${ALIYUN_HOST:?Set ALIYUN_HOST in GitHub Secrets}"
+          : "${ALIYUN_SSH_KEY:?Set ALIYUN_SSH_KEY in GitHub Secrets}"
+
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$ALIYUN_SSH_KEY" > ~/.ssh/aliyun_deploy_key
+          chmod 600 ~/.ssh/aliyun_deploy_key
+
+          port="${ALIYUN_PORT:-22}"
+          ssh-keyscan -p "$port" -H "$ALIYUN_HOST" >> ~/.ssh/known_hosts
+
+      - name: Run server deployment
+        env:
+          ALIYUN_HOST: ${{ secrets.ALIYUN_HOST }}
+          ALIYUN_USER: ${{ secrets.ALIYUN_USER }}
+          ALIYUN_PORT: ${{ secrets.ALIYUN_PORT }}
+          ALIYUN_APP_DIR: ${{ secrets.ALIYUN_APP_DIR }}
+          ALIYUN_BACKEND_SERVICE: ${{ secrets.ALIYUN_BACKEND_SERVICE }}
+        run: |
+          set -Eeuo pipefail
+
+          user="${ALIYUN_USER:-admin}"
+          port="${ALIYUN_PORT:-22}"
+          app_dir="${ALIYUN_APP_DIR:-/var/www/roommate}"
+          backend_service="${ALIYUN_BACKEND_SERVICE:-roommate-backend.service}"
+
+          ssh -i ~/.ssh/aliyun_deploy_key \
+            -p "$port" \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            "$user@$ALIYUN_HOST" \
+            "APP_DIR='$app_dir' BRANCH='main' BACKEND_SERVICE='$backend_service' bash -s" \
+            < scripts/server-deploy.sh
