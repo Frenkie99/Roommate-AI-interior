@@ -24,7 +24,16 @@ reload_nginx() {
   fi
 
   $SUDO /usr/sbin/nginx -t
-  $SUDO /usr/sbin/nginx -s reload
+  if [ -s /run/nginx.pid ]; then
+    $SUDO /usr/sbin/nginx -s reload
+    return
+  fi
+
+  master_pid="$(pgrep -o -f 'nginx: master process')"
+  if [ -z "$master_pid" ]; then
+    fail "nginx is listening but no master process was found."
+  fi
+  $SUDO kill -HUP "$master_pid"
 }
 
 log "Entering ${APP_DIR}"
