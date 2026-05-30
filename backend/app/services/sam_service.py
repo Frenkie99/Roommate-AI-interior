@@ -163,8 +163,7 @@ class SAM3Service:
         
         return {
             "output": {
-                "overlay_base64": overlay_base64,
-                "mask_base64": overlay_base64
+                "overlay_base64": overlay_base64
             }
         }
     

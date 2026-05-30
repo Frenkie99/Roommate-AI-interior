@@ -8,6 +8,7 @@ import os
 import io
 import uuid
 import base64
+import logging
 import httpx
 from typing import List, Optional
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Request
@@ -18,6 +19,8 @@ import numpy as np
 from scipy import ndimage
 
 from app.services.sam_service import sam3_service, create_rgba_mask, extract_masked_region
+
+logger = logging.getLogger(__name__)
 
 
 def extract_mask_from_segmented_image(segmented_img: Image.Image) -> np.ndarray:
@@ -98,6 +101,21 @@ def image_to_base64(image: Image.Image, format: str = "PNG") -> str:
     return base64.b64encode(buffer.getvalue()).decode("utf-8")
 
 
+def _mask_base64_from_overlay(overlay_base64: str, original_image: Optional[Image.Image] = None) -> str:
+    overlay_data = base64.b64decode(overlay_base64)
+    overlay_image = Image.open(io.BytesIO(overlay_data)).convert("RGBA")
+
+    if original_image is not None:
+        overlay_rgb = overlay_image.convert("RGB")
+        original_resized = original_image.convert("RGB").resize(overlay_rgb.size)
+        diff = np.abs(np.array(overlay_rgb).astype(int) - np.array(original_resized).astype(int))
+        mask_array = (np.sum(diff, axis=2) > 30).astype(np.uint8) * 255
+    else:
+        mask_array = extract_mask_from_segmented_image(overlay_image)
+
+    return image_to_base64(Image.fromarray(mask_array, mode="L"), "PNG")
+
+
 @router.post("/by-point")
 async def segment_by_point(
     x: int = Form(...),
@@ -118,6 +136,7 @@ async def segment_by_point(
     """
     try:
         final_image_url = image_url
+        pil_image = None
         
         if image and not image_url:
             contents = await image.read()
@@ -145,7 +164,9 @@ async def segment_by_point(
         
         output = result.get("output", {})
         overlay_base64 = output.get("overlay_base64")
-        mask_base64 = output.get("mask_base64")
+        if not overlay_base64:
+            raise ValueError("SAM response missing overlay_base64")
+        mask_base64 = _mask_base64_from_overlay(overlay_base64, pil_image)
         
         return JSONResponse({
             "code": 0,
@@ -158,10 +179,11 @@ async def segment_by_point(
             }
         })
         
-    except Exception as e:
+    except Exception:
+        logger.exception("分割失败")
         return JSONResponse({
             "code": -1,
-            "message": f"分割失败: {str(e)}",
+            "message": "服务器内部错误，请稍后重试",
             "data": None
         }, status_code=500)
 
@@ -226,10 +248,11 @@ async def segment_by_text(
             }
         })
         
-    except Exception as e:
+    except Exception:
+        logger.exception("分割失败")
         return JSONResponse({
             "code": -1,
-            "message": f"分割失败: {str(e)}",
+            "message": "服务器内部错误，请稍后重试",
             "data": None
         }, status_code=500)
 
@@ -278,24 +301,7 @@ async def segment_by_box(
         output = result.get("output", {})
         overlay_base64 = output.get("overlay_base64", "")
         
-        # 从overlay提取黑白mask
-        overlay_data = base64.b64decode(overlay_base64)
-        overlay_image = Image.open(io.BytesIO(overlay_data)).convert("RGB")
-        original_resized = pil_image.resize(overlay_image.size)
-        
-        overlay_array = np.array(overlay_image)
-        original_array = np.array(original_resized)
-        
-        # 计算差异提取mask
-        diff = np.abs(overlay_array.astype(int) - original_array.astype(int))
-        diff_sum = np.sum(diff, axis=2)
-        mask_array = (diff_sum > 30).astype(np.uint8) * 255
-        
-        # 转换为base64
-        mask_image = Image.fromarray(mask_array, mode="L")
-        buffered = io.BytesIO()
-        mask_image.save(buffered, format="PNG")
-        mask_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
+        mask_base64 = _mask_base64_from_overlay(overlay_base64, pil_image)
         
         return JSONResponse({
             "code": 0,
@@ -307,10 +313,11 @@ async def segment_by_box(
             }
         })
         
-    except Exception as e:
+    except Exception:
+        logger.exception("分割失败")
         return JSONResponse({
             "code": -1,
-            "message": f"分割失败: {str(e)}",
+            "message": "服务器内部错误，请稍后重试",
             "data": None
         }, status_code=500)
 
@@ -348,10 +355,11 @@ async def preview_mask(
             }
         })
         
-    except Exception as e:
+    except Exception:
+        logger.exception("预览失败")
         return JSONResponse({
             "code": -1,
-            "message": f"预览失败: {str(e)}",
+            "message": "服务器内部错误，请稍后重试",
             "data": None
         }, status_code=500)
 
@@ -400,10 +408,11 @@ async def inpaint_region(
             }
         })
         
-    except Exception as e:
+    except Exception:
+        logger.exception("替换失败")
         return JSONResponse({
             "code": -1,
-            "message": f"替换失败: {str(e)}",
+            "message": "服务器内部错误，请稍后重试",
             "data": None
         }, status_code=500)
 
@@ -448,10 +457,11 @@ async def replace_furniture(
             }
         })
         
-    except Exception as e:
+    except Exception:
+        logger.exception("替换失败")
         return JSONResponse({
             "code": -1,
-            "message": f"替换失败: {str(e)}",
+            "message": "服务器内部错误，请稍后重试",
             "data": None
         }, status_code=500)
 
@@ -496,10 +506,11 @@ async def replace_decoration(
             }
         })
         
-    except Exception as e:
+    except Exception:
+        logger.exception("替换失败")
         return JSONResponse({
             "code": -1,
-            "message": f"替换失败: {str(e)}",
+            "message": "服务器内部错误，请稍后重试",
             "data": None
         }, status_code=500)
 

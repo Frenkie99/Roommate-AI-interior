@@ -23,4 +23,14 @@ class BaseScorer(ABC):
         ...
 
     def score_batch(self, pairs: List[ImagePair]) -> List[float]:
-        return [self.score(p.input_path, p.output_path, p.prompt) for p in pairs]
+        return [
+            self.score(
+                p.input_path,
+                p.output_path,
+                p.prompt,
+                style=getattr(p, "style", None),
+                room_type=getattr(p, "room_type", None),
+                tags=getattr(p, "tags", None),
+            )
+            for p in pairs
+        ]

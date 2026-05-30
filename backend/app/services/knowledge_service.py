@@ -117,12 +117,43 @@ class KnowledgeService:
             })
         return results
 
-    def _vector_search(self, query: str, top_k: int = 20) -> List[Dict]:
+    @staticmethod
+    def _build_where_filter(style: Optional[str], room_type: Optional[str]) -> Optional[Dict]:
+        filters: List[Dict] = []
+        if style:
+            filters.append({"style": style})
+        if room_type:
+            filters.append({"room_type": room_type})
+
+        if not filters:
+            return None
+        if len(filters) == 1:
+            return filters[0]
+        return {"$and": filters}
+
+    @staticmethod
+    def _match_metadata(metadata: Dict, style: Optional[str], room_type: Optional[str]) -> bool:
+        if style and metadata.get("style") != style:
+            return False
+        if room_type and metadata.get("room_type") != room_type:
+            return False
+        return True
+
+    def _vector_search(
+        self,
+        query: str,
+        top_k: int = 20,
+        where: Optional[Dict] = None
+    ) -> List[Dict]:
         """向量语义检索"""
-        results = self.collection.query(
-            query_texts=[query],
-            n_results=min(top_k, self.collection.count())
-        )
+        query_kwargs = {
+            "query_texts": [query],
+            "n_results": min(top_k, self.collection.count()),
+        }
+        if where is not None:
+            query_kwargs["where"] = where
+
+        results = self.collection.query(**query_kwargs)
 
         if not results or not results['documents'] or not results['documents'][0]:
             return []
@@ -198,18 +229,34 @@ class KnowledgeService:
         4. Reranker 重排序取 top-n_results
         """
         if not self._initialized:
-            return self._empty_result(f"知识库未初始化: {self._init_error}")
+            return self._empty_result(
+                f"知识库未初始化: {self._init_error}",
+                error="not_initialized",
+            )
 
         try:
             count = self.collection.count()
             if count == 0:
-                return self._empty_result("知识库为空，请先运行初始化脚本。")
+                return self._empty_result(
+                    "知识库为空，请先运行初始化脚本。",
+                    error="empty_collection",
+                )
 
             retrieve_k = min(20, count)
+            where_filter = self._build_where_filter(style, room_type)
 
             # Step 1 + 2: 双路检索
-            vector_results = self._vector_search(question, top_k=retrieve_k)
+            vector_results = self._vector_search(
+                question,
+                top_k=retrieve_k,
+                where=where_filter,
+            )
             bm25_results = self._bm25_search(question, top_k=retrieve_k)
+            if style or room_type:
+                bm25_results = [
+                    result for result in bm25_results
+                    if self._match_metadata(result.get("metadata") or {}, style, room_type)
+                ]
 
             # Step 3: RRF 融合
             fused = self._rrf_fusion(vector_results, bm25_results)
@@ -222,11 +269,15 @@ class KnowledgeService:
                 reranked = reranker.rerank(question, fused, top_k=n_results)
             except Exception:
                 # 重排序器不可用时，直接用 RRF 排序结果
+                logger.exception("重排序器不可用，回退到 RRF 排序")
                 reranked = fused[:n_results]
 
-        except Exception as e:
-            logger.exception(f"知识库检索失败: {e}")
-            return self._empty_result(f"检索失败: {str(e)}")
+        except ValueError:
+            logger.exception("知识库检索参数不合法")
+            return self._empty_result("检索参数不合法", error="invalid_query")
+        except Exception:
+            logger.exception("知识库检索内部错误")
+            return self._empty_result("检索失败", error="internal")
 
         if not reranked:
             return self._empty_result("未找到相关知识。")
@@ -258,13 +309,16 @@ class KnowledgeService:
             "context_used": context
         }
 
-    def _empty_result(self, message: str = "") -> Dict:
-        return {
+    def _empty_result(self, message: str = "", error: Optional[str] = None) -> Dict:
+        result = {
             "answer": message,
             "sources": [],
             "relevant_docs": [],
             "context_used": ""
         }
+        if error is not None:
+            result["error"] = error
+        return result
 
     def add_documents(
         self,

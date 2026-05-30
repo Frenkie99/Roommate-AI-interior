@@ -1,13 +1,28 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Upload, Image as ImageIcon, X } from 'lucide-react';
 
 export default function ImageUploader({ onImageUpload, uploadedImage }) {
+  const lastPreviewRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (lastPreviewRef.current) {
+        URL.revokeObjectURL(lastPreviewRef.current);
+        lastPreviewRef.current = null;
+      }
+    };
+  }, []);
+
   const onDrop = useCallback((acceptedFiles) => {
     const file = acceptedFiles[0];
     if (file) {
+      if (lastPreviewRef.current) {
+        URL.revokeObjectURL(lastPreviewRef.current);
+      }
       const preview = URL.createObjectURL(file);
+      lastPreviewRef.current = preview;
       onImageUpload({ file, preview });
     }
   }, [onImageUpload]);
@@ -21,6 +36,10 @@ export default function ImageUploader({ onImageUpload, uploadedImage }) {
 
   const handleRemove = (e) => {
     e.stopPropagation();
+    if (lastPreviewRef.current) {
+      URL.revokeObjectURL(lastPreviewRef.current);
+      lastPreviewRef.current = null;
+    }
     onImageUpload(null);
   };
 

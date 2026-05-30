@@ -35,6 +35,7 @@ const styles = [
 
 // 后端API地址（生产环境使用相对路径，由Nginx代理）
 const API_BASE = '';
+const API_TIMEOUT_MS = 180_000;
 
 export default function PlaygroundPage() {
   const [selectedRoom, setSelectedRoom] = useState('living_room');
@@ -153,6 +154,7 @@ export default function PlaygroundPage() {
       const segResponse = await fetch(`${API_BASE}/api/v1/segment/by-box`, {
         method: 'POST',
         body: formData,
+        signal: AbortSignal.timeout(API_TIMEOUT_MS),
       });
       
       const result = await segResponse.json();
@@ -271,6 +273,7 @@ export default function PlaygroundPage() {
       const response = await fetch(`${API_BASE}/api/v1/generate`, {
         method: 'POST',
         body: formData,
+        signal: AbortSignal.timeout(API_TIMEOUT_MS),
       });
       
       if (!response.ok) {
