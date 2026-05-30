@@ -61,7 +61,10 @@ class Runner:
         metrics = list(results[0].scores.keys())
         print("\n--- Summary ---")
         for m in metrics:
-            values = [r.scores[m] for r in results]
+            values = [r.scores[m] for r in results if r.scores.get(m) is not None]
+            if not values:
+                print(f"  Avg {m}: N/A (no numeric scores)")
+                continue
             avg = sum(values) / len(values)
             print(f"  Avg {m}: {avg:.4f} (min={min(values):.4f}, max={max(values):.4f})")
 

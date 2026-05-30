@@ -40,7 +40,16 @@ class ResultStore:
 
     def load(self) -> Dict[str, Any]:
         with open(self.path, "r", encoding="utf-8") as f:
-            return json.load(f)
+            try:
+                return json.load(f)
+            except json.JSONDecodeError:
+                return {
+                    "version": "1.0",
+                    "created_at": None,
+                    "total_results": 0,
+                    "metadata": {"corrupted": True, "source": self.path},
+                    "results": [],
+                }
 
     def get_results_list(self) -> List[EvalResult]:
         data = self.load()

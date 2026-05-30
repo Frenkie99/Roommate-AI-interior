@@ -3,6 +3,7 @@
 import json
 import logging
 from pathlib import Path
+from typing import Optional
 
 import streamlit as st
 from PIL import Image
@@ -11,34 +12,41 @@ from evals.config import METRIC_RANGES, METRIC_LABELS, BADCASE_NOTES_PATH, EVALS
 
 logger = logging.getLogger(__name__)
 
+_ALLOWED_ROOTS = (
+    EVALS_DIR.resolve(),
+    (PROJECT_ROOT / "output").resolve(),
+)
 
-def _resolve(path: str) -> Path:
+def _resolve(path: str) -> Optional[Path]:
     """
     安全地解析路径，防止路径遍历攻击：
     1. 不接受绝对路径
     2. resolve() 后必须仍在允许的目录内
     """
+    if not path:
+        return None
+
     p = Path(path)
-
-    # 不接受绝对路径
     if p.is_absolute():
+        resolved = p.resolve()
+        if any(resolved.is_relative_to(root) for root in _ALLOWED_ROOTS):
+            return resolved
         logger.warning(f"REJECTED absolute path: {path!r}")
-        raise ValueError(f"绝对路径不允许: {path}")
+        return None
 
-    # 解析路径
-    if path.startswith("data/"):
-        resolved = (EVALS_DIR / p).resolve()
-        allowed_root = EVALS_DIR.resolve()
-    else:
+    if path.startswith("data/") or path.startswith("evals/"):
+        resolved = (PROJECT_ROOT / p).resolve() if path.startswith("evals/") else (EVALS_DIR / p).resolve()
+    elif path.startswith("output/"):
         resolved = (PROJECT_ROOT / p).resolve()
-        allowed_root = PROJECT_ROOT.resolve()
+    else:
+        logger.warning(f"REJECTED unsupported path prefix: {path!r}")
+        return None
 
-    # 确保解析后仍在允许范围内
-    if not resolved.is_relative_to(allowed_root):
-        logger.warning(f"REJECTED path escape: {path!r} -> {resolved}")
-        raise ValueError(f"路径逃逸: {path}")
+    if any(resolved.is_relative_to(root) for root in _ALLOWED_ROOTS):
+        return resolved
 
-    return resolved
+    logger.warning(f"REJECTED path escape: {path!r} -> {resolved}")
+    return None
 
 
 def _normalize_score(scores: dict) -> float:
@@ -46,6 +54,8 @@ def _normalize_score(scores: dict) -> float:
     total = 0
     count = 0
     for metric, value in scores.items():
+        if value is None:
+            continue
         lo, hi, higher_better = METRIC_RANGES.get(metric, (0, 1, True))
         if hi <= lo:
             continue
@@ -122,14 +132,18 @@ def _render_case(pair, result: dict, notes: dict) -> None:
         st.write("**毛坯原图**")
         if pair:
             input_path = _resolve(pair.input_path)
-            if input_path.exists():
+            if input_path is None:
+                st.caption("图片路径不安全，已跳过")
+            elif input_path.exists():
                 st.image(str(input_path), use_container_width=True)
 
     with col2:
         st.write("**AI 效果图**")
         if pair and pair.output_path:
             output_path = _resolve(pair.output_path)
-            if output_path.exists():
+            if output_path is None:
+                st.caption("效果图路径不安全或为空，已跳过")
+            elif output_path.exists():
                 st.image(str(output_path), use_container_width=True)
 
     # 评分
@@ -138,6 +152,9 @@ def _render_case(pair, result: dict, notes: dict) -> None:
         with score_cols[i]:
             label = METRIC_LABELS.get(metric, metric)
             lo, hi, higher_better = METRIC_RANGES.get(metric, (0, 1, True))
+            if value is None:
+                st.metric(label=label, value="N/A")
+                continue
             if hi > lo:
                 normalized = (value - lo) / (hi - lo)
             else:

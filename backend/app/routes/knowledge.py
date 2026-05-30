@@ -119,9 +119,9 @@ async def query_knowledge(request: KnowledgeQueryRequest):
             }
         )
 
-    except Exception as e:
-        logger.exception(f"知识库查询失败: {e}")
-        raise HTTPException(status_code=500, detail=f"知识库查询失败: {str(e)}")
+    except Exception:
+        logger.exception("知识库查询失败")
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
 
 
 @router.get("/api/v1/knowledge/health")
