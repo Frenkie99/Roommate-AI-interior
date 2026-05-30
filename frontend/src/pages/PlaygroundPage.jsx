@@ -75,7 +75,7 @@ export default function PlaygroundPage() {
     uploadedFile, generatedImage, selectedMask, viewMode,
     selectedStyle, selectedRoom, styles,
     setIsGenerating, setProgress, setStatusText,
-    setGeneratedImage, setSelectedMask, setSelectedStyle,
+    setGeneratedImage, setSelectedMask, setSelectedStyle, setViewMode,
   });
 
   // 框选/点选模式 - 鼠标按下开始绘制
