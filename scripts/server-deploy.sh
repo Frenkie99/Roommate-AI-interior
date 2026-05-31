@@ -6,6 +6,7 @@ BRANCH="${BRANCH:-main}"
 BACKEND_SERVICE="${BACKEND_SERVICE:-roommate-backend.service}"
 BACKEND_DIR="${APP_DIR}/backend"
 FRONTEND_DIR="${APP_DIR}/frontend"
+DEPLOY_STATE_DIR="${DEPLOY_STATE_DIR:-/var/tmp/roommate-deploy}"
 SUDO="${SUDO:-sudo -n}"
 
 log() {
@@ -37,8 +38,60 @@ reload_nginx() {
   $SUDO kill -HUP "$master_pid"
 }
 
+file_hash() {
+  sha256sum "$1" | awk '{print $1}'
+}
+
+install_backend_dependencies() {
+  log "Installing backend dependencies"
+  cd "$BACKEND_DIR"
+  if [ ! -f requirements.txt ]; then
+    log "No backend requirements.txt found; skipping"
+    return
+  fi
+
+  current_hash="$(file_hash requirements.txt)"
+  marker="${DEPLOY_STATE_DIR}/backend-requirements.sha256"
+  if [ -f "$marker" ] && [ "$(cat "$marker")" = "$current_hash" ]; then
+    log "Backend dependencies unchanged; skipping"
+    return
+  fi
+
+  if [ -x venv/bin/python ]; then
+    venv/bin/python -m pip install -r requirements.txt
+  else
+    python3 -m pip install -r requirements.txt
+  fi
+  printf '%s\n' "$current_hash" > "$marker"
+}
+
+install_frontend_dependencies() {
+  log "Installing frontend dependencies"
+  cd "$FRONTEND_DIR"
+
+  manifest="package.json"
+  if [ -f package-lock.json ]; then
+    manifest="package-lock.json"
+  fi
+
+  current_hash="$(file_hash "$manifest")"
+  marker="${DEPLOY_STATE_DIR}/frontend-${manifest}.sha256"
+  if [ -d node_modules ] && [ -f "$marker" ] && [ "$(cat "$marker")" = "$current_hash" ]; then
+    log "Frontend dependencies unchanged; skipping"
+    return
+  fi
+
+  if [ -f package-lock.json ]; then
+    npm ci
+  else
+    npm install
+  fi
+  printf '%s\n' "$current_hash" > "$marker"
+}
+
 log "Entering ${APP_DIR}"
 cd "$APP_DIR"
+mkdir -p "$DEPLOY_STATE_DIR"
 
 git config --global --add safe.directory "$APP_DIR" >/dev/null 2>&1 || true
 
@@ -57,23 +110,11 @@ log "Pulling origin/${BRANCH}"
 git fetch origin "$BRANCH"
 git pull --ff-only origin "$BRANCH"
 
-log "Installing backend dependencies"
-cd "$BACKEND_DIR"
-if [ -x venv/bin/python ] && [ -f requirements.txt ]; then
-  venv/bin/python -m pip install -r requirements.txt
-elif [ -f requirements.txt ]; then
-  python3 -m pip install -r requirements.txt
-fi
-
-log "Installing frontend dependencies"
-cd "$FRONTEND_DIR"
-if [ -f package-lock.json ]; then
-  npm ci
-else
-  npm install
-fi
+install_backend_dependencies
+install_frontend_dependencies
 
 log "Building frontend"
+cd "$FRONTEND_DIR"
 npm run build
 
 log "Restarting backend: ${BACKEND_SERVICE}"

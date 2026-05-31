@@ -53,6 +53,8 @@ jobs:
           ssh -i ~/.ssh/aliyun_deploy_key \
             -p "$port" \
             -o BatchMode=yes \
+            -o ServerAliveInterval=30 \
+            -o ServerAliveCountMax=60 \
             -o StrictHostKeyChecking=yes \
             "$user@$ALIYUN_HOST" \
             "APP_DIR='$app_dir' BRANCH='main' BACKEND_SERVICE='$backend_service' bash -s" \

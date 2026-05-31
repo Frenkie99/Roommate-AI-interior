@@ -16,6 +16,7 @@ assert.match(workflow, /branches:\s*\[\s*main\s*\]/, 'workflow should deploy onl
 assert.match(workflow, /workflow_dispatch:/, 'workflow should allow manual runs');
 assert.match(workflow, /ALIYUN_SSH_KEY/, 'workflow should use the SSH key secret');
 assert.match(workflow, /ssh-keyscan/, 'workflow should add the server host key');
+assert.match(workflow, /ServerAliveInterval=30/, 'workflow should keep long SSH deployments alive');
 assert.match(workflow, /scripts\/server-deploy\.sh/, 'workflow should run the server deploy script');
 
 const deployScript = readFileSync(deployScriptPath, 'utf8');
@@ -25,7 +26,9 @@ assert.match(deployScript, /BACKEND_SERVICE="\$\{BACKEND_SERVICE:-roommate-backe
 assert.match(deployScript, /git pull --ff-only origin "\$BRANCH"/, 'deploy script should fast-forward pull main');
 assert.match(deployScript, /Installing backend dependencies/, 'deploy script should install backend dependencies');
 assert.match(deployScript, /venv\/bin\/python -m pip install -r requirements\.txt/, 'deploy script should use backend venv requirements');
+assert.match(deployScript, /Backend dependencies unchanged; skipping/, 'deploy script should skip unchanged backend dependencies');
 assert.match(deployScript, /npm ci/, 'deploy script should install exact frontend dependencies');
+assert.match(deployScript, /Frontend dependencies unchanged; skipping/, 'deploy script should skip unchanged frontend dependencies');
 assert.match(deployScript, /npm run build/, 'deploy script should build the frontend');
 assert.match(deployScript, /systemctl restart "\$BACKEND_SERVICE"/, 'deploy script should restart the backend service');
 assert.match(deployScript, /reload_nginx\(\)/, 'deploy script should isolate nginx reload logic');
