@@ -7,6 +7,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { getWelcomeMessage } from './quickPrompts';
 import { parseAgentResponse } from './agentResponse';
+import { addDesignHistory } from '../services/historyService';
 
 const API_BASE = '';
 
@@ -146,6 +147,18 @@ export function useChatEngine({
       const data = result.data || {};
       applyAgentStatePatch(data.state_patch);
 
+      const generatedImageUrl = data.state_patch?.generated_image;
+      if (generatedImageUrl) {
+        addDesignHistory({
+          taskId: data.tool_result?.task_id,
+          outputUrl: generatedImageUrl,
+          style: selectedStyle,
+          roomType: selectedRoom,
+          prompt: messageText,
+          source: 'agent',
+        });
+      }
+
       if (data.ui_hint === 'refine' && generatedImage && setViewMode) {
         setViewMode('refine');
       }
@@ -180,6 +193,8 @@ export function useChatEngine({
     applyAgentStatePatch,
     updateLastAssistantMessage,
     setViewMode,
+    selectedStyle,
+    selectedRoom,
   ]);
 
   return {
