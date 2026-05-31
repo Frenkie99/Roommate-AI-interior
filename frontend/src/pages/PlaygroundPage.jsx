@@ -4,6 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import Navbar from '../components/Navbar';
 import { useChatEngine } from '../chat/useChatEngine';
 import { IMAGE_PROMPTS, KNOWLEDGE_PROMPTS, REFINE_PROMPTS } from '../chat/quickPrompts';
+import { addDesignHistory } from '../services/historyService';
 
 // 房间类型映射 v2.0：按距离家门口远近排序（玄关→主卧）
 const roomTypes = [
@@ -35,7 +36,6 @@ const styles = [
 
 // 后端API地址（生产环境使用相对路径，由Nginx代理）
 const API_BASE = '';
-const API_TIMEOUT_MS = 180_000;
 
 export default function PlaygroundPage() {
   const [selectedRoom, setSelectedRoom] = useState('living_room');
@@ -154,7 +154,6 @@ export default function PlaygroundPage() {
       const segResponse = await fetch(`${API_BASE}/api/v1/segment/by-box`, {
         method: 'POST',
         body: formData,
-        signal: AbortSignal.timeout(API_TIMEOUT_MS),
       });
       
       const result = await segResponse.json();
@@ -273,7 +272,6 @@ export default function PlaygroundPage() {
       const response = await fetch(`${API_BASE}/api/v1/generate`, {
         method: 'POST',
         body: formData,
-        signal: AbortSignal.timeout(API_TIMEOUT_MS),
       });
       
       if (!response.ok) {
@@ -293,7 +291,16 @@ export default function PlaygroundPage() {
       
       const outputUrls = result.data?.output_urls || [];
       if (outputUrls.length > 0) {
-        setGeneratedImage(outputUrls[0]);
+        const generatedImageUrl = outputUrls[0];
+        setGeneratedImage(generatedImageUrl);
+        addDesignHistory({
+          taskId: result.data?.task_id,
+          outputUrl: generatedImageUrl,
+          style: selectedStyle,
+          roomType: selectedRoom,
+          prompt: result.data?.prompt || notes,
+          source: 'playground',
+        });
         setProgress(100);
         setStatusText('生成完成!');
       } else {

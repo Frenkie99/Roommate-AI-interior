@@ -6,6 +6,7 @@ import StyleSelector from '../components/StyleSelector';
 import RoomTypeSelector from '../components/RoomTypeSelector';
 import ResultDisplay from '../components/ResultDisplay';
 import { generateImage } from '../services/api';
+import { addDesignHistory } from '../services/historyService';
 import toast from 'react-hot-toast';
 
 export default function HomePage() {
@@ -27,11 +28,20 @@ export default function HomePage() {
     try {
       const response = await generateImage(uploadedImage.file, selectedStyle, selectedRoom);
       if (response.code === 0) {
+        const generatedImage = response.data.output_urls[0];
         setResult({
           originalImage: uploadedImage.preview,
-          generatedImage: response.data.output_urls[0],
+          generatedImage,
           style: selectedStyle,
           prompt: response.data.prompt
+        });
+        addDesignHistory({
+          taskId: response.data.task_id,
+          outputUrl: generatedImage,
+          style: selectedStyle,
+          roomType: selectedRoom,
+          prompt: response.data.prompt,
+          source: 'home',
         });
         toast.success('效果图生成成功！');
       } else {
