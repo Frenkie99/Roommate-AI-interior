@@ -28,7 +28,7 @@ export default function Navbar() {
         {/* Logo */}
         <div className="flex items-center pl-2 flex-1">
           <Link to="/" className="flex items-center gap-3 group">
-            <img src="/assets/logo/导航栏logo-抠图.png" alt="Roommate" className="h-14" />
+            <img src="/assets/logo/导航栏logo-抠图.webp" alt="Roommate" className="h-14" fetchPriority="high" />
           </Link>
         </div>
 

@@ -3,7 +3,7 @@ export default function Footer() {
     <footer className="bg-charcoal text-ivory py-10 px-8 border-t border-warm-gold/10">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-5">
         <div className="flex items-center">
-          <img src="/assets/logo/导航栏logo-抠图.png" alt="Roommate" className="h-10" />
+          <img src="/assets/logo/导航栏logo-抠图.webp" alt="Roommate" className="h-10" loading="lazy" />
         </div>
         <div className="flex items-center gap-10 text-sm text-ivory/60">
           <a href="#" className="hover:text-warm-gold transition-colors">隐私政策</a>

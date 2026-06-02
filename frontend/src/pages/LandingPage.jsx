@@ -57,16 +57,16 @@ export default function LandingPage() {
   }, []);
 
   const galleryImages = [
-    { img: '/assets/gallery/gallery_export/Item_01_Scandinavian_Living_Room_Light_and_Airy.png', label: 'SCANDINAVIAN • LIVING ROOM', title: 'Light & Airy', aspect: 'aspect-2-3', float: 'gallery-float-1' },
-    { img: '/assets/gallery/gallery_export/Item_02_Industrial_Bedroom_Urban_Edge.png', label: 'INDUSTRIAL • BEDROOM', title: 'Urban Edge', aspect: 'aspect-3-2', float: 'gallery-float-2' },
-    { img: '/assets/gallery/gallery_export/Item_03_Bohemian_Office_Creative_Spirit.png', label: 'BOHEMIAN • OFFICE', title: 'Creative Spirit', aspect: 'aspect-9-16', float: 'gallery-float-3' },
-    { img: '/assets/gallery/gallery_export/Item_04_Modern_Kitchen_Clean_Lines.png', label: 'MODERN • KITCHEN', title: 'Clean Lines', aspect: 'aspect-1-1', float: 'gallery-float-4' },
-    { img: '/assets/gallery/gallery_export/Item_05_Classic_Bathroom_Timeless_Elegance.png', label: 'CLASSIC • BATHROOM', title: 'Timeless Elegance', aspect: 'aspect-16-9', float: 'gallery-float-5' },
-    { img: '/assets/gallery/gallery_export/Item_06_Minimalist_Dining_Pure_Simplicity.png', label: 'MINIMALIST • DINING', title: 'Pure Simplicity', aspect: 'aspect-2-3', float: 'gallery-float-1' },
-    { img: '/assets/gallery/gallery_export/Item_07_Japandi_Living_Room_East_Meets_West.png', label: 'JAPANDI • LIVING ROOM', title: 'East Meets West', aspect: 'aspect-3-2', float: 'gallery-float-2' },
-    { img: '/assets/gallery/gallery_export/Item_08_Contemporary_Bedroom_Modern_Comfort.png', label: 'CONTEMPORARY • BEDROOM', title: 'Modern Comfort', aspect: 'aspect-9-16', float: 'gallery-float-3' },
-    { img: '/assets/gallery/gallery_export/Item_09_Luxury_Living_Room_Opulent_Charm.png', label: 'LUXURY • LIVING ROOM', title: 'Opulent Charm', aspect: 'aspect-1-1', float: 'gallery-float-4' },
-    { img: '/assets/gallery/gallery_export/Item_10_Rustic_Kitchen_Natural_Warmth.png', label: 'RUSTIC • KITCHEN', title: 'Natural Warmth', aspect: 'aspect-16-9', float: 'gallery-float-5' },
+    { img: '/assets/gallery/gallery_export/Item_01_Scandinavian_Living_Room_Light_and_Airy.webp', label: 'SCANDINAVIAN • LIVING ROOM', title: 'Light & Airy', aspect: 'aspect-2-3', float: 'gallery-float-1' },
+    { img: '/assets/gallery/gallery_export/Item_02_Industrial_Bedroom_Urban_Edge.webp', label: 'INDUSTRIAL • BEDROOM', title: 'Urban Edge', aspect: 'aspect-3-2', float: 'gallery-float-2' },
+    { img: '/assets/gallery/gallery_export/Item_03_Bohemian_Office_Creative_Spirit.webp', label: 'BOHEMIAN • OFFICE', title: 'Creative Spirit', aspect: 'aspect-9-16', float: 'gallery-float-3' },
+    { img: '/assets/gallery/gallery_export/Item_04_Modern_Kitchen_Clean_Lines.webp', label: 'MODERN • KITCHEN', title: 'Clean Lines', aspect: 'aspect-1-1', float: 'gallery-float-4' },
+    { img: '/assets/gallery/gallery_export/Item_05_Classic_Bathroom_Timeless_Elegance.webp', label: 'CLASSIC • BATHROOM', title: 'Timeless Elegance', aspect: 'aspect-16-9', float: 'gallery-float-5' },
+    { img: '/assets/gallery/gallery_export/Item_06_Minimalist_Dining_Pure_Simplicity.webp', label: 'MINIMALIST • DINING', title: 'Pure Simplicity', aspect: 'aspect-2-3', float: 'gallery-float-1' },
+    { img: '/assets/gallery/gallery_export/Item_07_Japandi_Living_Room_East_Meets_West.webp', label: 'JAPANDI • LIVING ROOM', title: 'East Meets West', aspect: 'aspect-3-2', float: 'gallery-float-2' },
+    { img: '/assets/gallery/gallery_export/Item_08_Contemporary_Bedroom_Modern_Comfort.webp', label: 'CONTEMPORARY • BEDROOM', title: 'Modern Comfort', aspect: 'aspect-9-16', float: 'gallery-float-3' },
+    { img: '/assets/gallery/gallery_export/Item_09_Luxury_Living_Room_Opulent_Charm.webp', label: 'LUXURY • LIVING ROOM', title: 'Opulent Charm', aspect: 'aspect-1-1', float: 'gallery-float-4' },
+    { img: '/assets/gallery/gallery_export/Item_10_Rustic_Kitchen_Natural_Warmth.webp', label: 'RUSTIC • KITCHEN', title: 'Natural Warmth', aspect: 'aspect-16-9', float: 'gallery-float-5' },
   ];
 
   return (
@@ -123,11 +123,13 @@ export default function LandingPage() {
               >
                 {/* Before Image (毛坯图) */}
                 <div className="relative">
-                  <img 
-                    src="/assets/hero section/毛坯图.png" 
-                    alt="Before" 
+                  <img
+                    src="/assets/hero section/毛坯图.webp"
+                    alt="Before"
                     className="w-full h-[380px] md:h-[420px] lg:h-[450px] object-cover pointer-events-none"
                     draggable="false"
+                    fetchPriority="high"
+                    decoding="async"
                   />
                   <div className="absolute bottom-5 left-5 bg-black/60 backdrop-blur-sm text-white px-3 py-1.5 rounded-sm text-xs font-medium tracking-wide">
                     改造前
@@ -138,11 +140,13 @@ export default function LandingPage() {
                   className="absolute top-0 left-0 w-full h-full overflow-hidden"
                   style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
                 >
-                  <img 
-                    src="/assets/hero section/效果图.png" 
-                    alt="After" 
+                  <img
+                    src="/assets/hero section/效果图.webp"
+                    alt="After"
                     className="w-full h-[380px] md:h-[420px] lg:h-[450px] object-cover pointer-events-none"
                     draggable="false"
+                    fetchPriority="high"
+                    decoding="async"
                   />
                   <div className="absolute bottom-5 right-5 bg-warm-gold/90 backdrop-blur-sm text-white px-3 py-1.5 rounded-sm text-xs font-medium tracking-wide">
                     改造后
@@ -177,13 +181,14 @@ export default function LandingPage() {
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             {/* Left: Video */}
             <div className="relative rounded-lg overflow-hidden shadow-2xl">
-              <video 
+              <video
                 ref={videoRef}
                 className="w-full h-auto rounded-lg"
                 muted
                 playsInline
                 controls
-                poster="/assets/video/meeting room-1.png"
+                preload="none"
+                poster="/assets/video/meeting room-1.webp"
               >
                 <source src="/assets/video/1.mp4" type="video/mp4" />
                 您的浏览器不支持视频播放。
@@ -222,7 +227,7 @@ export default function LandingPage() {
                 className={`gallery-item ${item.aspect} ${item.float}`}
                 style={{ animationDelay: `${index * 0.5}s` }}
               >
-                <img src={item.img} alt={item.title} className="w-full h-full object-cover" />
+                <img src={item.img} alt={item.title} className="w-full h-full object-cover" loading="lazy" decoding="async" />
                 <div className="overlay">
                   <p className="text-xs tracking-wider opacity-80 mb-1">{item.label}</p>
                   <p className="font-serif text-base">{item.title}</p>

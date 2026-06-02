@@ -22,16 +22,16 @@ const roomTypes = [
 
 // 风格映射 v2.0：本地代表性图片（/public/styles/）
 const styles = [
-  { id: 'modern_luxury', label: '现代轻奢', img: '/styles/现代轻奢.png' },
-  { id: 'chinese_modern', label: '新中式', img: '/styles/新中式.png' },
-  { id: 'american_transitional', label: '美式', img: '/styles/美式.jpg' },
-  { id: 'european_neoclassical', label: '欧式', img: '/styles/欧式.png' },
-  { id: 'industrial_loft', label: '工业风', img: '/styles/工业风.png' },
-  { id: 'natural_wood', label: '原木风', img: '/styles/原木风.png' },
-  { id: 'japanese_traditional', label: '日式', img: '/styles/日式.png' },
-  { id: 'bohemian', label: '波西米亚', img: '/styles/波西米亚.png' },
-  { id: 'bauhaus', label: '包豪斯', img: '/styles/包豪斯.png' },
-  { id: 'modern_minimalist', label: '现代简约', img: '/styles/现代简约.png' },
+  { id: 'modern_luxury', label: '现代轻奢', img: '/styles/现代轻奢.webp' },
+  { id: 'chinese_modern', label: '新中式', img: '/styles/新中式.webp' },
+  { id: 'american_transitional', label: '美式', img: '/styles/美式.webp' },
+  { id: 'european_neoclassical', label: '欧式', img: '/styles/欧式.webp' },
+  { id: 'industrial_loft', label: '工业风', img: '/styles/工业风.webp' },
+  { id: 'natural_wood', label: '原木风', img: '/styles/原木风.webp' },
+  { id: 'japanese_traditional', label: '日式', img: '/styles/日式.webp' },
+  { id: 'bohemian', label: '波西米亚', img: '/styles/波西米亚.webp' },
+  { id: 'bauhaus', label: '包豪斯', img: '/styles/包豪斯.webp' },
+  { id: 'modern_minimalist', label: '现代简约', img: '/styles/现代简约.webp' },
 ];
 
 // 后端API地址（生产环境使用相对路径，由Nginx代理）
