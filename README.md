@@ -2,9 +2,9 @@
 
 > 基于 API易 Gemini API + Segmind SAM3 的智能装修设计与局部精修工具，内置评测平台
 
-[![AI装修平台](https://img.shields.io/badge/AI-装修-智能设计-blue)](https://github.com/Frenkie99/Roommate-AI-interior)
-[![技术栈](https://img.shields.io/badge/技术栈-React--FastAPI-brightgreen)](https://github.com/Frenkie99/Roommate-AI-interior)
-[![RAG知识库](https://img.shields.io/badge/RAG-知识库-orange)](https://github.com/Frenkie99/Roommate-AI-interior)
+[![AI Interior Design](https://img.shields.io/badge/AI-Interior_Design-blue)](https://github.com/Frenkie99/Roommate-AI-interior)
+[![Tech Stack](https://img.shields.io/badge/Stack-React%20%2B%20FastAPI-brightgreen)](https://github.com/Frenkie99/Roommate-AI-interior)
+[![RAG](https://img.shields.io/badge/RAG-Knowledge_Base-orange)](https://github.com/Frenkie99/Roommate-AI-interior)
 
 ## 🎬 功能演示
 
