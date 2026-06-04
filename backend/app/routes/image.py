@@ -11,7 +11,7 @@ from fastapi import APIRouter, File, UploadFile, Form, HTTPException
 from fastapi.responses import JSONResponse
 
 from app.services.getgoapi_client import getgoapi_client, GetGoModel, AspectRatio, ImageSize, DEFAULT_MODEL_PRIORITY
-from app.services.llm_client import llm_client, LLMModel, DEFAULT_LLM_MODEL_PRIORITY
+from app.services.llm_client import llm_client, LLMModel
 from app.services.image_processor import image_processor
 from app.utils.prompt_builder import build_prompt, STYLE_PROMPTS, ROOM_TYPE_PROMPTS
 
@@ -92,7 +92,6 @@ async def generate_renovation_image(
                 style=style,
                 room_type=room_type,
                 custom_prompt=custom_prompt,
-                model=DEFAULT_LLM_MODEL_PRIORITY[0]
             )
             
             if llm_result.get("code") == 0:
@@ -163,7 +162,9 @@ async def generate_renovation_image(
     # 7. 保存生成的图片并返回 URL
     output_urls = []
     for i, img_data in enumerate(images):
-        output_filename = f"{timestamp}_{task_id}_output_{i}.png"
+        mime_type = img_data.get("mime_type", "image/jpeg")
+        ext = ".jpg" if "jpeg" in mime_type or "jpg" in mime_type else ".png"
+        output_filename = f"{timestamp}_{task_id}_output_{i}{ext}"
         output_path = os.path.join(OUTPUT_DIR, output_filename)
         async with aiofiles.open(output_path, 'wb') as f:
             await f.write(img_data["data"])

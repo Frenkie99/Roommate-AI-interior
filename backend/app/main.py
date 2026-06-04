@@ -38,9 +38,28 @@ if load_env_file(env_path):
 else:
     print(f"[WARN] .env not found at: {env_path}")
 
+# 额外加载 backend/.env（优先级更高，覆盖根目录配置）
+backend_env_path = Path(__file__).parent / ".env"
+if backend_env_path != env_path:
+    if load_env_file(backend_env_path):
+        print(f"[INFO] Environment loaded from: {backend_env_path}")
+
 # 验证关键环境变量：只记录是否存在，不打印任何 key 内容或前缀
-print(f"[INFO] APIYI_KEY: {'configured' if os.getenv('APIYI_KEY') else 'NOT SET'}")
-print(f"[INFO] LLM_APIYI_KEY: {'configured' if os.getenv('LLM_APIYI_KEY') else 'NOT SET'}")
+apiyi_key = os.getenv('APIYI_KEY')
+llm_apiyi_key = os.getenv('LLM_APIYI_KEY')
+print(f"[INFO] APIYI_KEY: {'configured' if apiyi_key else 'NOT SET'}")
+print(f"[INFO] LLM_APIYI_KEY: {'configured' if llm_apiyi_key else 'NOT SET'}")
+
+# 诊断：检查图像生成能力
+if not apiyi_key and not llm_apiyi_key:
+    print("[ERROR] 未配置任何 API Key! 图像生成和 LLM 分析都无法使用。")
+    print("        请在 .env 中配置 APIYI_KEY（推荐）或 LLM_APIYI_KEY。")
+elif not apiyi_key and llm_apiyi_key:
+    print("[WARN]  APIYI_KEY 未配置，使用 LLM_APIYI_KEY 作为备用。")
+    print("        如果 LLM_APIYI_KEY 没有 Gemini 图像模型权限，图像生成将失败。")
+    print("        建议配置 APIYI_KEY 以获得完整的图像生成能力。")
+else:
+    print("[INFO] APIYI_KEY 已配置，图像生成功能就绪。")
 
 # LLM 功能开关
 use_llm = os.getenv('USE_LLM_PROMPT', 'true')

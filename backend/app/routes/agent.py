@@ -55,7 +55,10 @@ async def agent_chat(
             room_type=context.get("room_type"),
             n_results=5,
         ))
-        return response.data or {}
+        data = response.data or {}
+        if data.get("answer") is None:
+            data["answer"] = "知识库暂无相关资料，AI 回答服务也遇到了问题。请稍后再试或换个问法。"
+        return data
 
     async def generate_tool(prompt: str, context: dict) -> dict:
         if not upload_image:
@@ -66,6 +69,8 @@ async def agent_chat(
             style=context.get("style") or "modern_minimalist",
             room_type=context.get("room_type"),
             custom_prompt=prompt,
+            aspect_ratio="auto",
+            image_size="1K",
         )
         body = _json_response_data(response)
         if body.get("code") != 0:
@@ -80,6 +85,7 @@ async def agent_chat(
             image=current_image,
             mask_base64=mask_base64,
             prompt=prompt,
+            negative_prompt=None,
             strength=0.85,
         )
         body = _json_response_data(response)

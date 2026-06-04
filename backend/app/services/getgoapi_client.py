@@ -58,7 +58,7 @@ class GetGoAPIClient:
     @property
     def api_key(self) -> str:
         """每次动态获取 API Key，不缓存"""
-        return os.getenv("APIYI_KEY")
+        return os.getenv("APIYI_KEY") or os.getenv("LLM_APIYI_KEY")
     
     def _get_headers(self) -> dict:
         """获取请求头"""
@@ -233,9 +233,16 @@ class GetGoAPIClient:
                 continue
         
         # 所有重试都失败
+        # 提供更友好的错误信息
+        friendly_msg = f"API 请求失败（已重试 {self.MAX_RETRIES} 次）: {last_error}"
+        if "no available channels" in str(last_error):
+            friendly_msg += " — 可能原因：API Key 未开通该模型权限，请检查 APIYI_KEY 配置。"
+        elif "401" in str(last_error) or "令牌" in str(last_error):
+            friendly_msg += " — 可能原因：API Key 无效或已过期，请检查 .env 中的配置。"
+
         return {
             "code": -1,
-            "msg": f"API 请求失败（已重试 {self.MAX_RETRIES} 次）: {last_error}",
+            "msg": friendly_msg,
             "data": None
         }
     
@@ -301,7 +308,7 @@ class GetGoAPIClient:
         
         return {
             "code": -1,
-            "msg": f"所有模型都生成失败，最后错误: {last_error}",
+            "msg": f"所有模型都生成失败，最后错误: {last_error}。请检查 API Key 是否有 Gemini 图像模型权限。",
             "data": None
         }
     

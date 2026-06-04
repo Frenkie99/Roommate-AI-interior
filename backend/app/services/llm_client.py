@@ -40,15 +40,21 @@ class LLMClient:
     
     @property
     def api_key(self) -> str:
-        """动态获取 API Key"""
+        """动态获取 API Key - 优先用 CHAT_APIYI_KEY (DeepSeek)，备选 LLM_APIYI_KEY"""
         if self._api_key is None:
-            self._api_key = os.getenv("LLM_APIYI_KEY")
+            self._api_key = os.getenv("CHAT_APIYI_KEY") or os.getenv("LLM_APIYI_KEY")
         return self._api_key
     
     def image_to_base64(self, image_data: bytes) -> str:
         """将图片数据转换为 base64"""
         return base64.b64encode(image_data).decode("utf-8")
     
+    # 模型降级顺序：Gemini 视觉 → DeepSeek 纯文本
+    _VISION_MODEL_PRIORITY = [
+        LLMModel.GEMINI_3_FLASH_PREVIEW,
+        LLMModel.GEMINI_25_FLASH_PREVIEW,
+    ]
+
     async def analyze_room_and_generate_prompt(
         self,
         image_data: bytes,
@@ -59,83 +65,72 @@ class LLMClient:
     ) -> Dict[str, Any]:
         """
         分析毛坯房图片并生成定制化装修提示词
-        
+
+        自动降级：先尝试 Gemini 视觉模型（支持图片输入），
+        失败后降级到 DeepSeek 纯文本模型（仅基于风格/类型推测）。
+
         Args:
             image_data: 毛坯房图片数据
             style: 装修风格
             room_type: 房间类型
             custom_prompt: 用户自定义需求
             model: LLM 模型
-            
+
         Returns:
             包含分析结果和生成提示词的字典
         """
-        # 构建分析提示词
+        # --- 尝试 Gemini 视觉模型 ---
         analysis_prompt = self._build_analysis_prompt(style, room_type, custom_prompt)
-        
-        # 准备请求数据
         image_base64 = self.image_to_base64(image_data)
-        
-        payload = {
-            "contents": [{
-                "parts": [
-                    {
-                        "inlineData": {
-                            "mimeType": "image/jpeg",
-                            "data": image_base64
-                        }
-                    },
-                    {
-                        "text": analysis_prompt
+
+        for vision_model in self._VISION_MODEL_PRIORITY:
+            try:
+                payload = {
+                    "contents": [{
+                        "parts": [
+                            {"inlineData": {"mimeType": "image/jpeg", "data": image_base64}},
+                            {"text": analysis_prompt}
+                        ]
+                    }],
+                    "generationConfig": {
+                        "responseModalities": ["TEXT"],
+                        "responseMimeType": "application/json",
+                        "temperature": 0.7,
+                        "maxOutputTokens": 2048
                     }
-                ]
-            }],
-            "generationConfig": {
-                "responseModalities": ["TEXT"],
-                "responseMimeType": "application/json",
-                "temperature": 0.7,
-                "maxOutputTokens": 2048
-            }
-        }
-        
-        # API URL
-        model_name = model.value if hasattr(model, 'value') else str(model)
-        api_url = f"{self.BASE_URL}/v1beta/models/{model_name}:generateContent"
-        
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.api_key}"
-        }
-        
-        try:
-            response = await self.client.post(api_url, headers=headers, json=payload)
-            response.raise_for_status()
-            
-            result = response.json()
-            
-            # 解析响应
-            if "candidates" in result and len(result["candidates"]) > 0:
-                content = result["candidates"][0]["content"]["parts"][0]["text"]
-                
-                # 提取结构化信息
-                return self._parse_llm_response(content, style, room_type, custom_prompt)
-            else:
-                return {
-                    "code": -1,
-                    "message": "未获取到 LLM 响应",
-                    "data": None
                 }
-                
-        except httpx.HTTPStatusError as e:
-            return {
-                "code": e.response.status_code,
-                "message": f"LLM API 请求失败: {e.response.text}",
-                "data": None
-            }
+                model_name = vision_model.value if hasattr(vision_model, 'value') else str(vision_model)
+                api_url = f"{self.BASE_URL}/v1beta/models/{model_name}:generateContent"
+                headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {self.api_key}"
+                }
+                response = await self.client.post(api_url, headers=headers, json=payload)
+                response.raise_for_status()
+
+                result = response.json()
+                if "candidates" in result and len(result["candidates"]) > 0:
+                    content = result["candidates"][0]["content"]["parts"][0]["text"]
+                    return self._parse_llm_response(content, style, room_type, custom_prompt)
+            except Exception as e:
+                print(f"[LLM] Gemini 视觉模型 {vision_model} 失败: {e}, 尝试下一个...")
+                continue
+
+        # --- 降级：DeepSeek 纯文本分析（不需要图片） ---
+        print("[LLM] 所有 Gemini 视觉模型不可用，降级到 DeepSeek 纯文本分析")
+        try:
+            text_prompt = self._build_text_only_prompt(style, room_type, custom_prompt)
+            text_result = await self.chat_text(
+                prompt=text_prompt,
+                model=LLMModel.DEEPSEEK_CHAT,
+                system_prompt="你是专业室内设计师，擅长分析空间并生成设计提示词。",
+                max_tokens=2048
+            )
+            return self._parse_llm_response(text_result, style, room_type, custom_prompt)
         except Exception as e:
             return {
                 "code": -1,
-                "message": f"LLM 分析异常: {str(e)}",
+                "message": f"LLM 分析异常（含降级）: {str(e)}",
                 "data": None
             }
     
@@ -181,7 +176,44 @@ IMPORTANT: Focus on FACTS about the space. Do NOT include structural modificatio
 Output a single valid JSON object."""
         
         return prompt
-    
+
+    def _build_text_only_prompt(
+        self,
+        style: str,
+        room_type: Optional[str],
+        custom_prompt: Optional[str]
+    ) -> str:
+        """构建纯文本分析提示词（DeepSeek 降级用，不依赖图片）"""
+        style_info = STYLE_PROMPTS.get(style, {})
+        style_name = style_info.get("name", style)
+        style_desc = style_info.get("prompt", "")
+
+        return f"""You are a professional interior designer. Generate design recommendations for a raw room.
+
+## Context:
+- Target style: {style_name}
+- Room type: {room_type or 'general room'}
+- User requirements: "{custom_prompt or 'none'}"
+- Style reference: {style_desc[:200]}
+
+## Output Format (Strict JSON):
+{{
+    "room_analysis": {{
+        "room_type": "{room_type or 'general room'}",
+        "space_description": "typical {room_type or 'room'} space characteristics",
+        "physical_features": "standard ceiling height, typical window layout",
+        "lighting_analysis": "natural and artificial lighting plan"
+    }},
+    "design_recommendations": {{
+        "layout_suggestion": "furniture layout for {style_name} style",
+        "furniture_placement": "specific {style_name} furniture pieces and positions",
+        "color_scheme": "{style_name} color palette",
+        "lighting_design": "ambient, task, and accent lighting for {style_name}"
+    }}
+}}
+
+IMPORTANT: Output a single valid JSON object only."""
+
     def _extract_first_json_block(self, text: str) -> Optional[str]:
         """使用 stack-based 平衡括号匹配提取第一个完整的 JSON 块"""
         start = text.find("{")
@@ -266,6 +298,13 @@ Output a single valid JSON object."""
                 "data": None
             }
     
+    # chat_text 自动降级模型列表
+    _TEXT_MODEL_FALLBACK = [
+        ("deepseek", LLMModel.DEEPSEEK_CHAT),
+        ("gemini", "gemini-2.5-flash-image"),
+        ("gemini", "gemini-3-pro-image-preview"),
+    ]
+
     async def chat_text(
         self,
         prompt: str,
@@ -274,74 +313,75 @@ Output a single valid JSON object."""
         max_tokens: int = 2048
     ) -> str:
         """
-        纯文本对话（用于RAG问答）- 支持 OpenAI 兼容格式
+        纯文本对话（用于RAG问答）- 自动降级
 
-        Args:
-            prompt: 完整的对话提示词
-            model: LLM模型（默认使用 DeepSeek）
-            system_prompt: 系统提示词（可自定义）
-            max_tokens: 最大输出 token 数
+        依次尝试: DeepSeek → gemini-2.5-flash-image → gemini-3-pro-image-preview
 
         Returns:
             AI生成的文本回复
         """
-        # 判断使用哪种格式
-        is_deepseek = model in [LLMModel.DEEPSEEK_CHAT, LLMModel.DEEPSEEK_V3]
+        last_error = None
+        for fmt, m in self._TEXT_MODEL_FALLBACK:
+            try:
+                if fmt == "deepseek":
+                    return await self._chat_deepseek(prompt, m, system_prompt, max_tokens)
+                else:
+                    return await self._chat_gemini(prompt, m, system_prompt, max_tokens)
+            except Exception as e:
+                print(f"[LLM] chat_text {m} 失败: {e}, 尝试下一个...")
+                last_error = e
+        raise Exception(f"所有文本模型都不可用: {last_error}")
 
-        if is_deepseek:
-            # DeepSeek 使用 OpenAI 兼容格式
-            payload = {
-                "model": model.value,
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": prompt}
-                ],
+    async def _chat_deepseek(self, prompt: str, model, system_prompt: str, max_tokens: int) -> str:
+        """DeepSeek OpenAI 兼容格式"""
+        payload = {
+            "model": model.value if hasattr(model, 'value') else str(model),
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt}
+            ],
+            "temperature": 0.7,
+            "max_tokens": max_tokens
+        }
+        api_url = f"{self.BASE_URL}/v1/chat/completions"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}"
+        }
+        response = await self.client.post(api_url, headers=headers, json=payload)
+        response.raise_for_status()
+        result = response.json()
+        if "choices" in result and len(result["choices"]) > 0:
+            return result["choices"][0]["message"]["content"]
+        raise ValueError("DeepSeek 响应格式错误：缺少 choices")
+
+    async def _chat_gemini(self, prompt: str, model, system_prompt: str, max_tokens: int) -> str:
+        """Gemini 原生格式（也适用于图像模型的文本模式）"""
+        full_prompt = f"{system_prompt}\n\n{prompt}" if system_prompt else prompt
+        payload = {
+            "contents": [{
+                "parts": [{"text": full_prompt}]
+            }],
+            "generationConfig": {
+                "responseModalities": ["TEXT"],
+                "responseMimeType": "text/plain",
                 "temperature": 0.7,
-                "max_tokens": max_tokens
+                "maxOutputTokens": max_tokens
             }
-            api_url = f"{self.BASE_URL}/v1/chat/completions"
-        else:
-            # Gemini 使用原生格式
-            payload = {
-                "contents": [{
-                    "parts": [{"text": prompt}]
-                }],
-                "generationConfig": {
-                    "responseModalities": ["TEXT"],
-                    "responseMimeType": "text/plain",
-                    "temperature": 0.7,
-                    "maxOutputTokens": max_tokens
-                }
-            }
-            model_name = model.value if hasattr(model, 'value') else str(model)
-            api_url = f"{self.BASE_URL}/v1beta/models/{model_name}:generateContent"
+        }
+        model_name = model.value if hasattr(model, 'value') else str(model)
+        api_url = f"{self.BASE_URL}/v1beta/models/{model_name}:generateContent"
 
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.api_key}"
         }
-
-        try:
-            response = await self.client.post(api_url, headers=headers, json=payload)
-            response.raise_for_status()
-            result = response.json()
-
-            if is_deepseek:
-                # OpenAI 格式响应
-                if "choices" in result and len(result["choices"]) > 0:
-                    return result["choices"][0]["message"]["content"]
-                else:
-                    raise ValueError("DeepSeek 响应格式错误：缺少 choices")
-            else:
-                # Gemini 格式响应
-                if "candidates" in result and len(result["candidates"]) > 0:
-                    return result["candidates"][0]["content"]["parts"][0]["text"]
-                else:
-                    raise ValueError("Gemini 响应格式错误：缺少 candidates")
-        except httpx.HTTPStatusError as e:
-            raise Exception(f"LLM API 请求失败: {e.response.status_code}") from e
-        except Exception as e:
-            raise Exception(f"LLM 调用失败: {str(e)}") from e
+        response = await self.client.post(api_url, headers=headers, json=payload)
+        response.raise_for_status()
+        result = response.json()
+        if "candidates" in result and len(result["candidates"]) > 0:
+            return result["candidates"][0]["content"]["parts"][0]["text"]
+        raise ValueError("Gemini 响应格式错误：缺少 candidates")
 
     async def close(self):
         """关闭客户端连接"""

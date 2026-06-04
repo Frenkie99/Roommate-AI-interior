@@ -11,7 +11,7 @@ import base64
 import logging
 import httpx
 from typing import List, Optional
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Request
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from PIL import Image, ImageFilter, ImageDraw
@@ -137,25 +137,20 @@ async def segment_by_point(
     try:
         final_image_url = image_url
         pil_image = None
-        
+
         if image and not image_url:
             contents = await image.read()
-            filename = f"segment_input_{uuid.uuid4().hex}.png"
-            temp_file_path = os.path.join(OUTPUT_DIR, filename)
-            
-            os.makedirs(OUTPUT_DIR, exist_ok=True)
             pil_image = Image.open(io.BytesIO(contents)).convert("RGB")
-            pil_image.save(temp_file_path, "PNG")
-            
-            final_image_url = f"{BASE_URL}/output/{filename}"
-        
+            img_b64 = base64.b64encode(contents).decode("utf-8")
+            final_image_url = f"data:image/jpeg;base64,{img_b64}"
+
         if not final_image_url:
             return JSONResponse({
                 "code": -1,
                 "message": "请提供image或image_url参数",
                 "data": None
             }, status_code=400)
-        
+
         result = await sam3_service.segment_by_point(
             image_url=final_image_url,
             point=(x, y),
@@ -206,27 +201,20 @@ async def segment_by_text(
     try:
         # 确定图片URL
         final_image_url = image_url
-        temp_file_path = None
-        
+
         if image and not image_url:
-            # 上传文件模式：保存到服务器并生成URL
+            # 上传文件模式：转为 base64 data URI
             contents = await image.read()
-            filename = f"segment_input_{uuid.uuid4().hex}.png"
-            temp_file_path = os.path.join(OUTPUT_DIR, filename)
-            
-            os.makedirs(OUTPUT_DIR, exist_ok=True)
-            pil_image = Image.open(io.BytesIO(contents)).convert("RGB")
-            pil_image.save(temp_file_path, "PNG")
-            
-            final_image_url = f"{BASE_URL}/output/{filename}"
-        
+            img_b64 = base64.b64encode(contents).decode("utf-8")
+            final_image_url = f"data:image/jpeg;base64,{img_b64}"
+
         if not final_image_url:
             return JSONResponse({
                 "code": -1,
                 "message": "请提供image或image_url参数",
                 "data": None
             }, status_code=400)
-        
+
         # 调用RunComfy SAM3 API
         result = await sam3_service.segment_by_text(
             image_url=final_image_url,
@@ -259,7 +247,6 @@ async def segment_by_text(
 
 @router.post("/by-box")
 async def segment_by_box(
-    request: Request,
     image: UploadFile = File(...),
     x1: int = Form(...),
     y1: int = Form(...),
@@ -276,31 +263,19 @@ async def segment_by_box(
     try:
         contents = await image.read()
         pil_image = Image.open(io.BytesIO(contents)).convert("RGB")
-        
-        # 保存临时文件并获取公网URL
-        output_dir = "/var/www/roommate/output"
-        os.makedirs(output_dir, exist_ok=True)
-        temp_filename = f"temp_{uuid.uuid4().hex[:8]}.jpg"
-        temp_path = os.path.join(output_dir, temp_filename)
-        pil_image.save(temp_path, "JPEG", quality=90)
-        
-        base_url = str(request.base_url).rstrip('/')
-        if '47.76.239.100' in base_url or 'localhost' in base_url:
-            base_url = "http://47.76.239.100:8000"
-        image_url = f"{base_url}/output/{temp_filename}"
-        
+
+        # 优先使用 base64 data URI（本地和线上都可用）
+        img_b64 = base64.b64encode(contents).decode("utf-8")
+        image_source = f"data:image/jpeg;base64,{img_b64}"
+
         result = await sam3_service.segment_by_box(
-            image_url=image_url,
+            image_url=image_source,
             box=(x1, y1, x2, y2)
         )
-        
-        # 清理临时文件
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
-        
+
         output = result.get("output", {})
         overlay_base64 = output.get("overlay_base64", "")
-        
+
         mask_base64 = _mask_base64_from_overlay(overlay_base64, pil_image)
         
         return JSONResponse({

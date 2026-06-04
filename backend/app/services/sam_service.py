@@ -48,12 +48,12 @@ class SAM3Service:
     
     def __init__(self):
         self.api_key = os.getenv("SEGMIND_API_KEY", "SG_63bab65c13127931")
+        self.api_url = "https://api.segmind.com/v1/sam3-image"
         self.client = httpx.AsyncClient(timeout=60.0)
 
     async def close(self):
         """关闭客户端连接"""
         await self.client.aclose()
-        self.api_url = "https://api.segmind.com/v1/sam3-image"
         
     def _image_to_base64(self, image: Image.Image) -> str:
         """将PIL Image转换为base64字符串"""

@@ -14,13 +14,26 @@ const API_BASE = '';
 const DESIGN_ACTION_WORDS = [
   '换', '调整', '变成', '改成', '改为', '增加', '减少', '去掉',
   '生成', '设计', '加', '加点', '加些', '移除', '删除', '更',
-  '做', '来一', '配', '放', '摆', '放些',
+  '做', '来一', '配', '放', '摆', '放些', '弄',
 ];
 const LOCAL_OBJECT_WORDS = [
   '沙发', '椅子', '桌', '茶几', '床', '柜', '灯', '窗帘', '地毯',
   '绿植', '植物', '挂画', '墙', '背景墙', '吊灯', '区域', '物体', '家具',
 ];
 const LOCAL_POINTER_WORDS = ['把', '将', '这个', '这里', '选中', '局部', '框选', '区域'];
+
+const QUESTION_WORDS = [
+  '什么', '如何', '怎么', '为什么', '建议', '推荐', '哪些', '区别',
+  '优缺点', '怎么样', '好不好', '注意', '预算', '适合', '选择', '吗', '呢',
+  '什么意思', '好不好看', '效果', '搭配', '好不好',
+];
+
+function looksLikeQuestion(message) {
+  // 以问号结尾
+  if (message.endsWith('？') || message.endsWith('?')) return true;
+  // 包含疑问词
+  return QUESTION_WORDS.some(word => message.includes(word));
+}
 
 function looksLikeDesignAction(message) {
   return DESIGN_ACTION_WORDS.some(word => message.includes(word));
@@ -108,9 +121,10 @@ export function useChatEngine({
     const userMessage = { type: 'user', text: messageText };
     const history = [...chatMessages, userMessage].slice(-12);
     const isDesignAction = looksLikeDesignAction(messageText);
+    const isQuestion = looksLikeQuestion(messageText);
     const isLocalEditWithoutMask = !!generatedImage && !selectedMask && looksLikeLocalEdit(messageText);
-    const likelyRefine = !!selectedMask && isDesignAction;
-    const likelyGenerate = !!uploadedFile && isDesignAction && !isLocalEditWithoutMask && !likelyRefine;
+    const likelyRefine = !!selectedMask && isDesignAction && !isQuestion;
+    const likelyGenerate = !!uploadedFile && isDesignAction && !isQuestion && !isLocalEditWithoutMask && !likelyRefine;
     const likelyImageWork = likelyRefine || likelyGenerate;
 
     setChatMessages(prev => [...prev, userMessage, { type: 'ai', text: '正在处理您的需求...' }]);

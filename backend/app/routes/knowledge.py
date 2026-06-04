@@ -74,7 +74,7 @@ async def query_knowledge(request: KnowledgeQueryRequest):
                     code=0,
                     message="success",
                     data={
-                        "answer": None,
+                        "answer": "抱歉，知识库暂无相关资料，AI 回答服务也暂时不可用。请确认 LLM_APIYI_KEY 已正确配置后重试。",
                         "sources": [],
                     }
                 )
