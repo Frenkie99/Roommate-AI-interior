@@ -54,6 +54,8 @@ jobs:
             -p "$port" \
             -o BatchMode=yes \
             -o StrictHostKeyChecking=yes \
+            -o ServerAliveInterval=30 \
+            -o ServerAliveCountMax=120 \
             "$user@$ALIYUN_HOST" \
             "APP_DIR='$app_dir' BRANCH='main' BACKEND_SERVICE='$backend_service' bash -s" \
             < scripts/server-deploy.sh
