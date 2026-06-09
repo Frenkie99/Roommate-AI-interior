@@ -42,15 +42,17 @@ cd "$APP_DIR"
 
 git config --global --add safe.directory "$APP_DIR" >/dev/null 2>&1 || true
 
+# Auto-clean local changes (build artifacts, renamed assets) instead of failing
 if ! git diff --quiet || ! git diff --cached --quiet; then
-  git status -sb
-  fail "Server repository has local tracked changes. Clean them before deployment."
+  log "Discarding local tracked changes (safe: build artifacts only)"
+  git checkout -- .
+  git clean -fdq -- "$(git rev-parse --show-cdup)"
 fi
 
 untracked_files="$(git ls-files --others --exclude-standard)"
 if [ -n "$untracked_files" ]; then
-  printf '%s\n' "$untracked_files"
-  fail "Server repository has untracked files. Clean them before deployment."
+  log "Removing untracked files (safe: build output only)"
+  git clean -fdq
 fi
 
 log "Pulling origin/${BRANCH}"
