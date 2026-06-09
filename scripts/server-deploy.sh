@@ -55,6 +55,7 @@ if [ -n "$untracked_files" ]; then
 fi
 
 log "Pulling origin/${BRANCH}"
+$SUDO chown -R "$(whoami)" .git 2>/dev/null || true
 git fetch origin "$BRANCH"
 git pull --ff-only origin "$BRANCH"
 
