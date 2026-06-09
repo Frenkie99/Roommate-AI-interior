@@ -59,24 +59,24 @@ $SUDO chown -R "$(whoami)" .git 2>/dev/null || true
 git fetch origin "$BRANCH"
 git pull --ff-only origin "$BRANCH"
 
-log "Installing backend dependencies"
+log "Installing backend dependencies (skip already installed)"
 cd "$BACKEND_DIR"
 if [ -x venv/bin/python ] && [ -f requirements.txt ]; then
-  venv/bin/python -m pip install -r requirements.txt
+  venv/bin/python -m pip install --prefer-binary -r requirements.txt 2>&1 | tail -5
 elif [ -f requirements.txt ]; then
-  python3 -m pip install -r requirements.txt
+  python3 -m pip install --prefer-binary -r requirements.txt 2>&1 | tail -5
 fi
 
-log "Installing frontend dependencies"
+log "Installing frontend dependencies (prefer offline)"
 cd "$FRONTEND_DIR"
 if [ -f package-lock.json ]; then
-  npm ci
+  npm ci --prefer-offline 2>&1 | tail -5
 else
-  npm install
+  npm install --prefer-offline 2>&1 | tail -5
 fi
 
 log "Building frontend"
-npm run build
+npm run build 2>&1 | tail -5
 
 log "Restarting backend: ${BACKEND_SERVICE}"
 $SUDO systemctl restart "$BACKEND_SERVICE"
