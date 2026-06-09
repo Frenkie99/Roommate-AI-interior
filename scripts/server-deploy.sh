@@ -51,7 +51,7 @@ fi
 untracked_files="$(git ls-files --others --exclude-standard)"
 if [ -n "$untracked_files" ]; then
   log "Removing untracked files"
-  git clean -fdq
+  git clean -fdq || true
 fi
 
 log "Pulling origin/${BRANCH}"
