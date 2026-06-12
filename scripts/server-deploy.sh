@@ -84,16 +84,23 @@ elif [ -f requirements.txt ]; then
   python3 -m pip install --prefer-binary -r requirements.txt 2>&1 | tail -5
 fi
 
-log "Installing frontend dependencies"
-cd "$FRONTEND_DIR"
-if [ -f package-lock.json ]; then
-  npm ci --prefer-offline 2>&1 | tail -5
+# Frontend build: by default CI (GitHub Actions) builds and uploads dist,
+# so the server no longer runs npm build (avoids OOM on the ~1GB box).
+# Build locally only as a fallback when SKIP_FRONTEND_BUILD != 1 (manual run).
+if [ "${SKIP_FRONTEND_BUILD:-0}" = "1" ]; then
+  log "Skipping frontend build on server (dist uploaded by CI)"
 else
-  npm install --prefer-offline 2>&1 | tail -5
-fi
+  log "Installing frontend dependencies"
+  cd "$FRONTEND_DIR"
+  if [ -f package-lock.json ]; then
+    npm ci --prefer-offline 2>&1 | tail -5
+  else
+    npm install --prefer-offline 2>&1 | tail -5
+  fi
 
-log "Building frontend"
-npm run build 2>&1 | tail -5
+  log "Building frontend (local fallback)"
+  npm run build 2>&1 | tail -5
+fi
 
 log "Restarting backend: ${BACKEND_SERVICE}"
 $SUDO systemctl restart "$BACKEND_SERVICE"

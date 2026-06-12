@@ -17,6 +17,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Build frontend (in CI runner, not on the 1GB server)
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
       - name: Configure SSH
         env:
           ALIYUN_HOST: ${{ secrets.ALIYUN_HOST }}
@@ -57,5 +68,18 @@ jobs:
             -o ServerAliveInterval=30 \
             -o ServerAliveCountMax=120 \
             "$user@$ALIYUN_HOST" \
-            "APP_DIR='$app_dir' BRANCH='main' BACKEND_SERVICE='$backend_service' bash -s" \
+            "APP_DIR='$app_dir' BRANCH='main' BACKEND_SERVICE='$backend_service' SKIP_FRONTEND_BUILD=1 bash -s" \
             < scripts/server-deploy.sh
+
+      - name: Upload built frontend to server
+        env:
+          ALIYUN_HOST: ${{ secrets.ALIYUN_HOST }}
+          ALIYUN_USER: ${{ secrets.ALIYUN_USER }}
+          ALIYUN_PORT: ${{ secrets.ALIYUN_PORT }}
+          ALIYUN_APP_DIR: ${{ secrets.ALIYUN_APP_DIR }}
+        run: |
+          set -Eeuo pipefail
+          user="${ALIYUN_USER:-admin}"
+          port="${ALIYUN_PORT:-22}"
+          app_dir="${ALIYUN_APP_DIR:-/var/www/roommate}"
+          tar -C frontend/dist -czf - . | ssh -i ~/.ssh/aliyun_deploy_key -p "$port" -o BatchMode=yes -o StrictHostKeyChecking=yes "$user@$ALIYUN_HOST" "set -e; rm -rf '$app_dir/frontend/dist'; mkdir -p '$app_dir/frontend/dist'; tar -C '$app_dir/frontend/dist' -xzf -"
