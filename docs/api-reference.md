@@ -9,28 +9,23 @@
 
 ---
 
-## 外部API: Grsai Nano Banana
+## 外部API: API易平台（Gemini 图像模型）
 
-本项目使用 **Grsai Nano Banana API** 进行图片生成。
+本项目使用 **API易平台**（https://api.apiyi.com）的 Gemini 图像模型生成图片。
 
 | 配置项 | 值 |
 |-------|---|
-| API地址(海外) | https://grsaiapi.com |
-| API地址(国内) | https://grsai.dakka.com.cn |
-| 绘画接口 | POST /v1/draw/nano-banana |
-| 结果查询 | POST /v1/draw/result |
+| API地址 | https://api.apiyi.com |
+| 图像生成 | POST /v1beta/models/{model}:generateContent |
+| 鉴权 | Authorization: Bearer ${APIYI_KEY} |
 
 ### 支持的模型
 
 | 模型ID | 说明 |
 |-------|------|
-| nano-banana-fast | 快速生成 |
-| nano-banana | 标准模型（默认） |
-| nano-banana-pro | 专业版，支持1K/2K/4K |
-| nano-banana-pro-vt | 专业增强版 |
-| nano-banana-pro-cl | 色彩增强版 |
-| nano-banana-pro-vip | VIP版，支持1K/2K |
-| nano-banana-pro-4k-vip | 4K专享版 |
+| gemini-3-pro-image-preview | 图像生成（默认） |
+| gemini-2.5-flash-image | 图像生成（降级） |
+| deepseek-chat | 文本 LLM（问答兑底） |
 
 ---
 

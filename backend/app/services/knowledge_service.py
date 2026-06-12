@@ -37,6 +37,9 @@ class KnowledgeService:
         self._bm25_ids = []
         self._bm25_docs = []
         self._bm25_metas = []
+        if os.getenv("ENABLE_KNOWLEDGE_BASE","true").strip().lower() not in ("true","1","yes"):
+            self._init_error="knowledge base disabled (low-memory mode)"
+            return
 
         try:
             os.makedirs(persist_directory, exist_ok=True)

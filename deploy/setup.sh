@@ -41,11 +41,21 @@ source venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 
-# 创建环境变量文件
+# 创建环境变量文件（仅在不存在时生成模板，避免覆盖已有真实密钥）
+if [ ! -f .env ]; then
 cat > .env << 'EOF'
-GRSAI_API_KEY=sk-3f112119d539422b89ee22440b31ebec
-GRSAI_API_URL=https://grsai.dakka.com.cn
+# API易平台 Key（图片生成 Gemini + LLM）：https://api.apiyi.com
+APIYI_KEY=
+LLM_APIYI_KEY=
+CHAT_APIYI_KEY=
+# 家具/区域分割（SAM3）：https://www.segmind.com
+SEGMIND_API_KEY=
+# 低内存服务器（~1GB）建议关闭知识库模型，避免后端 OOM
+ENABLE_KNOWLEDGE_BASE=false
+USE_LLM_PROMPT=true
 EOF
+echo "[提示] 已生成 backend/.env 模板，请填入真实 API Key 后再启动后端"
+fi
 
 # 构建前端
 echo "[7/8] 构建前端..."
