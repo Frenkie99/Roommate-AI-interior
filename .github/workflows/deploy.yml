@@ -82,4 +82,6 @@ jobs:
           user="${ALIYUN_USER:-admin}"
           port="${ALIYUN_PORT:-22}"
           app_dir="${ALIYUN_APP_DIR:-/var/www/roommate}"
-          tar -C frontend/dist -czf - . | ssh -i ~/.ssh/aliyun_deploy_key -p "$port" -o BatchMode=yes -o StrictHostKeyChecking=yes "$user@$ALIYUN_HOST" "set -e; rm -rf '$app_dir/frontend/dist'; mkdir -p '$app_dir/frontend/dist'; tar -C '$app_dir/frontend/dist' -xzf -"
+          # 原子化替换 dist：先解压到 dist.new，再用 mv 瞬间切换，
+          # 避免 "rm -rf dist 后、解压未完成" 的几秒内静态资源 404。
+          tar -C frontend/dist -czf - . | ssh -i ~/.ssh/aliyun_deploy_key -p "$port" -o BatchMode=yes -o StrictHostKeyChecking=yes "$user@$ALIYUN_HOST" "set -e; rm -rf '$app_dir/frontend/dist.new' '$app_dir/frontend/dist.old'; mkdir -p '$app_dir/frontend/dist.new'; tar -C '$app_dir/frontend/dist.new' -xzf -; [ -d '$app_dir/frontend/dist' ] && mv '$app_dir/frontend/dist' '$app_dir/frontend/dist.old'; mv '$app_dir/frontend/dist.new' '$app_dir/frontend/dist'; rm -rf '$app_dir/frontend/dist.old'"
