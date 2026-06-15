@@ -84,9 +84,9 @@ elif [ -f requirements.txt ]; then
   python3 -m pip install --prefer-binary -r requirements.txt 2>&1 | tail -5
 fi
 
-# Frontend build: by default CI (GitHub Actions) builds and uploads dist,
-# so the server no longer runs npm build (avoids OOM on the ~1GB box).
-# Build locally only as a fallback when SKIP_FRONTEND_BUILD != 1 (manual run).
+# 前端构建：默认由 CI(GitHub Actions)在云端 runner 构建并上传 dist，
+# 服务器不再 npm build（避免 ~1GB 内存机器部署时 OOM）。
+# 仅当未设置 SKIP_FRONTEND_BUILD=1（如手动直接运行本脚本）时，才本地兜底构建。
 if [ "${SKIP_FRONTEND_BUILD:-0}" = "1" ]; then
   log "Skipping frontend build on server (dist uploaded by CI)"
 else

@@ -63,36 +63,21 @@ cd /var/www/roommate/frontend
 npm install
 npm run build
 
-# 配置 Nginx
+# 配置 Nginx（使用版本化的 deploy/nginx-roommate.conf）
 echo "[8/8] 配置 Nginx..."
-cat > /etc/nginx/sites-available/roommate << 'EOF'
-server {
-    listen 80;
-    server_name _;
-
-    # 前端静态文件
-    location / {
-        root /var/www/roommate/frontend/dist;
-        index index.html;
-        try_files $uri $uri/ /index.html;
-    }
-
-    # 后端 API 代理
-    location /api/ {
-        proxy_pass http://127.0.0.1:8000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_read_timeout 300s;
-        client_max_body_size 50M;
-    }
-}
-EOF
+SETUP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cp "$SETUP_DIR/nginx-roommate.conf" /etc/nginx/sites-available/roommate
+echo "[提示] 该配置启用 HTTPS，请确保已放置 SSL 证书："
+echo "       /etc/nginx/cert/roommate-ai.pem 与 /etc/nginx/cert/roommate-ai.key"
 
 # 启用站点
-ln -sf /etc/nginx/sites-available/roommate /etc/nginx/sites-enabled/
+ln -sf /etc/nginx/sites-available/roommate /etc/nginx/sites-enabled/roommate
 rm -f /etc/nginx/sites-enabled/default
-nginx -t && systemctl reload nginx
+if nginx -t; then
+    systemctl reload nginx
+else
+    echo "[警告] nginx 配置测试未通过（可能缺少 SSL 证书）。放置证书后再执行：nginx -t && systemctl reload nginx"
+fi
 
 echo "=========================================="
 echo "  部署完成！"
