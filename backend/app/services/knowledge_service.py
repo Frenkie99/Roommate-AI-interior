@@ -37,8 +37,13 @@ class KnowledgeService:
         self._bm25_ids = []
         self._bm25_docs = []
         self._bm25_metas = []
-        if os.getenv("ENABLE_KNOWLEDGE_BASE","true").strip().lower() not in ("true","1","yes"):
-            self._init_error="knowledge base disabled (low-memory mode)"
+
+        # 低内存模式开关：设 ENABLE_KNOWLEDGE_BASE=false 时不加载 embedding 模型，
+        # 知识问答自动降级为纯 LLM 兜底（main.py 的 lifespan 已处理此降级）。
+        # 适用于 ~1GB 内存的小服务器，避免 SentenceTransformer 占用 ~470MB 触发 OOM。
+        if os.getenv("ENABLE_KNOWLEDGE_BASE", "true").strip().lower() not in ("true", "1", "yes"):
+            self._init_error = "knowledge base disabled (low-memory mode)"
+            logger.warning("知识库已禁用 (ENABLE_KNOWLEDGE_BASE=false)，问答降级为 LLM 兜底")
             return
 
         try:
