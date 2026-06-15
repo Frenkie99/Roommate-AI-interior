@@ -11,21 +11,24 @@
 
 ## 外部API: API易平台（Gemini 图像模型）
 
-本项目使用 **API易平台**（https://api.apiyi.com）的 Gemini 图像模型生成图片。
+本项目使用 **API易平台**（`https://api.apiyi.com`）的 Gemini 图像模型进行图片生成，
+LLM 智能提示词与知识问答同样走该平台。API Key 通过环境变量配置（见 `backend/.env.example`）。
 
 | 配置项 | 值 |
 |-------|---|
 | API地址 | https://api.apiyi.com |
-| 图像生成 | POST /v1beta/models/{model}:generateContent |
-| 鉴权 | Authorization: Bearer ${APIYI_KEY} |
+| 图像生成接口 | POST /v1beta/models/{model}:generateContent |
+| LLM 对话接口 | POST /v1/chat/completions（DeepSeek 兼容格式） |
+| 鉴权 | Header `Authorization: Bearer ${APIYI_KEY}` |
 
 ### 支持的模型
 
 | 模型ID | 说明 |
 |-------|------|
-| gemini-3-pro-image-preview | 图像生成（默认） |
-| gemini-2.5-flash-image | 图像生成（降级） |
-| deepseek-chat | 文本 LLM（问答兑底） |
+| gemini-3-pro-image-preview | 图像生成，质量最高（默认） |
+| gemini-2.5-flash-image | 图像生成，降级备选 |
+| gemini-3-flash-preview | 视觉分析（毛坯房识别） |
+| deepseek-chat | 纯文本 LLM（知识问答兜底） |
 
 ---
 
