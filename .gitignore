@@ -30,9 +30,7 @@ Thumbs.db
 *.log
 logs/
 
-# 上传和输出文件
-input/
-output/
+# input/ 与 output/ 已纳入版本控制（测试集所需：毛坯图原图 + AI 效果图）
 
 # 模型文件
 sam3-model/
@@ -88,9 +86,5 @@ frontend/test-*.html
 # RAG知识库向量数据（运行时生成）
 backend/data/chroma/
 
-# 评测平台 - 大文件排除
-evals/data/candidates/
-evals/data/images/
-evals/data/test_input/
-output/
+# 评测平台测试集图像已纳入版本控制（candidates/images/test_input）
 .claude/
