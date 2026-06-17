@@ -13,6 +13,7 @@ OUTPUT_DIR = PROJECT_ROOT / "output"
 METADATA_PATH = DATA_DIR / "real_metadata.json"
 EVAL_RESULTS_PATH = DATA_DIR / "eval_results.json"
 BADCASE_NOTES_PATH = DATA_DIR / "badcase_notes.json"
+GOLD_LABELS_PATH = DATA_DIR / "gold_labels.json"  # 人工金标准标注（评分器可信度的真值来源）
 
 # 指标范围: (min, max, higher_is_better)
 METRIC_RANGES = {

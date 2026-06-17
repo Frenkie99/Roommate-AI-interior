@@ -17,6 +17,8 @@ from evals.ui.components.data_table import render_data_table
 from evals.ui.components.summary_charts import render_summary_charts
 from evals.ui.components.image_comparison import render_image_comparison
 from evals.ui.components.badcase_panel import render_badcase_panel
+from evals.ui.components.gold_labeling import render_gold_labeling
+from evals.ui.components.credibility_panel import render_credibility_panel
 
 st.set_page_config(
     page_title="Roommate Eval Platform",
@@ -47,7 +49,9 @@ except FileNotFoundError:
 filters = render_sidebar(loader)
 
 # 主内容区
-tab1, tab2, tab3, tab4 = st.tabs(["概览", "数据表", "图像对比", "Badcase 分析"])
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
+    ["概览", "数据表", "图像对比", "Badcase 分析", "金标准标注", "评分器可信度"]
+)
 
 with tab1:
     render_summary_charts(store)
@@ -60,3 +64,9 @@ with tab3:
 
 with tab4:
     render_badcase_panel(store, loader)
+
+with tab5:
+    render_gold_labeling(loader)
+
+with tab6:
+    render_credibility_panel(loader)
