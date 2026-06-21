@@ -10,7 +10,7 @@
       "pair_id": "pair_000",
       "scores": {
         "clip_score": 0.804,
-        "structural_fidelity": 67.75,
+        "structural_fidelity": 57.22,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -25,7 +25,7 @@
       "pair_id": "pair_001",
       "scores": {
         "clip_score": 0.8791,
-        "structural_fidelity": 71.72,
+        "structural_fidelity": 66.96,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -40,7 +40,7 @@
       "pair_id": "pair_002",
       "scores": {
         "clip_score": 0.8883,
-        "structural_fidelity": 67.92,
+        "structural_fidelity": 59.76,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -55,7 +55,7 @@
       "pair_id": "pair_003",
       "scores": {
         "clip_score": 0.8768,
-        "structural_fidelity": 67.18,
+        "structural_fidelity": 53.75,
         "llm_judge": 3.0
       },
       "metadata": {
@@ -70,7 +70,7 @@
       "pair_id": "pair_004",
       "scores": {
         "clip_score": 0.8735,
-        "structural_fidelity": 77.2,
+        "structural_fidelity": 68.67,
         "llm_judge": 3.0
       },
       "metadata": {
@@ -85,7 +85,7 @@
       "pair_id": "pair_005",
       "scores": {
         "clip_score": 0.8495,
-        "structural_fidelity": 67.18,
+        "structural_fidelity": 56.98,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -100,7 +100,7 @@
       "pair_id": "pair_006",
       "scores": {
         "clip_score": 0.8606,
-        "structural_fidelity": 71.24,
+        "structural_fidelity": 55.03,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -115,7 +115,7 @@
       "pair_id": "pair_007",
       "scores": {
         "clip_score": 0.8579,
-        "structural_fidelity": 64.83,
+        "structural_fidelity": 49.6,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -130,7 +130,7 @@
       "pair_id": "pair_008",
       "scores": {
         "clip_score": 0.851,
-        "structural_fidelity": 63.89,
+        "structural_fidelity": 55.29,
         "llm_judge": 5.0
       },
       "metadata": {
@@ -145,7 +145,7 @@
       "pair_id": "pair_009",
       "scores": {
         "clip_score": 0.8327,
-        "structural_fidelity": 69.05,
+        "structural_fidelity": 55.68,
         "llm_judge": 3.0
       },
       "metadata": {
@@ -160,7 +160,7 @@
       "pair_id": "pair_010",
       "scores": {
         "clip_score": 0.8843,
-        "structural_fidelity": 72.76,
+        "structural_fidelity": 60.5,
         "llm_judge": 3.0
       },
       "metadata": {
@@ -175,7 +175,7 @@
       "pair_id": "pair_011",
       "scores": {
         "clip_score": 0.8354,
-        "structural_fidelity": 67.34,
+        "structural_fidelity": 68.31,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -190,7 +190,7 @@
       "pair_id": "pair_012",
       "scores": {
         "clip_score": 0.8499,
-        "structural_fidelity": 63.4,
+        "structural_fidelity": 60.55,
         "llm_judge": 3.0
       },
       "metadata": {
@@ -205,7 +205,7 @@
       "pair_id": "pair_013",
       "scores": {
         "clip_score": 0.8691,
-        "structural_fidelity": 76.31,
+        "structural_fidelity": 57.9,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -220,7 +220,7 @@
       "pair_id": "pair_014",
       "scores": {
         "clip_score": 0.8473,
-        "structural_fidelity": 65.14,
+        "structural_fidelity": 55.36,
         "llm_judge": 5.0
       },
       "metadata": {
@@ -235,7 +235,7 @@
       "pair_id": "pair_015",
       "scores": {
         "clip_score": 0.8624,
-        "structural_fidelity": 69.55,
+        "structural_fidelity": 54.18,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -250,7 +250,7 @@
       "pair_id": "pair_016",
       "scores": {
         "clip_score": 0.762,
-        "structural_fidelity": 64.14,
+        "structural_fidelity": 51.32,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -265,7 +265,7 @@
       "pair_id": "pair_017",
       "scores": {
         "clip_score": 0.8423,
-        "structural_fidelity": 59.85,
+        "structural_fidelity": 48.68,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -280,7 +280,7 @@
       "pair_id": "pair_018",
       "scores": {
         "clip_score": 0.8542,
-        "structural_fidelity": 68.29,
+        "structural_fidelity": 55.15,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -295,7 +295,7 @@
       "pair_id": "pair_019",
       "scores": {
         "clip_score": 0.8143,
-        "structural_fidelity": 66.47,
+        "structural_fidelity": 52.82,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -310,7 +310,7 @@
       "pair_id": "pair_020",
       "scores": {
         "clip_score": 0.875,
-        "structural_fidelity": 77.92,
+        "structural_fidelity": 57.47,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -325,7 +325,7 @@
       "pair_id": "pair_021",
       "scores": {
         "clip_score": 0.8407,
-        "structural_fidelity": 67.4,
+        "structural_fidelity": 52.9,
         "llm_judge": 3.0
       },
       "metadata": {
@@ -340,7 +340,7 @@
       "pair_id": "pair_022",
       "scores": {
         "clip_score": 0.8555,
-        "structural_fidelity": 68.13,
+        "structural_fidelity": 53.26,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -355,7 +355,7 @@
       "pair_id": "pair_023",
       "scores": {
         "clip_score": 0.8718,
-        "structural_fidelity": 68.45,
+        "structural_fidelity": 60.58,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -370,7 +370,7 @@
       "pair_id": "pair_024",
       "scores": {
         "clip_score": 0.798,
-        "structural_fidelity": 64.89,
+        "structural_fidelity": 59.82,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -385,7 +385,7 @@
       "pair_id": "pair_025",
       "scores": {
         "clip_score": 0.8742,
-        "structural_fidelity": 68.61,
+        "structural_fidelity": 66.36,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -400,7 +400,7 @@
       "pair_id": "pair_026",
       "scores": {
         "clip_score": 0.7908,
-        "structural_fidelity": 60.46,
+        "structural_fidelity": 56.92,
         "llm_judge": 3.0
       },
       "metadata": {
@@ -415,7 +415,7 @@
       "pair_id": "pair_027",
       "scores": {
         "clip_score": 0.8195,
-        "structural_fidelity": 65.58,
+        "structural_fidelity": 55.96,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -430,7 +430,7 @@
       "pair_id": "pair_028",
       "scores": {
         "clip_score": 0.8239,
-        "structural_fidelity": 71.43,
+        "structural_fidelity": 54.96,
         "llm_judge": 5.0
       },
       "metadata": {
@@ -445,7 +445,7 @@
       "pair_id": "pair_029",
       "scores": {
         "clip_score": 0.8081,
-        "structural_fidelity": 63.42,
+        "structural_fidelity": 52.66,
         "llm_judge": 5.0
       },
       "metadata": {
@@ -460,7 +460,7 @@
       "pair_id": "pair_030",
       "scores": {
         "clip_score": 0.8705,
-        "structural_fidelity": 68.36,
+        "structural_fidelity": 55.64,
         "llm_judge": 3.0
       },
       "metadata": {
@@ -475,7 +475,7 @@
       "pair_id": "pair_031",
       "scores": {
         "clip_score": 0.8611,
-        "structural_fidelity": 65.7,
+        "structural_fidelity": 56.17,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -490,7 +490,7 @@
       "pair_id": "pair_032",
       "scores": {
         "clip_score": 0.8493,
-        "structural_fidelity": 69.86,
+        "structural_fidelity": 60.28,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -505,7 +505,7 @@
       "pair_id": "pair_033",
       "scores": {
         "clip_score": 0.9343,
-        "structural_fidelity": 75.95,
+        "structural_fidelity": 68.93,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -520,7 +520,7 @@
       "pair_id": "pair_034",
       "scores": {
         "clip_score": 0.8755,
-        "structural_fidelity": 70.31,
+        "structural_fidelity": 60.04,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -535,7 +535,7 @@
       "pair_id": "pair_035",
       "scores": {
         "clip_score": 0.8036,
-        "structural_fidelity": 58.8,
+        "structural_fidelity": 51.72,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -550,7 +550,7 @@
       "pair_id": "pair_036",
       "scores": {
         "clip_score": 0.8639,
-        "structural_fidelity": 70.95,
+        "structural_fidelity": 62.78,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -565,7 +565,7 @@
       "pair_id": "pair_037",
       "scores": {
         "clip_score": 0.8204,
-        "structural_fidelity": 72.71,
+        "structural_fidelity": 62.38,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -580,7 +580,7 @@
       "pair_id": "pair_038",
       "scores": {
         "clip_score": 0.7944,
-        "structural_fidelity": 60.16,
+        "structural_fidelity": 55.59,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -595,7 +595,7 @@
       "pair_id": "pair_039",
       "scores": {
         "clip_score": 0.8777,
-        "structural_fidelity": 72.52,
+        "structural_fidelity": 67.09,
         "llm_judge": 3.0
       },
       "metadata": {
@@ -610,7 +610,7 @@
       "pair_id": "pair_040",
       "scores": {
         "clip_score": 0.8802,
-        "structural_fidelity": 62.44,
+        "structural_fidelity": 64.14,
         "llm_judge": 3.0
       },
       "metadata": {
@@ -625,7 +625,7 @@
       "pair_id": "pair_041",
       "scores": {
         "clip_score": 0.8476,
-        "structural_fidelity": 71.72,
+        "structural_fidelity": 65.36,
         "llm_judge": 3.0
       },
       "metadata": {
@@ -640,7 +640,7 @@
       "pair_id": "pair_042",
       "scores": {
         "clip_score": 0.8087,
-        "structural_fidelity": 60.34,
+        "structural_fidelity": 54.47,
         "llm_judge": 3.0
       },
       "metadata": {
@@ -655,7 +655,7 @@
       "pair_id": "pair_043",
       "scores": {
         "clip_score": 0.9072,
-        "structural_fidelity": 61.17,
+        "structural_fidelity": 55.12,
         "llm_judge": 3.0
       },
       "metadata": {
@@ -670,7 +670,7 @@
       "pair_id": "pair_044",
       "scores": {
         "clip_score": 0.8571,
-        "structural_fidelity": 67.67,
+        "structural_fidelity": 55.03,
         "llm_judge": 3.0
       },
       "metadata": {
@@ -685,7 +685,7 @@
       "pair_id": "pair_045",
       "scores": {
         "clip_score": 0.8405,
-        "structural_fidelity": 62.72,
+        "structural_fidelity": 56.18,
         "llm_judge": 3.0
       },
       "metadata": {
@@ -700,7 +700,7 @@
       "pair_id": "pair_046",
       "scores": {
         "clip_score": 0.8418,
-        "structural_fidelity": 66.2,
+        "structural_fidelity": 53.76,
         "llm_judge": 3.0
       },
       "metadata": {
@@ -715,7 +715,7 @@
       "pair_id": "pair_047",
       "scores": {
         "clip_score": 0.8163,
-        "structural_fidelity": 69.78,
+        "structural_fidelity": 61.38,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -730,7 +730,7 @@
       "pair_id": "pair_048",
       "scores": {
         "clip_score": 0.8548,
-        "structural_fidelity": 77.16,
+        "structural_fidelity": 67.64,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -745,7 +745,7 @@
       "pair_id": "pair_049",
       "scores": {
         "clip_score": 0.8593,
-        "structural_fidelity": 59.18,
+        "structural_fidelity": 51.93,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -760,7 +760,7 @@
       "pair_id": "pair_050",
       "scores": {
         "clip_score": 0.8609,
-        "structural_fidelity": 66.7,
+        "structural_fidelity": 53.31,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -775,7 +775,7 @@
       "pair_id": "pair_051",
       "scores": {
         "clip_score": 0.8035,
-        "structural_fidelity": 69.04,
+        "structural_fidelity": 64.55,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -790,7 +790,7 @@
       "pair_id": "pair_052",
       "scores": {
         "clip_score": 0.8118,
-        "structural_fidelity": 64.38,
+        "structural_fidelity": 50.57,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -805,7 +805,7 @@
       "pair_id": "pair_053",
       "scores": {
         "clip_score": 0.8141,
-        "structural_fidelity": 70.52,
+        "structural_fidelity": 55.08,
         "llm_judge": 3.0
       },
       "metadata": {
@@ -820,7 +820,7 @@
       "pair_id": "pair_054",
       "scores": {
         "clip_score": 0.8418,
-        "structural_fidelity": 60.08,
+        "structural_fidelity": 53.34,
         "llm_judge": 3.0
       },
       "metadata": {
@@ -835,7 +835,7 @@
       "pair_id": "pair_055",
       "scores": {
         "clip_score": 0.8634,
-        "structural_fidelity": 67.73,
+        "structural_fidelity": 58.59,
         "llm_judge": 5.0
       },
       "metadata": {
@@ -850,7 +850,7 @@
       "pair_id": "pair_056",
       "scores": {
         "clip_score": 0.8779,
-        "structural_fidelity": 66.71,
+        "structural_fidelity": 60.41,
         "llm_judge": 3.0
       },
       "metadata": {
@@ -865,7 +865,7 @@
       "pair_id": "pair_057",
       "scores": {
         "clip_score": 0.8312,
-        "structural_fidelity": 66.12,
+        "structural_fidelity": 54.45,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -880,7 +880,7 @@
       "pair_id": "pair_058",
       "scores": {
         "clip_score": 0.8866,
-        "structural_fidelity": 77.55,
+        "structural_fidelity": 58.91,
         "llm_judge": 5.0
       },
       "metadata": {
@@ -895,7 +895,7 @@
       "pair_id": "pair_059",
       "scores": {
         "clip_score": 0.8363,
-        "structural_fidelity": 60.23,
+        "structural_fidelity": 53.86,
         "llm_judge": 5.0
       },
       "metadata": {
@@ -910,7 +910,7 @@
       "pair_id": "pair_060",
       "scores": {
         "clip_score": 0.8077,
-        "structural_fidelity": 68.89,
+        "structural_fidelity": 58.67,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -925,7 +925,7 @@
       "pair_id": "pair_061",
       "scores": {
         "clip_score": 0.8578,
-        "structural_fidelity": 66.03,
+        "structural_fidelity": 52.44,
         "llm_judge": 3.0
       },
       "metadata": {
@@ -940,7 +940,7 @@
       "pair_id": "pair_062",
       "scores": {
         "clip_score": 0.8533,
-        "structural_fidelity": 60.66,
+        "structural_fidelity": 50.54,
         "llm_judge": 3.0
       },
       "metadata": {
@@ -955,7 +955,7 @@
       "pair_id": "pair_063",
       "scores": {
         "clip_score": 0.8787,
-        "structural_fidelity": 56.95,
+        "structural_fidelity": 54.7,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -970,7 +970,7 @@
       "pair_id": "pair_064",
       "scores": {
         "clip_score": 0.808,
-        "structural_fidelity": 69.41,
+        "structural_fidelity": 55.63,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -985,7 +985,7 @@
       "pair_id": "pair_065",
       "scores": {
         "clip_score": 0.8459,
-        "structural_fidelity": 63.93,
+        "structural_fidelity": 59.44,
         "llm_judge": 5.0
       },
       "metadata": {
@@ -1000,7 +1000,7 @@
       "pair_id": "pair_066",
       "scores": {
         "clip_score": 0.823,
-        "structural_fidelity": 62.75,
+        "structural_fidelity": 56.72,
         "llm_judge": 3.0
       },
       "metadata": {
@@ -1015,7 +1015,7 @@
       "pair_id": "pair_067",
       "scores": {
         "clip_score": 0.8006,
-        "structural_fidelity": 63.07,
+        "structural_fidelity": 54.35,
         "llm_judge": 3.0
       },
       "metadata": {
@@ -1030,7 +1030,7 @@
       "pair_id": "pair_068",
       "scores": {
         "clip_score": 0.8514,
-        "structural_fidelity": 67.72,
+        "structural_fidelity": 56.41,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -1045,7 +1045,7 @@
       "pair_id": "pair_069",
       "scores": {
         "clip_score": 0.8504,
-        "structural_fidelity": 65.52,
+        "structural_fidelity": 57.7,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -1060,7 +1060,7 @@
       "pair_id": "pair_070",
       "scores": {
         "clip_score": 0.8511,
-        "structural_fidelity": 68.19,
+        "structural_fidelity": 52.36,
         "llm_judge": 3.0
       },
       "metadata": {
@@ -1075,7 +1075,7 @@
       "pair_id": "pair_071",
       "scores": {
         "clip_score": 0.8373,
-        "structural_fidelity": 67.32,
+        "structural_fidelity": 63.24,
         "llm_judge": 3.0
       },
       "metadata": {
@@ -1090,7 +1090,7 @@
       "pair_id": "pair_072",
       "scores": {
         "clip_score": 0.8484,
-        "structural_fidelity": 67.31,
+        "structural_fidelity": 62.87,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -1105,7 +1105,7 @@
       "pair_id": "pair_073",
       "scores": {
         "clip_score": 0.827,
-        "structural_fidelity": 74.31,
+        "structural_fidelity": 59.16,
         "llm_judge": 5.0
       },
       "metadata": {
@@ -1120,7 +1120,7 @@
       "pair_id": "pair_074",
       "scores": {
         "clip_score": 0.823,
-        "structural_fidelity": 61.78,
+        "structural_fidelity": 63.81,
         "llm_judge": 3.0
       },
       "metadata": {
@@ -1135,7 +1135,7 @@
       "pair_id": "pair_075",
       "scores": {
         "clip_score": 0.8471,
-        "structural_fidelity": 64.86,
+        "structural_fidelity": 52.96,
         "llm_judge": 5.0
       },
       "metadata": {
@@ -1150,7 +1150,7 @@
       "pair_id": "pair_076",
       "scores": {
         "clip_score": 0.8125,
-        "structural_fidelity": 63.81,
+        "structural_fidelity": 56.33,
         "llm_judge": 3.0
       },
       "metadata": {
@@ -1165,7 +1165,7 @@
       "pair_id": "pair_077",
       "scores": {
         "clip_score": 0.862,
-        "structural_fidelity": 64.2,
+        "structural_fidelity": 54.41,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -1180,7 +1180,7 @@
       "pair_id": "pair_078",
       "scores": {
         "clip_score": 0.8922,
-        "structural_fidelity": 61.92,
+        "structural_fidelity": 51.94,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -1195,7 +1195,7 @@
       "pair_id": "pair_079",
       "scores": {
         "clip_score": 0.8874,
-        "structural_fidelity": 74.73,
+        "structural_fidelity": 68.06,
         "llm_judge": 3.0
       },
       "metadata": {
@@ -1210,7 +1210,7 @@
       "pair_id": "pair_080",
       "scores": {
         "clip_score": 0.8881,
-        "structural_fidelity": 60.29,
+        "structural_fidelity": 54.0,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -1225,7 +1225,7 @@
       "pair_id": "pair_081",
       "scores": {
         "clip_score": 0.9012,
-        "structural_fidelity": 71.14,
+        "structural_fidelity": 55.12,
         "llm_judge": 5.0
       },
       "metadata": {
@@ -1240,7 +1240,7 @@
       "pair_id": "pair_082",
       "scores": {
         "clip_score": 0.7991,
-        "structural_fidelity": 58.18,
+        "structural_fidelity": 54.42,
         "llm_judge": 4.0
       },
       "metadata": {
@@ -1255,7 +1255,7 @@
       "pair_id": "pair_083",
       "scores": {
         "clip_score": 0.8543,
-        "structural_fidelity": 56.63,
+        "structural_fidelity": 52.42,
         "llm_judge": 3.0
       },
       "metadata": {
@@ -1270,7 +1270,7 @@
       "pair_id": "pair_084",
       "scores": {
         "clip_score": 0.9015,
-        "structural_fidelity": 73.94,
+        "structural_fidelity": 58.79,
         "llm_judge": 4.0
       },
       "metadata": {
