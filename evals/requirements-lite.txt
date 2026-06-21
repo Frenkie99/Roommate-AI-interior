@@ -1,0 +1,10 @@
+# 评测平台「轻量三件套」—— 仅启动看板 + 金标准标注 + 可信度分析所需
+# 这一层不含 torch/cv2/skimage/transformers，纯免费、可在任意环境快速起步。
+# 重依赖（重跑本地评分器时再装）见 requirements-full.txt（待建）。
+#
+# 安装：python3 -m venv .venv && .venv/bin/pip install -r requirements-lite.txt
+# 启动：.venv/bin/streamlit run evals/ui/app.py（在项目根目录执行）
+
+streamlit
+pandas
+Pillow

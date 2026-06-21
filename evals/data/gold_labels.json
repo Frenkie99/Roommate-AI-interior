@@ -1,0 +1,1033 @@
+{
+  "version": "1.0",
+  "updated_at": "2026-06-21T19:14:20.697165",
+  "total": 85,
+  "axes": {
+    "structural": "结构保真",
+    "aesthetic": "美学质量",
+    "instruction": "指令遵循",
+    "overall": "综合"
+  },
+  "labels": [
+    {
+      "pair_id": "pair_000",
+      "scores": {
+        "structural": 1.0,
+        "aesthetic": 2.0,
+        "instruction": 2.0,
+        "overall": 1.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T17:45:48.544909",
+      "notes": "视角和原毛坯图完全不一致"
+    },
+    {
+      "pair_id": "pair_001",
+      "scores": {
+        "structural": 5.0,
+        "aesthetic": 3.0,
+        "instruction": 4.0,
+        "overall": 4.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T17:49:16.455891",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_002",
+      "scores": {
+        "structural": 2.0,
+        "aesthetic": 3.0,
+        "instruction": 3.0,
+        "overall": 2.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T17:49:53.325040",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_003",
+      "scores": {
+        "structural": 2.0,
+        "aesthetic": 5.0,
+        "instruction": 3.0,
+        "overall": 3.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T17:52:08.677134",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_004",
+      "scores": {
+        "structural": 5.0,
+        "aesthetic": 5.0,
+        "instruction": 5.0,
+        "overall": 5.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T17:52:44.622089",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_005",
+      "scores": {
+        "structural": 4.0,
+        "aesthetic": 5.0,
+        "instruction": 4.0,
+        "overall": 4.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T17:53:16.768013",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_006",
+      "scores": {
+        "structural": 4.0,
+        "aesthetic": 2.0,
+        "instruction": 3.0,
+        "overall": 3.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T17:56:03.240819",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_007",
+      "scores": {
+        "structural": 5.0,
+        "aesthetic": 5.0,
+        "instruction": 5.0,
+        "overall": 5.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T17:56:27.463582",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_008",
+      "scores": {
+        "structural": 1.0,
+        "aesthetic": 4.0,
+        "instruction": 2.0,
+        "overall": 4.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T17:57:04.446127",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_009",
+      "scores": {
+        "structural": 4.0,
+        "aesthetic": 5.0,
+        "instruction": 5.0,
+        "overall": 5.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T17:57:22.155086",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_010",
+      "scores": {
+        "structural": 4.0,
+        "aesthetic": 5.0,
+        "instruction": 5.0,
+        "overall": 5.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T17:57:49.305039",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_011",
+      "scores": {
+        "structural": 5.0,
+        "aesthetic": 4.0,
+        "instruction": 5.0,
+        "overall": 4.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T17:58:08.873179",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_012",
+      "scores": {
+        "structural": 5.0,
+        "aesthetic": 5.0,
+        "instruction": 5.0,
+        "overall": 4.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T17:58:23.488918",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_013",
+      "scores": {
+        "structural": 4.0,
+        "aesthetic": 1.0,
+        "instruction": 4.0,
+        "overall": 1.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T17:58:53.165425",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_014",
+      "scores": {
+        "structural": 2.0,
+        "aesthetic": 4.0,
+        "instruction": 4.0,
+        "overall": 2.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T17:59:41.523290",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_015",
+      "scores": {
+        "structural": 5.0,
+        "aesthetic": 5.0,
+        "instruction": 5.0,
+        "overall": 5.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:00:03.621808",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_016",
+      "scores": {
+        "structural": 4.0,
+        "aesthetic": 5.0,
+        "instruction": 4.0,
+        "overall": 5.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:02:48.315597",
+      "notes": "当原毛坯图摄影角度一般的时候，该案例进行了很好的角度矫正，该行为是模型的自动行为还是什么有待考证，是否需要固化为该产品的系统提示词？待定"
+    },
+    {
+      "pair_id": "pair_017",
+      "scores": {
+        "structural": 1.0,
+        "aesthetic": 4.0,
+        "instruction": 4.0,
+        "overall": 2.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:03:57.856490",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_018",
+      "scores": {
+        "structural": 5.0,
+        "aesthetic": 5.0,
+        "instruction": 5.0,
+        "overall": 5.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:05:24.681907",
+      "notes": "测试案例的房间功能需要分类：这个明显是卫生间，就不应该随机分配别的房间功能来测试"
+    },
+    {
+      "pair_id": "pair_019",
+      "scores": {
+        "structural": 2.0,
+        "aesthetic": 4.0,
+        "instruction": 4.0,
+        "overall": 4.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:06:32.744975",
+      "notes": "角度自动矫正再次发生"
+    },
+    {
+      "pair_id": "pair_020",
+      "scores": {
+        "structural": 1.0,
+        "aesthetic": 1.0,
+        "instruction": 2.0,
+        "overall": 1.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:06:53.922737",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_021",
+      "scores": {
+        "structural": 1.0,
+        "aesthetic": 5.0,
+        "instruction": 4.0,
+        "overall": 4.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:43:19.206993",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_022",
+      "scores": {
+        "structural": 2.0,
+        "aesthetic": 2.0,
+        "instruction": 4.0,
+        "overall": 2.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:43:42.345869",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_023",
+      "scores": {
+        "structural": 5.0,
+        "aesthetic": 5.0,
+        "instruction": 4.0,
+        "overall": 4.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:44:11.496925",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_024",
+      "scores": {
+        "structural": 5.0,
+        "aesthetic": 5.0,
+        "instruction": 5.0,
+        "overall": 5.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:44:27.256075",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_025",
+      "scores": {
+        "structural": 5.0,
+        "aesthetic": 5.0,
+        "instruction": 5.0,
+        "overall": 5.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:44:39.497085",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_026",
+      "scores": {
+        "structural": 5.0,
+        "aesthetic": 5.0,
+        "instruction": 5.0,
+        "overall": 5.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:45:08.395476",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_027",
+      "scores": {
+        "structural": 1.0,
+        "aesthetic": 4.0,
+        "instruction": 4.0,
+        "overall": 4.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:47:03.453302",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_028",
+      "scores": {
+        "structural": 4.0,
+        "aesthetic": 4.0,
+        "instruction": 4.0,
+        "overall": 4.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:47:42.944439",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_029",
+      "scores": {
+        "structural": 2.0,
+        "aesthetic": 4.0,
+        "instruction": 5.0,
+        "overall": 4.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:48:26.055552",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_030",
+      "scores": {
+        "structural": 5.0,
+        "aesthetic": 1.0,
+        "instruction": 2.0,
+        "overall": 1.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:48:45.469202",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_031",
+      "scores": {
+        "structural": 5.0,
+        "aesthetic": 4.0,
+        "instruction": 4.0,
+        "overall": 4.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:49:10.752571",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_032",
+      "scores": {
+        "structural": 3.0,
+        "aesthetic": 1.0,
+        "instruction": 2.0,
+        "overall": 1.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:49:35.332265",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_033",
+      "scores": {
+        "structural": 5.0,
+        "aesthetic": 2.0,
+        "instruction": 2.0,
+        "overall": 2.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:49:52.712011",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_034",
+      "scores": {
+        "structural": 3.0,
+        "aesthetic": 4.0,
+        "instruction": 4.0,
+        "overall": 4.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:50:14.353569",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_035",
+      "scores": {
+        "structural": 5.0,
+        "aesthetic": 5.0,
+        "instruction": 5.0,
+        "overall": 5.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:50:28.554383",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_036",
+      "scores": {
+        "structural": 5.0,
+        "aesthetic": 4.0,
+        "instruction": 4.0,
+        "overall": 4.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:51:11.485750",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_037",
+      "scores": {
+        "structural": 2.0,
+        "aesthetic": 4.0,
+        "instruction": 3.0,
+        "overall": 4.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:51:26.336946",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_038",
+      "scores": {
+        "structural": 1.0,
+        "aesthetic": 3.0,
+        "instruction": 3.0,
+        "overall": 4.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:51:38.271816",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_039",
+      "scores": {
+        "structural": 5.0,
+        "aesthetic": 2.0,
+        "instruction": 3.0,
+        "overall": 3.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:51:51.259672",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_040",
+      "scores": {
+        "structural": 4.0,
+        "aesthetic": 4.0,
+        "instruction": 4.0,
+        "overall": 4.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:52:03.934317",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_041",
+      "scores": {
+        "structural": 5.0,
+        "aesthetic": 3.0,
+        "instruction": 4.0,
+        "overall": 2.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:52:15.585525",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_042",
+      "scores": {
+        "structural": 5.0,
+        "aesthetic": 5.0,
+        "instruction": 5.0,
+        "overall": 5.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:52:26.292184",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_043",
+      "scores": {
+        "structural": 4.0,
+        "aesthetic": 4.0,
+        "instruction": 4.0,
+        "overall": 4.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:52:43.676537",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_044",
+      "scores": {
+        "structural": 1.0,
+        "aesthetic": 1.0,
+        "instruction": 2.0,
+        "overall": 1.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:53:05.411492",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_045",
+      "scores": {
+        "structural": 3.0,
+        "aesthetic": 5.0,
+        "instruction": 4.0,
+        "overall": 4.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:54:12.368551",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_046",
+      "scores": {
+        "structural": 4.0,
+        "aesthetic": 4.0,
+        "instruction": 4.0,
+        "overall": 4.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:54:29.936116",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_047",
+      "scores": {
+        "structural": 4.0,
+        "aesthetic": 4.0,
+        "instruction": 4.0,
+        "overall": 3.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:54:50.689287",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_048",
+      "scores": {
+        "structural": 5.0,
+        "aesthetic": 1.0,
+        "instruction": 3.0,
+        "overall": 1.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:55:10.945156",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_049",
+      "scores": {
+        "structural": 1.0,
+        "aesthetic": 4.0,
+        "instruction": 3.0,
+        "overall": 2.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:55:28.460256",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_050",
+      "scores": {
+        "structural": 5.0,
+        "aesthetic": 4.0,
+        "instruction": 4.0,
+        "overall": 4.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:55:44.959466",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_051",
+      "scores": {
+        "structural": 4.0,
+        "aesthetic": 5.0,
+        "instruction": 4.0,
+        "overall": 4.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:56:11.043768",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_052",
+      "scores": {
+        "structural": 5.0,
+        "aesthetic": 4.0,
+        "instruction": 4.0,
+        "overall": 4.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:56:24.535095",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_053",
+      "scores": {
+        "structural": 4.0,
+        "aesthetic": 5.0,
+        "instruction": 4.0,
+        "overall": 4.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:57:42.217485",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_054",
+      "scores": {
+        "structural": 4.0,
+        "aesthetic": 4.0,
+        "instruction": 4.0,
+        "overall": 4.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:57:57.552821",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_055",
+      "scores": {
+        "structural": 5.0,
+        "aesthetic": 4.0,
+        "instruction": 4.0,
+        "overall": 4.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:58:36.110480",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_056",
+      "scores": {
+        "structural": 5.0,
+        "aesthetic": 4.0,
+        "instruction": 4.0,
+        "overall": 4.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T18:59:29.685784",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_057",
+      "scores": {
+        "structural": 2.0,
+        "aesthetic": 5.0,
+        "instruction": 5.0,
+        "overall": 4.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T19:01:55.252919",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_058",
+      "scores": {
+        "structural": 1.0,
+        "aesthetic": 1.0,
+        "instruction": 2.0,
+        "overall": 1.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T19:02:13.835192",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_059",
+      "scores": {
+        "structural": 2.0,
+        "aesthetic": 4.0,
+        "instruction": 4.0,
+        "overall": 4.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T19:02:54.693153",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_060",
+      "scores": {
+        "structural": 2.0,
+        "aesthetic": 4.0,
+        "instruction": 3.0,
+        "overall": 2.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T19:03:11.418226",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_061",
+      "scores": {
+        "structural": 1.0,
+        "aesthetic": 1.0,
+        "instruction": 1.0,
+        "overall": 1.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T19:03:32.349411",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_062",
+      "scores": {
+        "structural": 2.0,
+        "aesthetic": 4.0,
+        "instruction": 2.0,
+        "overall": 2.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T19:04:09.001347",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_063",
+      "scores": {
+        "structural": 4.0,
+        "aesthetic": 2.0,
+        "instruction": 4.0,
+        "overall": 2.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T19:04:23.470875",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_064",
+      "scores": {
+        "structural": 2.0,
+        "aesthetic": 2.0,
+        "instruction": 2.0,
+        "overall": 2.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T19:04:34.735105",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_065",
+      "scores": {
+        "structural": 4.0,
+        "aesthetic": 3.0,
+        "instruction": 3.0,
+        "overall": 3.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T19:04:49.005718",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_066",
+      "scores": {
+        "structural": 4.0,
+        "aesthetic": 4.0,
+        "instruction": 2.0,
+        "overall": 4.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T19:05:48.914183",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_067",
+      "scores": {
+        "structural": 2.0,
+        "aesthetic": 1.0,
+        "instruction": 2.0,
+        "overall": 1.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T19:06:11.399977",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_068",
+      "scores": {
+        "structural": 5.0,
+        "aesthetic": 4.0,
+        "instruction": 4.0,
+        "overall": 4.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T19:06:36.408789",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_069",
+      "scores": {
+        "structural": 2.0,
+        "aesthetic": 1.0,
+        "instruction": 2.0,
+        "overall": 1.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T19:07:01.743034",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_070",
+      "scores": {
+        "structural": 2.0,
+        "aesthetic": 4.0,
+        "instruction": 4.0,
+        "overall": 4.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T19:07:22.672639",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_071",
+      "scores": {
+        "structural": 5.0,
+        "aesthetic": 4.0,
+        "instruction": 4.0,
+        "overall": 4.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T19:08:41.792302",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_072",
+      "scores": {
+        "structural": 5.0,
+        "aesthetic": 2.0,
+        "instruction": 2.0,
+        "overall": 3.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T19:08:55.645089",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_073",
+      "scores": {
+        "structural": 2.0,
+        "aesthetic": 1.0,
+        "instruction": 2.0,
+        "overall": 1.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T19:09:22.731971",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_074",
+      "scores": {
+        "structural": 5.0,
+        "aesthetic": 5.0,
+        "instruction": 4.0,
+        "overall": 5.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T19:09:42.580057",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_075",
+      "scores": {
+        "structural": 2.0,
+        "aesthetic": 2.0,
+        "instruction": 2.0,
+        "overall": 2.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T19:09:55.074411",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_076",
+      "scores": {
+        "structural": 2.0,
+        "aesthetic": 5.0,
+        "instruction": 4.0,
+        "overall": 4.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T19:10:52.054426",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_077",
+      "scores": {
+        "structural": 4.0,
+        "aesthetic": 1.0,
+        "instruction": 2.0,
+        "overall": 2.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T19:11:05.756447",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_078",
+      "scores": {
+        "structural": 1.0,
+        "aesthetic": 1.0,
+        "instruction": 1.0,
+        "overall": 1.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T19:12:43.190297",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_079",
+      "scores": {
+        "structural": 4.0,
+        "aesthetic": 4.0,
+        "instruction": 4.0,
+        "overall": 4.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T19:13:02.691053",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_080",
+      "scores": {
+        "structural": 3.0,
+        "aesthetic": 2.0,
+        "instruction": 2.0,
+        "overall": 1.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T19:13:13.203591",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_081",
+      "scores": {
+        "structural": 2.0,
+        "aesthetic": 1.0,
+        "instruction": 2.0,
+        "overall": 1.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T19:13:22.247910",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_082",
+      "scores": {
+        "structural": 1.0,
+        "aesthetic": 4.0,
+        "instruction": 3.0,
+        "overall": 3.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T19:13:40.040728",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_083",
+      "scores": {
+        "structural": 3.0,
+        "aesthetic": 2.0,
+        "instruction": 2.0,
+        "overall": 2.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T19:14:10.397817",
+      "notes": ""
+    },
+    {
+      "pair_id": "pair_084",
+      "scores": {
+        "structural": 4.0,
+        "aesthetic": 2.0,
+        "instruction": 2.0,
+        "overall": 2.0
+      },
+      "labeler": "frenkie",
+      "labeled_at": "2026-06-21T19:14:20.697161",
+      "notes": ""
+    }
+  ]
+}
