@@ -63,7 +63,7 @@ L5  评测直接驱动代码自动迭代（北极星）
 - **动作**：装结构依赖（numpy/opencv/skimage）→ 消融实验找最佳结构度量 → 重写 `structural_fidelity` → 量化验证。
 - **DoD**：至少 1 个本地评分器可信度被量化证明达标。✅ **已达成**。
 - **结果**：消融发现 Canny 边缘 SSIM 几乎零相关（现版 60% 权重的真凶）；改用 64×64 低分辨率 SSIM → **structural_fidelity +0.170 → +0.418**（过显著线，2.5 倍）。详见 `structural_ablation.py`。
-- **遗留**：clip_score 待处置（反指标，建议移除，待用户确认）；torch 因 clip 弃用预计不装。
+- **clip + llm_judge 已退役**（2026-06-21）：从 registry 与 eval_results 移除，看板只留可信的 structural_fidelity；.py 文件保留备查，torch 依赖解除。
 
 ### 阶段 3 — 上视觉模型 Judge（押后，花钱）⬜ 方案已就绪 → `VISION_JUDGE_DESIGN.md`
 - **动作**：把图**真正发给** Gemini 视觉模型替换盲评 DeepSeek + 多模型投票纠偏 + 量化方差。

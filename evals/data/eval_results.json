@@ -3,15 +3,18 @@
   "created_at": "2026-05-07T20:46:28.497069",
   "total_results": 85,
   "metadata": {
-    "total_pairs": 85
+    "total_pairs": 85,
+    "retired_metrics": [
+      "clip_score",
+      "llm_judge"
+    ],
+    "retired_reason": "clip=反指标(vs美学-0.31), llm_judge=盲评噪声; 2026-06-21经85条金标准证伪"
   },
   "results": [
     {
       "pair_id": "pair_000",
       "scores": {
-        "clip_score": 0.804,
-        "structural_fidelity": 57.22,
-        "llm_judge": 4.0
+        "structural_fidelity": 57.22
       },
       "metadata": {
         "style": "bauhaus",
@@ -24,9 +27,7 @@
     {
       "pair_id": "pair_001",
       "scores": {
-        "clip_score": 0.8791,
-        "structural_fidelity": 66.96,
-        "llm_judge": 4.0
+        "structural_fidelity": 66.96
       },
       "metadata": {
         "style": "modern_luxury",
@@ -39,9 +40,7 @@
     {
       "pair_id": "pair_002",
       "scores": {
-        "clip_score": 0.8883,
-        "structural_fidelity": 59.76,
-        "llm_judge": 4.0
+        "structural_fidelity": 59.76
       },
       "metadata": {
         "style": "american_transitional",
@@ -54,9 +53,7 @@
     {
       "pair_id": "pair_003",
       "scores": {
-        "clip_score": 0.8768,
-        "structural_fidelity": 53.75,
-        "llm_judge": 3.0
+        "structural_fidelity": 53.75
       },
       "metadata": {
         "style": "chinese_modern",
@@ -69,9 +66,7 @@
     {
       "pair_id": "pair_004",
       "scores": {
-        "clip_score": 0.8735,
-        "structural_fidelity": 68.67,
-        "llm_judge": 3.0
+        "structural_fidelity": 68.67
       },
       "metadata": {
         "style": "american_transitional",
@@ -84,9 +79,7 @@
     {
       "pair_id": "pair_005",
       "scores": {
-        "clip_score": 0.8495,
-        "structural_fidelity": 56.98,
-        "llm_judge": 4.0
+        "structural_fidelity": 56.98
       },
       "metadata": {
         "style": "japanese_traditional",
@@ -99,9 +92,7 @@
     {
       "pair_id": "pair_006",
       "scores": {
-        "clip_score": 0.8606,
-        "structural_fidelity": 55.03,
-        "llm_judge": 4.0
+        "structural_fidelity": 55.03
       },
       "metadata": {
         "style": "natural_wood",
@@ -114,9 +105,7 @@
     {
       "pair_id": "pair_007",
       "scores": {
-        "clip_score": 0.8579,
-        "structural_fidelity": 49.6,
-        "llm_judge": 4.0
+        "structural_fidelity": 49.6
       },
       "metadata": {
         "style": "japanese_traditional",
@@ -129,9 +118,7 @@
     {
       "pair_id": "pair_008",
       "scores": {
-        "clip_score": 0.851,
-        "structural_fidelity": 55.29,
-        "llm_judge": 5.0
+        "structural_fidelity": 55.29
       },
       "metadata": {
         "style": "modern_luxury",
@@ -144,9 +131,7 @@
     {
       "pair_id": "pair_009",
       "scores": {
-        "clip_score": 0.8327,
-        "structural_fidelity": 55.68,
-        "llm_judge": 3.0
+        "structural_fidelity": 55.68
       },
       "metadata": {
         "style": "american_transitional",
@@ -159,9 +144,7 @@
     {
       "pair_id": "pair_010",
       "scores": {
-        "clip_score": 0.8843,
-        "structural_fidelity": 60.5,
-        "llm_judge": 3.0
+        "structural_fidelity": 60.5
       },
       "metadata": {
         "style": "natural_wood",
@@ -174,9 +157,7 @@
     {
       "pair_id": "pair_011",
       "scores": {
-        "clip_score": 0.8354,
-        "structural_fidelity": 68.31,
-        "llm_judge": 4.0
+        "structural_fidelity": 68.31
       },
       "metadata": {
         "style": "bohemian",
@@ -189,9 +170,7 @@
     {
       "pair_id": "pair_012",
       "scores": {
-        "clip_score": 0.8499,
-        "structural_fidelity": 60.55,
-        "llm_judge": 3.0
+        "structural_fidelity": 60.55
       },
       "metadata": {
         "style": "bohemian",
@@ -204,9 +183,7 @@
     {
       "pair_id": "pair_013",
       "scores": {
-        "clip_score": 0.8691,
-        "structural_fidelity": 57.9,
-        "llm_judge": 4.0
+        "structural_fidelity": 57.9
       },
       "metadata": {
         "style": "modern_minimalist",
@@ -219,9 +196,7 @@
     {
       "pair_id": "pair_014",
       "scores": {
-        "clip_score": 0.8473,
-        "structural_fidelity": 55.36,
-        "llm_judge": 5.0
+        "structural_fidelity": 55.36
       },
       "metadata": {
         "style": "modern_minimalist",
@@ -234,9 +209,7 @@
     {
       "pair_id": "pair_015",
       "scores": {
-        "clip_score": 0.8624,
-        "structural_fidelity": 54.18,
-        "llm_judge": 4.0
+        "structural_fidelity": 54.18
       },
       "metadata": {
         "style": "natural_wood",
@@ -249,9 +222,7 @@
     {
       "pair_id": "pair_016",
       "scores": {
-        "clip_score": 0.762,
-        "structural_fidelity": 51.32,
-        "llm_judge": 4.0
+        "structural_fidelity": 51.32
       },
       "metadata": {
         "style": "american_transitional",
@@ -264,9 +235,7 @@
     {
       "pair_id": "pair_017",
       "scores": {
-        "clip_score": 0.8423,
-        "structural_fidelity": 48.68,
-        "llm_judge": 4.0
+        "structural_fidelity": 48.68
       },
       "metadata": {
         "style": "modern_luxury",
@@ -279,9 +248,7 @@
     {
       "pair_id": "pair_018",
       "scores": {
-        "clip_score": 0.8542,
-        "structural_fidelity": 55.15,
-        "llm_judge": 4.0
+        "structural_fidelity": 55.15
       },
       "metadata": {
         "style": "chinese_modern",
@@ -294,9 +261,7 @@
     {
       "pair_id": "pair_019",
       "scores": {
-        "clip_score": 0.8143,
-        "structural_fidelity": 52.82,
-        "llm_judge": 4.0
+        "structural_fidelity": 52.82
       },
       "metadata": {
         "style": "japanese_traditional",
@@ -309,9 +274,7 @@
     {
       "pair_id": "pair_020",
       "scores": {
-        "clip_score": 0.875,
-        "structural_fidelity": 57.47,
-        "llm_judge": 4.0
+        "structural_fidelity": 57.47
       },
       "metadata": {
         "style": "modern_minimalist",
@@ -324,9 +287,7 @@
     {
       "pair_id": "pair_021",
       "scores": {
-        "clip_score": 0.8407,
-        "structural_fidelity": 52.9,
-        "llm_judge": 3.0
+        "structural_fidelity": 52.9
       },
       "metadata": {
         "style": "natural_wood",
@@ -339,9 +300,7 @@
     {
       "pair_id": "pair_022",
       "scores": {
-        "clip_score": 0.8555,
-        "structural_fidelity": 53.26,
-        "llm_judge": 4.0
+        "structural_fidelity": 53.26
       },
       "metadata": {
         "style": "modern_minimalist",
@@ -354,9 +313,7 @@
     {
       "pair_id": "pair_023",
       "scores": {
-        "clip_score": 0.8718,
-        "structural_fidelity": 60.58,
-        "llm_judge": 4.0
+        "structural_fidelity": 60.58
       },
       "metadata": {
         "style": "european_neoclassical",
@@ -369,9 +326,7 @@
     {
       "pair_id": "pair_024",
       "scores": {
-        "clip_score": 0.798,
-        "structural_fidelity": 59.82,
-        "llm_judge": 4.0
+        "structural_fidelity": 59.82
       },
       "metadata": {
         "style": "european_neoclassical",
@@ -384,9 +339,7 @@
     {
       "pair_id": "pair_025",
       "scores": {
-        "clip_score": 0.8742,
-        "structural_fidelity": 66.36,
-        "llm_judge": 4.0
+        "structural_fidelity": 66.36
       },
       "metadata": {
         "style": "bauhaus",
@@ -399,9 +352,7 @@
     {
       "pair_id": "pair_026",
       "scores": {
-        "clip_score": 0.7908,
-        "structural_fidelity": 56.92,
-        "llm_judge": 3.0
+        "structural_fidelity": 56.92
       },
       "metadata": {
         "style": "bohemian",
@@ -414,9 +365,7 @@
     {
       "pair_id": "pair_027",
       "scores": {
-        "clip_score": 0.8195,
-        "structural_fidelity": 55.96,
-        "llm_judge": 4.0
+        "structural_fidelity": 55.96
       },
       "metadata": {
         "style": "chinese_modern",
@@ -429,9 +378,7 @@
     {
       "pair_id": "pair_028",
       "scores": {
-        "clip_score": 0.8239,
-        "structural_fidelity": 54.96,
-        "llm_judge": 5.0
+        "structural_fidelity": 54.96
       },
       "metadata": {
         "style": "modern_luxury",
@@ -444,9 +391,7 @@
     {
       "pair_id": "pair_029",
       "scores": {
-        "clip_score": 0.8081,
-        "structural_fidelity": 52.66,
-        "llm_judge": 5.0
+        "structural_fidelity": 52.66
       },
       "metadata": {
         "style": "european_neoclassical",
@@ -459,9 +404,7 @@
     {
       "pair_id": "pair_030",
       "scores": {
-        "clip_score": 0.8705,
-        "structural_fidelity": 55.64,
-        "llm_judge": 3.0
+        "structural_fidelity": 55.64
       },
       "metadata": {
         "style": "chinese_modern",
@@ -474,9 +417,7 @@
     {
       "pair_id": "pair_031",
       "scores": {
-        "clip_score": 0.8611,
-        "structural_fidelity": 56.17,
-        "llm_judge": 4.0
+        "structural_fidelity": 56.17
       },
       "metadata": {
         "style": "chinese_modern",
@@ -489,9 +430,7 @@
     {
       "pair_id": "pair_032",
       "scores": {
-        "clip_score": 0.8493,
-        "structural_fidelity": 60.28,
-        "llm_judge": 4.0
+        "structural_fidelity": 60.28
       },
       "metadata": {
         "style": "modern_minimalist",
@@ -504,9 +443,7 @@
     {
       "pair_id": "pair_033",
       "scores": {
-        "clip_score": 0.9343,
-        "structural_fidelity": 68.93,
-        "llm_judge": 4.0
+        "structural_fidelity": 68.93
       },
       "metadata": {
         "style": "bauhaus",
@@ -519,9 +456,7 @@
     {
       "pair_id": "pair_034",
       "scores": {
-        "clip_score": 0.8755,
-        "structural_fidelity": 60.04,
-        "llm_judge": 4.0
+        "structural_fidelity": 60.04
       },
       "metadata": {
         "style": "japanese_traditional",
@@ -534,9 +469,7 @@
     {
       "pair_id": "pair_035",
       "scores": {
-        "clip_score": 0.8036,
-        "structural_fidelity": 51.72,
-        "llm_judge": 4.0
+        "structural_fidelity": 51.72
       },
       "metadata": {
         "style": "bohemian",
@@ -549,9 +482,7 @@
     {
       "pair_id": "pair_036",
       "scores": {
-        "clip_score": 0.8639,
-        "structural_fidelity": 62.78,
-        "llm_judge": 4.0
+        "structural_fidelity": 62.78
       },
       "metadata": {
         "style": "american_transitional",
@@ -564,9 +495,7 @@
     {
       "pair_id": "pair_037",
       "scores": {
-        "clip_score": 0.8204,
-        "structural_fidelity": 62.38,
-        "llm_judge": 4.0
+        "structural_fidelity": 62.38
       },
       "metadata": {
         "style": "japanese_traditional",
@@ -579,9 +508,7 @@
     {
       "pair_id": "pair_038",
       "scores": {
-        "clip_score": 0.7944,
-        "structural_fidelity": 55.59,
-        "llm_judge": 4.0
+        "structural_fidelity": 55.59
       },
       "metadata": {
         "style": "european_neoclassical",
@@ -594,9 +521,7 @@
     {
       "pair_id": "pair_039",
       "scores": {
-        "clip_score": 0.8777,
-        "structural_fidelity": 67.09,
-        "llm_judge": 3.0
+        "structural_fidelity": 67.09
       },
       "metadata": {
         "style": "bauhaus",
@@ -609,9 +534,7 @@
     {
       "pair_id": "pair_040",
       "scores": {
-        "clip_score": 0.8802,
-        "structural_fidelity": 64.14,
-        "llm_judge": 3.0
+        "structural_fidelity": 64.14
       },
       "metadata": {
         "style": "natural_wood",
@@ -624,9 +547,7 @@
     {
       "pair_id": "pair_041",
       "scores": {
-        "clip_score": 0.8476,
-        "structural_fidelity": 65.36,
-        "llm_judge": 3.0
+        "structural_fidelity": 65.36
       },
       "metadata": {
         "style": "bauhaus",
@@ -639,9 +560,7 @@
     {
       "pair_id": "pair_042",
       "scores": {
-        "clip_score": 0.8087,
-        "structural_fidelity": 54.47,
-        "llm_judge": 3.0
+        "structural_fidelity": 54.47
       },
       "metadata": {
         "style": "american_transitional",
@@ -654,9 +573,7 @@
     {
       "pair_id": "pair_043",
       "scores": {
-        "clip_score": 0.9072,
-        "structural_fidelity": 55.12,
-        "llm_judge": 3.0
+        "structural_fidelity": 55.12
       },
       "metadata": {
         "style": "bohemian",
@@ -669,9 +586,7 @@
     {
       "pair_id": "pair_044",
       "scores": {
-        "clip_score": 0.8571,
-        "structural_fidelity": 55.03,
-        "llm_judge": 3.0
+        "structural_fidelity": 55.03
       },
       "metadata": {
         "style": "industrial_loft",
@@ -684,9 +599,7 @@
     {
       "pair_id": "pair_045",
       "scores": {
-        "clip_score": 0.8405,
-        "structural_fidelity": 56.18,
-        "llm_judge": 3.0
+        "structural_fidelity": 56.18
       },
       "metadata": {
         "style": "european_neoclassical",
@@ -699,9 +612,7 @@
     {
       "pair_id": "pair_046",
       "scores": {
-        "clip_score": 0.8418,
-        "structural_fidelity": 53.76,
-        "llm_judge": 3.0
+        "structural_fidelity": 53.76
       },
       "metadata": {
         "style": "american_transitional",
@@ -714,9 +625,7 @@
     {
       "pair_id": "pair_047",
       "scores": {
-        "clip_score": 0.8163,
-        "structural_fidelity": 61.38,
-        "llm_judge": 4.0
+        "structural_fidelity": 61.38
       },
       "metadata": {
         "style": "japanese_traditional",
@@ -729,9 +638,7 @@
     {
       "pair_id": "pair_048",
       "scores": {
-        "clip_score": 0.8548,
-        "structural_fidelity": 67.64,
-        "llm_judge": 4.0
+        "structural_fidelity": 67.64
       },
       "metadata": {
         "style": "bauhaus",
@@ -744,9 +651,7 @@
     {
       "pair_id": "pair_049",
       "scores": {
-        "clip_score": 0.8593,
-        "structural_fidelity": 51.93,
-        "llm_judge": 4.0
+        "structural_fidelity": 51.93
       },
       "metadata": {
         "style": "modern_luxury",
@@ -759,9 +664,7 @@
     {
       "pair_id": "pair_050",
       "scores": {
-        "clip_score": 0.8609,
-        "structural_fidelity": 53.31,
-        "llm_judge": 4.0
+        "structural_fidelity": 53.31
       },
       "metadata": {
         "style": "american_transitional",
@@ -774,9 +677,7 @@
     {
       "pair_id": "pair_051",
       "scores": {
-        "clip_score": 0.8035,
-        "structural_fidelity": 64.55,
-        "llm_judge": 4.0
+        "structural_fidelity": 64.55
       },
       "metadata": {
         "style": "bauhaus",
@@ -789,9 +690,7 @@
     {
       "pair_id": "pair_052",
       "scores": {
-        "clip_score": 0.8118,
-        "structural_fidelity": 50.57,
-        "llm_judge": 4.0
+        "structural_fidelity": 50.57
       },
       "metadata": {
         "style": "industrial_loft",
@@ -804,9 +703,7 @@
     {
       "pair_id": "pair_053",
       "scores": {
-        "clip_score": 0.8141,
-        "structural_fidelity": 55.08,
-        "llm_judge": 3.0
+        "structural_fidelity": 55.08
       },
       "metadata": {
         "style": "natural_wood",
@@ -819,9 +716,7 @@
     {
       "pair_id": "pair_054",
       "scores": {
-        "clip_score": 0.8418,
-        "structural_fidelity": 53.34,
-        "llm_judge": 3.0
+        "structural_fidelity": 53.34
       },
       "metadata": {
         "style": "japanese_traditional",
@@ -834,9 +729,7 @@
     {
       "pair_id": "pair_055",
       "scores": {
-        "clip_score": 0.8634,
-        "structural_fidelity": 58.59,
-        "llm_judge": 5.0
+        "structural_fidelity": 58.59
       },
       "metadata": {
         "style": "modern_luxury",
@@ -849,9 +742,7 @@
     {
       "pair_id": "pair_056",
       "scores": {
-        "clip_score": 0.8779,
-        "structural_fidelity": 60.41,
-        "llm_judge": 3.0
+        "structural_fidelity": 60.41
       },
       "metadata": {
         "style": "bauhaus",
@@ -864,9 +755,7 @@
     {
       "pair_id": "pair_057",
       "scores": {
-        "clip_score": 0.8312,
-        "structural_fidelity": 54.45,
-        "llm_judge": 4.0
+        "structural_fidelity": 54.45
       },
       "metadata": {
         "style": "american_transitional",
@@ -879,9 +768,7 @@
     {
       "pair_id": "pair_058",
       "scores": {
-        "clip_score": 0.8866,
-        "structural_fidelity": 58.91,
-        "llm_judge": 5.0
+        "structural_fidelity": 58.91
       },
       "metadata": {
         "style": "modern_minimalist",
@@ -894,9 +781,7 @@
     {
       "pair_id": "pair_059",
       "scores": {
-        "clip_score": 0.8363,
-        "structural_fidelity": 53.86,
-        "llm_judge": 5.0
+        "structural_fidelity": 53.86
       },
       "metadata": {
         "style": "european_neoclassical",
@@ -909,9 +794,7 @@
     {
       "pair_id": "pair_060",
       "scores": {
-        "clip_score": 0.8077,
-        "structural_fidelity": 58.67,
-        "llm_judge": 4.0
+        "structural_fidelity": 58.67
       },
       "metadata": {
         "style": "chinese_modern",
@@ -924,9 +807,7 @@
     {
       "pair_id": "pair_061",
       "scores": {
-        "clip_score": 0.8578,
-        "structural_fidelity": 52.44,
-        "llm_judge": 3.0
+        "structural_fidelity": 52.44
       },
       "metadata": {
         "style": "industrial_loft",
@@ -939,9 +820,7 @@
     {
       "pair_id": "pair_062",
       "scores": {
-        "clip_score": 0.8533,
-        "structural_fidelity": 50.54,
-        "llm_judge": 3.0
+        "structural_fidelity": 50.54
       },
       "metadata": {
         "style": "industrial_loft",
@@ -954,9 +833,7 @@
     {
       "pair_id": "pair_063",
       "scores": {
-        "clip_score": 0.8787,
-        "structural_fidelity": 54.7,
-        "llm_judge": 4.0
+        "structural_fidelity": 54.7
       },
       "metadata": {
         "style": "modern_luxury",
@@ -969,9 +846,7 @@
     {
       "pair_id": "pair_064",
       "scores": {
-        "clip_score": 0.808,
-        "structural_fidelity": 55.63,
-        "llm_judge": 4.0
+        "structural_fidelity": 55.63
       },
       "metadata": {
         "style": "modern_luxury",
@@ -984,9 +859,7 @@
     {
       "pair_id": "pair_065",
       "scores": {
-        "clip_score": 0.8459,
-        "structural_fidelity": 59.44,
-        "llm_judge": 5.0
+        "structural_fidelity": 59.44
       },
       "metadata": {
         "style": "japanese_traditional",
@@ -999,9 +872,7 @@
     {
       "pair_id": "pair_066",
       "scores": {
-        "clip_score": 0.823,
-        "structural_fidelity": 56.72,
-        "llm_judge": 3.0
+        "structural_fidelity": 56.72
       },
       "metadata": {
         "style": "bohemian",
@@ -1014,9 +885,7 @@
     {
       "pair_id": "pair_067",
       "scores": {
-        "clip_score": 0.8006,
-        "structural_fidelity": 54.35,
-        "llm_judge": 3.0
+        "structural_fidelity": 54.35
       },
       "metadata": {
         "style": "industrial_loft",
@@ -1029,9 +898,7 @@
     {
       "pair_id": "pair_068",
       "scores": {
-        "clip_score": 0.8514,
-        "structural_fidelity": 56.41,
-        "llm_judge": 4.0
+        "structural_fidelity": 56.41
       },
       "metadata": {
         "style": "european_neoclassical",
@@ -1044,9 +911,7 @@
     {
       "pair_id": "pair_069",
       "scores": {
-        "clip_score": 0.8504,
-        "structural_fidelity": 57.7,
-        "llm_judge": 4.0
+        "structural_fidelity": 57.7
       },
       "metadata": {
         "style": "modern_minimalist",
@@ -1059,9 +924,7 @@
     {
       "pair_id": "pair_070",
       "scores": {
-        "clip_score": 0.8511,
-        "structural_fidelity": 52.36,
-        "llm_judge": 3.0
+        "structural_fidelity": 52.36
       },
       "metadata": {
         "style": "natural_wood",
@@ -1074,9 +937,7 @@
     {
       "pair_id": "pair_071",
       "scores": {
-        "clip_score": 0.8373,
-        "structural_fidelity": 63.24,
-        "llm_judge": 3.0
+        "structural_fidelity": 63.24
       },
       "metadata": {
         "style": "japanese_traditional",
@@ -1089,9 +950,7 @@
     {
       "pair_id": "pair_072",
       "scores": {
-        "clip_score": 0.8484,
-        "structural_fidelity": 62.87,
-        "llm_judge": 4.0
+        "structural_fidelity": 62.87
       },
       "metadata": {
         "style": "industrial_loft",
@@ -1104,9 +963,7 @@
     {
       "pair_id": "pair_073",
       "scores": {
-        "clip_score": 0.827,
-        "structural_fidelity": 59.16,
-        "llm_judge": 5.0
+        "structural_fidelity": 59.16
       },
       "metadata": {
         "style": "modern_minimalist",
@@ -1119,9 +976,7 @@
     {
       "pair_id": "pair_074",
       "scores": {
-        "clip_score": 0.823,
-        "structural_fidelity": 63.81,
-        "llm_judge": 3.0
+        "structural_fidelity": 63.81
       },
       "metadata": {
         "style": "bohemian",
@@ -1134,9 +989,7 @@
     {
       "pair_id": "pair_075",
       "scores": {
-        "clip_score": 0.8471,
-        "structural_fidelity": 52.96,
-        "llm_judge": 5.0
+        "structural_fidelity": 52.96
       },
       "metadata": {
         "style": "modern_luxury",
@@ -1149,9 +1002,7 @@
     {
       "pair_id": "pair_076",
       "scores": {
-        "clip_score": 0.8125,
-        "structural_fidelity": 56.33,
-        "llm_judge": 3.0
+        "structural_fidelity": 56.33
       },
       "metadata": {
         "style": "bohemian",
@@ -1164,9 +1015,7 @@
     {
       "pair_id": "pair_077",
       "scores": {
-        "clip_score": 0.862,
-        "structural_fidelity": 54.41,
-        "llm_judge": 4.0
+        "structural_fidelity": 54.41
       },
       "metadata": {
         "style": "industrial_loft",
@@ -1179,9 +1028,7 @@
     {
       "pair_id": "pair_078",
       "scores": {
-        "clip_score": 0.8922,
-        "structural_fidelity": 51.94,
-        "llm_judge": 4.0
+        "structural_fidelity": 51.94
       },
       "metadata": {
         "style": "industrial_loft",
@@ -1194,9 +1041,7 @@
     {
       "pair_id": "pair_079",
       "scores": {
-        "clip_score": 0.8874,
-        "structural_fidelity": 68.06,
-        "llm_judge": 3.0
+        "structural_fidelity": 68.06
       },
       "metadata": {
         "style": "natural_wood",
@@ -1209,9 +1054,7 @@
     {
       "pair_id": "pair_080",
       "scores": {
-        "clip_score": 0.8881,
-        "structural_fidelity": 54.0,
-        "llm_judge": 4.0
+        "structural_fidelity": 54.0
       },
       "metadata": {
         "style": "chinese_modern",
@@ -1224,9 +1067,7 @@
     {
       "pair_id": "pair_081",
       "scores": {
-        "clip_score": 0.9012,
-        "structural_fidelity": 55.12,
-        "llm_judge": 5.0
+        "structural_fidelity": 55.12
       },
       "metadata": {
         "style": "modern_minimalist",
@@ -1239,9 +1080,7 @@
     {
       "pair_id": "pair_082",
       "scores": {
-        "clip_score": 0.7991,
-        "structural_fidelity": 54.42,
-        "llm_judge": 4.0
+        "structural_fidelity": 54.42
       },
       "metadata": {
         "style": "european_neoclassical",
@@ -1254,9 +1093,7 @@
     {
       "pair_id": "pair_083",
       "scores": {
-        "clip_score": 0.8543,
-        "structural_fidelity": 52.42,
-        "llm_judge": 3.0
+        "structural_fidelity": 52.42
       },
       "metadata": {
         "style": "bohemian",
@@ -1269,9 +1106,7 @@
     {
       "pair_id": "pair_084",
       "scores": {
-        "clip_score": 0.9015,
-        "structural_fidelity": 58.79,
-        "llm_judge": 4.0
+        "structural_fidelity": 58.79
       },
       "metadata": {
         "style": "bauhaus",

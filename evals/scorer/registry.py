@@ -5,9 +5,13 @@ from typing import Dict
 from evals.scorer.base import BaseScorer
 from evals.scorer.iou_scorer import create_iou_scorer
 from evals.scorer.fid_scorer import create_fid_scorer
-from evals.scorer.clip_scorer import create_clip_scorer
 from evals.scorer.structural_fidelity import create_structural_fidelity_scorer
-from evals.scorer.llm_judge import create_llm_judge_scorer
+
+# 已退役评分器（2026-06-21，经 85 条金标准证伪，见 PROGRESS.md / METHODOLOGY.md 第8节）：
+#   - clip_score：vs 人工美学 Spearman -0.31，显著负相关 = 反指标，图-图相似度评毛坯→精装语义反。
+#   - llm_judge ：盲评（只喂文本不看图），全维度无有效对齐 = 噪声。
+# 代码文件 clip_scorer.py / llm_judge.py 保留备查，但不再注册。clip 退役后 torch 依赖也随之解除。
+# llm_judge 的"看图"重做方案见 VISION_JUDGE_DESIGN.md（阶段3）。
 
 
 class ScorerRegistry:
@@ -31,9 +35,7 @@ class ScorerRegistry:
         factories = [
             create_iou_scorer,
             create_fid_scorer,
-            create_clip_scorer,
             create_structural_fidelity_scorer,
-            create_llm_judge_scorer,
         ]
         for factory in factories:
             scorer = factory(use_mock=use_mock)
