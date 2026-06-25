@@ -60,4 +60,4 @@ def render_summary_charts(store) -> None:
     if tag_data:
         tag_df = pd.DataFrame(list(tag_data.items()), columns=["标签", "数量"])
         tag_df = tag_df.sort_values("数量", ascending=False)
-        st.dataframe(tag_df, use_container_width=True, hide_index=True)
+        st.dataframe(tag_df, width='stretch', hide_index=True)

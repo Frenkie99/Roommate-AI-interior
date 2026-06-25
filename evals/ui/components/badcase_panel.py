@@ -135,7 +135,7 @@ def _render_case(pair, result: dict, notes: dict) -> None:
             if input_path is None:
                 st.caption("图片路径不安全，已跳过")
             elif input_path.exists():
-                st.image(str(input_path), use_container_width=True)
+                st.image(str(input_path), width='stretch')
 
     with col2:
         st.write("**AI 效果图**")
@@ -144,7 +144,7 @@ def _render_case(pair, result: dict, notes: dict) -> None:
             if output_path is None:
                 st.caption("效果图路径不安全或为空，已跳过")
             elif output_path.exists():
-                st.image(str(output_path), use_container_width=True)
+                st.image(str(output_path), width='stretch')
 
     # 评分
     score_cols = st.columns(len(scores))

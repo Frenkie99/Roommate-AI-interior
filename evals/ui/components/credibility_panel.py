@@ -63,7 +63,7 @@ def render_credibility_panel(loader) -> None:
                 "Pearson": _corr_badge(stats["pearson"]) if stats else "—",
                 "归一MAE": f"{stats['nmae']:.3f}" if stats and stats["nmae"] is not None else "—",
             })
-        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+        st.dataframe(pd.DataFrame(rows), width='stretch', hide_index=True)
 
         # 主维度散点
         if primary and info["vs_axis"].get(primary):
@@ -98,7 +98,7 @@ def render_credibility_panel(loader) -> None:
                 rows = None
         if rows:
             df = pd.DataFrame(rows)
-            st.dataframe(df, use_container_width=True, hide_index=True)
+            st.dataframe(df, width='stretch', hide_index=True)
             mean_std = sum(r["std"] for r in rows) / len(rows)
             st.metric("平均标准差", f"{mean_std:.4f}")
         elif rows is not None:

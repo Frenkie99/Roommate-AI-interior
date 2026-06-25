@@ -78,7 +78,7 @@ def render_data_table(store: ResultStore, filters: Dict) -> pd.DataFrame:
     st.subheader(f"评测结果（{len(df_display)} 条）")
     st.dataframe(
         df_display,
-        use_container_width=True,
+        width='stretch',
         hide_index=True,
         column_config={
             COLUMN_NAMES["pair_id"]: st.column_config.TextColumn("样本编号", width="small"),

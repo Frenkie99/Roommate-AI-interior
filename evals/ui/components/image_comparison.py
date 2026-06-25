@@ -81,7 +81,7 @@ def render_image_comparison(store, loader) -> None:
         if input_path is None:
             st.warning("图片路径不安全，已跳过渲染")
         elif input_path.exists():
-            st.image(str(input_path), use_container_width=True)
+            st.image(str(input_path), width='stretch')
         else:
             st.warning(f"图片不存在: {input_path}")
 
@@ -90,7 +90,7 @@ def render_image_comparison(store, loader) -> None:
         if output_path is None:
             st.warning("效果图路径不安全或为空，已跳过渲染")
         elif output_path.exists():
-            st.image(str(output_path), use_container_width=True)
+            st.image(str(output_path), width='stretch')
         else:
             st.warning(f"效果图不存在: {output_path}")
 

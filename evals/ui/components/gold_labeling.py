@@ -70,14 +70,14 @@ def render_gold_labeling(loader) -> None:
         st.markdown("**毛坯原图**")
         ip = _resolve(pair.input_path)
         if ip and ip.exists():
-            st.image(str(ip), use_container_width=True)
+            st.image(str(ip), width='stretch')
         else:
             st.warning("原图不可用")
     with col2:
         st.markdown("**AI 效果图**")
         op = _resolve(pair.output_path) if pair.output_path else None
         if op and op.exists():
-            st.image(str(op), use_container_width=True)
+            st.image(str(op), width='stretch')
         else:
             st.warning("效果图不可用")
 
