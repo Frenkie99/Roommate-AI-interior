@@ -45,8 +45,8 @@ except FileNotFoundError:
     st.error("评测结果未找到。请先运行: `python -m evals.executor.runner`")
     st.stop()
 
-# 侧边栏
-filters = render_sidebar(loader)
+# 侧边栏（只渲染数据中实际存在的指标，规避已退役指标的死滑块）
+filters = render_sidebar(loader, store.get_active_metrics())
 
 # 主内容区
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(

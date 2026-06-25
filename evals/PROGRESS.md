@@ -25,7 +25,7 @@
 1. **实施视觉 Judge（阶段 3，需花钱）**：方案见 `VISION_JUDGE_DESIGN.md`。第一步=探单价+1-2 条小验，达标再跑全量。补齐美学/指令两维——目前这两维无任何可信信号。
 2. **（可选）评测集深化（阶段 4/鸿沟④）**：85 条按难度分层、补「领先当前能力」的难 case。
 3. ~~**（可选）iou/fid 处置**~~ ✅ **已完成（2026-06-25）**：iou/fid 已从 registry 退役（同 clip/llm_judge），runner 重跑不再注入假分/null。.py 文件保留备查。
-4. **（遗留 UI 隐患，未做）侧边栏死滑块**：`sidebar.py` 按 `config.METRIC_RANGES` 给每个指标渲染滑块，但 4 个已退役指标（iou/fid/clip/llm_judge）仍在 METRIC_RANGES 里 → 侧边栏显示 5 个滑块，4 个作用在不存在的数据列上（无效）。根治法=让 UI 按「数据实际存在的列」渲染，而非静态 config。属独立的 UI 诚实性问题，待用户决定是否做。
+4. ~~**侧边栏死滑块**~~ ✅ **已根治（2026-06-25）**：新增 `ResultStore.get_active_metrics()`（返回数据中实有非空分值的指标）；`sidebar.py` 改为只对活跃指标渲染滑块，`app.py` 传入。现侧边栏只剩 structural_fidelity 一个滑块，iou/fid/clip/llm_judge 四个死滑块全灭。config.METRIC_RANGES 保留全量定义（备查 .py 文件不会因缺 key 报错）。UI 从此数据驱动，后续退役/新增指标自动跟随。
 
 ---
 

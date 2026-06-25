@@ -55,6 +55,20 @@ class ResultStore:
         data = self.load()
         return [EvalResult.from_dict(r) for r in data.get("results", [])]
 
+    def get_active_metrics(self) -> List[str]:
+        """返回数据中实际出现、且至少有一个非空分值的指标名。
+
+        UI 应据此渲染（而非静态 config.METRIC_RANGES），这样已退役/无数据的
+        指标不会再以"死控件"形式出现在看板上——平台展示与实际产分保持一致。
+        """
+        data = self.load()
+        present = set()
+        for r in data.get("results", []):
+            for k, v in r.get("scores", {}).items():
+                if v is not None:
+                    present.add(k)
+        return sorted(present)
+
     def get_flat_dicts(self) -> List[Dict[str, Any]]:
         """展平为字典列表，方便 pandas 使用"""
         data = self.load()
