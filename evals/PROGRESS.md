@@ -9,8 +9,8 @@
 ## 📍 当前状态快照
 
 - **成熟度位置**：L1→L2 推进中。**已有第一个被数据证明可信的评分器**（structural_fidelity +0.418）。
-- **当前阶段**：阶段 0 ✅ · 阶段 1 ✅ · 阶段 2 🟡（结构评分器抢救成功；clip+llm_judge 已退役；视觉 Judge 已设计待实施）。
-- **看板现状**：概览/可信度只显示唯一可信指标 structural_fidelity（+0.418）。clip/llm_judge 已从 registry 与 eval_results 移除。
+- **当前阶段**：阶段 0 ✅ · 阶段 1 ✅ · 阶段 2 🟡（结构评分器抢救成功；clip+llm_judge+iou+fid 四个无效/桩评分器已全部退役；视觉 Judge 已设计待实施）。
+- **看板现状**：概览/可信度只显示唯一可信指标 structural_fidelity（+0.418）。registry 现仅注册 structural_fidelity。clip/llm_judge 的数据列已从 eval_results 移除；iou/fid 本就无数据列。
 - **环境**：本地 Mac（Apple Silicon arm64，系统 Python 3.9.6）。
   - venv：`evals/.venv`（已建）。
   - 轻量三件套：✅ streamlit 1.50.0 / pandas 2.3.3 / Pillow 11.3.0。
@@ -24,7 +24,8 @@
 
 1. **实施视觉 Judge（阶段 3，需花钱）**：方案见 `VISION_JUDGE_DESIGN.md`。第一步=探单价+1-2 条小验，达标再跑全量。补齐美学/指令两维——目前这两维无任何可信信号。
 2. **（可选）评测集深化（阶段 4/鸿沟④）**：85 条按难度分层、补「领先当前能力」的难 case。
-3. **（可选）iou/fid 处置**：registry 里仍注册但 Real 实现是桩（返回 None），从未验证、不在数据中。若重跑 runner 会注入 null 列，可考虑一并退役或实现。
+3. ~~**（可选）iou/fid 处置**~~ ✅ **已完成（2026-06-25）**：iou/fid 已从 registry 退役（同 clip/llm_judge），runner 重跑不再注入假分/null。.py 文件保留备查。
+4. **（遗留 UI 隐患，未做）侧边栏死滑块**：`sidebar.py` 按 `config.METRIC_RANGES` 给每个指标渲染滑块，但 4 个已退役指标（iou/fid/clip/llm_judge）仍在 METRIC_RANGES 里 → 侧边栏显示 5 个滑块，4 个作用在不存在的数据列上（无效）。根治法=让 UI 按「数据实际存在的列」渲染，而非静态 config。属独立的 UI 诚实性问题，待用户决定是否做。
 
 ---
 
@@ -37,6 +38,13 @@
 ---
 
 ## 🗓️ 会话日志（倒序，最新在上）
+
+### 2026-06-25 · 退役 iou + fid 桩评分器
+- **目标**：清理 registry 里仍注册、但从未实现真值的 iou/fid（Real 桩返回 None、Mock 伪造随机分），堵死 runner 重跑注入假分/null 的隐患。用户在三条岔路中选「先免费清 iou/fid 桩」。
+- **做了**：`registry.py` 移除 create_iou_scorer/create_fid_scorer 的 import 与工厂注册；扩充退役注释（含 iou/fid 原因与日期）。eval_results.json **无需改**——iou/fid 本就没有数据列（现存唯一列=structural_fidelity）。iou_scorer.py/fid_scorer.py 保留备查。
+- **验证**：registry.initialize 后仅 `['structural_fidelity']`；可信度报告正常（只剩 structural_fidelity +0.418）；看板 `import evals.ui.app` 通过。
+- **发现（未做，已记入「下一步」第4条）**：`sidebar.py` 仍按静态 config.METRIC_RANGES 渲染滑块，4 个退役指标（含 clip/llm_judge）残留其中 → 侧边栏有 4 个作用于空列的死滑块。根治需让 UI 数据驱动，属独立 UI 诚实性问题，待用户拍板。
+- **方法论**：与退役 clip/llm_judge 同一原则——不让「能产分但分无意义/无真值」的评分器留在生产路径上；诚实的评测平台 = 注册表里每一个评分器都对得起一次重跑。
 
 ### 2026-06-21（夜）· 退役 clip + llm_judge，看板只留可信分
 - **目标**：用户发现概览 CLIP/LLM 仍是旧分；结构保真度其实已是新值（57.409）。决定退役两个已判死指标而非花成本刷新。
