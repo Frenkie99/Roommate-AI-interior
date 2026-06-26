@@ -9,8 +9,9 @@
 ## 📍 当前状态快照
 
 - **成熟度位置**：L1→L2 推进中。**已有第一个被数据证明可信的评分器**（structural_fidelity +0.418）。
-- **当前阶段**：阶段 0 ✅ · 阶段 1 ✅ · 阶段 2 🟡（结构评分器抢救成功；clip+llm_judge+iou+fid 四个无效/桩评分器已全部退役；视觉 Judge 已设计待实施）。
+- **当前阶段**：阶段 0 ✅ · 阶段 1 ✅ · 阶段 2 🟡（结构评分器抢救成功；clip+llm_judge+iou+fid 四个无效/桩评分器已全部退役；视觉 Judge 已设计待实施）· 阶段 3(评测集) 🟡（路径A完成：85 条已可切片+失败地图；路径B采新难case押后）。
 - **看板现状**：概览/可信度只显示唯一可信指标 structural_fidelity（+0.418）。registry 现仅注册 structural_fidelity。clip/llm_judge 的数据列已从 eval_results 移除；iou/fid 本就无数据列。
+- **评测集**：85 条已激活切片——room_type(32/85)+结构难度 tags(35/85)+difficulty(85/85, 从人工 overall 反推)。回填脚本 `evals/dataset/enrich.py`(幂等)。失败地图见会话日志 2026-06-26。
 - **环境**：本地 Mac（Apple Silicon arm64，系统 Python 3.9.6）。
   - venv：`evals/.venv`（已建）。
   - 轻量三件套：✅ streamlit 1.50.0 / pandas 2.3.3 / Pillow 11.3.0。
@@ -23,7 +24,7 @@
 ## ⏭️ 下一步立即行动
 
 1. **实施视觉 Judge（阶段 3，需花钱）**：方案见 `VISION_JUDGE_DESIGN.md`。第一步=探单价+1-2 条小验，达标再跑全量。补齐美学/指令两维——目前这两维无任何可信信号。
-2. **（可选）评测集深化（阶段 4/鸿沟④）**：85 条按难度分层、补「领先当前能力」的难 case。
+2. **评测集深化·路径B（押后至视觉 Judge 之后）**：采集「领先当前能力」的难 case。已同意押后——因美学/指令两维现无可信尺子，过早采难 case 在最关键两维无法衡量。路径A（切片+失败地图）已于 2026-06-26 完成。
 3. ~~**（可选）iou/fid 处置**~~ ✅ **已完成（2026-06-25）**：iou/fid 已从 registry 退役（同 clip/llm_judge），runner 重跑不再注入假分/null。.py 文件保留备查。
 4. ~~**侧边栏死滑块**~~ ✅ **已根治（2026-06-25）**：新增 `ResultStore.get_active_metrics()`（返回数据中实有非空分值的指标）；`sidebar.py` 改为只对活跃指标渲染滑块，`app.py` 传入。现侧边栏只剩 structural_fidelity 一个滑块，iou/fid/clip/llm_judge 四个死滑块全灭。config.METRIC_RANGES 保留全量定义（备查 .py 文件不会因缺 key 报错）。UI 从此数据驱动，后续退役/新增指标自动跟随。
 
@@ -38,6 +39,17 @@
 ---
 
 ## 🗓️ 会话日志（倒序，最新在上）
+
+### 2026-06-26 · 评测集深化路径A：激活切片能力 + 失败地图
+- **目标**：评测集深化。三岔路中选「路径A（免费）」——不采新图，先把现有 85 条变得可切片，并产出失败地图。用户原则：「先做有可信尺子能衡量的」。
+- **做了**：写幂等脚本 `evals/dataset/enrich.py`：① 从文件名回填 room_type(32/85，识别不出留空不硬造) + 结构难度 tags(small_space/irregular_layout/duplex/exposed_beam/cluttered/basement, 35/85)；② 从人工金标准 overall 反推 difficulty(hard≤2 / medium=3 / easy≥4，85/85)。写回 real_metadata.json(源头, runner 重跑自动带) + eval_results.json(看板当下即可切片)。
+- **字段归类(第一性原理)**：room_type/tags=输入固有属性→real_metadata；difficulty=人工 overall 反推的"模型表现/结果"→单独成字段不混入输入 tags，以便做「输入属性 × 失败结果」交叉。
+- **失败地图关键发现**：
+  - 🔑 **structural_fidelity 在难度档间几乎不变**(hard56.5/med59.1/easy57.7)，而人工 overall 是 1.50/3.00/4.27——**不是 bug，是它"聚焦单维不越界"的体现**：模型"整体烂"的主因落在美学+指令两维，正是我们没可信尺子的地方 → 再次坐实视觉 Judge 必要性。
+  - 失分重灾区房型(人工 overall 真值)：餐厅2.0/阳台2.0/卧室2.67/厨房2.80 << 客厅3.17/书房4.0。⚠️小样本(餐厅阳台n=4,卫浴书房n=2)，方向性非定论。
+  - 反直觉：standard 分片最难(44%hard, overall2.84) > competitor/corner_case。
+- **验证**：完整性 0 缺失 0 损坏；loader 列出 6 tags+7 room_types；看板 health=200 无报错。
+- **下一步**：路径B(采集领先当前能力的难case)用户同意押后到视觉 Judge 补齐美学/指令两维之后再做。
 
 ### 2026-06-25 · 退役 iou + fid 桩评分器
 - **目标**：清理 registry 里仍注册、但从未实现真值的 iou/fid（Real 桩返回 None、Mock 伪造随机分），堵死 runner 重跑注入假分/null 的隐患。用户在三条岔路中选「先免费清 iou/fid 桩」。

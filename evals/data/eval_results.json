@@ -19,8 +19,11 @@
       "metadata": {
         "style": "bauhaus",
         "room_type": "",
-        "tags": [],
-        "split": "competitor"
+        "tags": [
+          "small_space"
+        ],
+        "split": "competitor",
+        "difficulty": "hard"
       },
       "notes": ""
     },
@@ -32,8 +35,11 @@
       "metadata": {
         "style": "modern_luxury",
         "room_type": "",
-        "tags": [],
-        "split": "competitor"
+        "tags": [
+          "small_space"
+        ],
+        "split": "competitor",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -45,8 +51,11 @@
       "metadata": {
         "style": "american_transitional",
         "room_type": "",
-        "tags": [],
-        "split": "competitor"
+        "tags": [
+          "small_space"
+        ],
+        "split": "competitor",
+        "difficulty": "hard"
       },
       "notes": ""
     },
@@ -58,8 +67,11 @@
       "metadata": {
         "style": "chinese_modern",
         "room_type": "",
-        "tags": [],
-        "split": "competitor"
+        "tags": [
+          "small_space"
+        ],
+        "split": "competitor",
+        "difficulty": "medium"
       },
       "notes": ""
     },
@@ -71,8 +83,11 @@
       "metadata": {
         "style": "american_transitional",
         "room_type": "",
-        "tags": [],
-        "split": "competitor"
+        "tags": [
+          "small_space"
+        ],
+        "split": "competitor",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -84,8 +99,11 @@
       "metadata": {
         "style": "japanese_traditional",
         "room_type": "",
-        "tags": [],
-        "split": "competitor"
+        "tags": [
+          "small_space"
+        ],
+        "split": "competitor",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -97,8 +115,11 @@
       "metadata": {
         "style": "natural_wood",
         "room_type": "",
-        "tags": [],
-        "split": "competitor"
+        "tags": [
+          "small_space"
+        ],
+        "split": "competitor",
+        "difficulty": "medium"
       },
       "notes": ""
     },
@@ -110,8 +131,11 @@
       "metadata": {
         "style": "japanese_traditional",
         "room_type": "",
-        "tags": [],
-        "split": "competitor"
+        "tags": [
+          "small_space"
+        ],
+        "split": "competitor",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -123,8 +147,11 @@
       "metadata": {
         "style": "modern_luxury",
         "room_type": "",
-        "tags": [],
-        "split": "competitor"
+        "tags": [
+          "small_space"
+        ],
+        "split": "competitor",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -136,8 +163,11 @@
       "metadata": {
         "style": "american_transitional",
         "room_type": "",
-        "tags": [],
-        "split": "competitor"
+        "tags": [
+          "small_space"
+        ],
+        "split": "competitor",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -149,8 +179,11 @@
       "metadata": {
         "style": "natural_wood",
         "room_type": "",
-        "tags": [],
-        "split": "competitor"
+        "tags": [
+          "small_space"
+        ],
+        "split": "competitor",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -163,7 +196,8 @@
         "style": "bohemian",
         "room_type": "",
         "tags": [],
-        "split": "competitor"
+        "split": "competitor",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -176,7 +210,8 @@
         "style": "bohemian",
         "room_type": "",
         "tags": [],
-        "split": "competitor"
+        "split": "competitor",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -189,7 +224,8 @@
         "style": "modern_minimalist",
         "room_type": "",
         "tags": [],
-        "split": "competitor"
+        "split": "competitor",
+        "difficulty": "hard"
       },
       "notes": ""
     },
@@ -201,8 +237,11 @@
       "metadata": {
         "style": "modern_minimalist",
         "room_type": "",
-        "tags": [],
-        "split": "competitor"
+        "tags": [
+          "duplex"
+        ],
+        "split": "competitor",
+        "difficulty": "hard"
       },
       "notes": ""
     },
@@ -214,8 +253,11 @@
       "metadata": {
         "style": "natural_wood",
         "room_type": "",
-        "tags": [],
-        "split": "competitor"
+        "tags": [
+          "duplex"
+        ],
+        "split": "competitor",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -227,8 +269,11 @@
       "metadata": {
         "style": "american_transitional",
         "room_type": "",
-        "tags": [],
-        "split": "competitor"
+        "tags": [
+          "duplex"
+        ],
+        "split": "competitor",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -240,8 +285,11 @@
       "metadata": {
         "style": "modern_luxury",
         "room_type": "",
-        "tags": [],
-        "split": "competitor"
+        "tags": [
+          "duplex"
+        ],
+        "split": "competitor",
+        "difficulty": "hard"
       },
       "notes": ""
     },
@@ -253,8 +301,11 @@
       "metadata": {
         "style": "chinese_modern",
         "room_type": "",
-        "tags": [],
-        "split": "competitor"
+        "tags": [
+          "duplex"
+        ],
+        "split": "competitor",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -266,8 +317,11 @@
       "metadata": {
         "style": "japanese_traditional",
         "room_type": "",
-        "tags": [],
-        "split": "competitor"
+        "tags": [
+          "duplex"
+        ],
+        "split": "competitor",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -279,8 +333,11 @@
       "metadata": {
         "style": "modern_minimalist",
         "room_type": "",
-        "tags": [],
-        "split": "competitor"
+        "tags": [
+          "irregular_layout"
+        ],
+        "split": "competitor",
+        "difficulty": "hard"
       },
       "notes": ""
     },
@@ -292,8 +349,11 @@
       "metadata": {
         "style": "natural_wood",
         "room_type": "",
-        "tags": [],
-        "split": "competitor"
+        "tags": [
+          "irregular_layout"
+        ],
+        "split": "competitor",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -305,8 +365,11 @@
       "metadata": {
         "style": "modern_minimalist",
         "room_type": "",
-        "tags": [],
-        "split": "competitor"
+        "tags": [
+          "irregular_layout"
+        ],
+        "split": "competitor",
+        "difficulty": "hard"
       },
       "notes": ""
     },
@@ -318,8 +381,11 @@
       "metadata": {
         "style": "european_neoclassical",
         "room_type": "",
-        "tags": [],
-        "split": "competitor"
+        "tags": [
+          "irregular_layout"
+        ],
+        "split": "competitor",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -331,8 +397,11 @@
       "metadata": {
         "style": "european_neoclassical",
         "room_type": "",
-        "tags": [],
-        "split": "competitor"
+        "tags": [
+          "irregular_layout"
+        ],
+        "split": "competitor",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -344,8 +413,11 @@
       "metadata": {
         "style": "bauhaus",
         "room_type": "",
-        "tags": [],
-        "split": "competitor"
+        "tags": [
+          "irregular_layout"
+        ],
+        "split": "competitor",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -357,8 +429,11 @@
       "metadata": {
         "style": "bohemian",
         "room_type": "",
-        "tags": [],
-        "split": "competitor"
+        "tags": [
+          "irregular_layout"
+        ],
+        "split": "competitor",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -370,8 +445,11 @@
       "metadata": {
         "style": "chinese_modern",
         "room_type": "",
-        "tags": [],
-        "split": "competitor"
+        "tags": [
+          "irregular_layout"
+        ],
+        "split": "competitor",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -383,8 +461,11 @@
       "metadata": {
         "style": "modern_luxury",
         "room_type": "",
-        "tags": [],
-        "split": "competitor"
+        "tags": [
+          "exposed_beam"
+        ],
+        "split": "competitor",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -396,8 +477,11 @@
       "metadata": {
         "style": "european_neoclassical",
         "room_type": "",
-        "tags": [],
-        "split": "competitor"
+        "tags": [
+          "exposed_beam"
+        ],
+        "split": "competitor",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -409,8 +493,11 @@
       "metadata": {
         "style": "chinese_modern",
         "room_type": "",
-        "tags": [],
-        "split": "competitor"
+        "tags": [
+          "exposed_beam"
+        ],
+        "split": "competitor",
+        "difficulty": "hard"
       },
       "notes": ""
     },
@@ -422,8 +509,11 @@
       "metadata": {
         "style": "chinese_modern",
         "room_type": "",
-        "tags": [],
-        "split": "corner_case"
+        "tags": [
+          "basement"
+        ],
+        "split": "corner_case",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -435,8 +525,11 @@
       "metadata": {
         "style": "modern_minimalist",
         "room_type": "",
-        "tags": [],
-        "split": "corner_case"
+        "tags": [
+          "basement"
+        ],
+        "split": "corner_case",
+        "difficulty": "hard"
       },
       "notes": ""
     },
@@ -448,8 +541,11 @@
       "metadata": {
         "style": "bauhaus",
         "room_type": "",
-        "tags": [],
-        "split": "corner_case"
+        "tags": [
+          "basement"
+        ],
+        "split": "corner_case",
+        "difficulty": "hard"
       },
       "notes": ""
     },
@@ -462,7 +558,8 @@
         "style": "japanese_traditional",
         "room_type": "",
         "tags": [],
-        "split": "corner_case"
+        "split": "corner_case",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -474,8 +571,11 @@
       "metadata": {
         "style": "bohemian",
         "room_type": "",
-        "tags": [],
-        "split": "corner_case"
+        "tags": [
+          "cluttered"
+        ],
+        "split": "corner_case",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -487,8 +587,11 @@
       "metadata": {
         "style": "american_transitional",
         "room_type": "",
-        "tags": [],
-        "split": "corner_case"
+        "tags": [
+          "cluttered"
+        ],
+        "split": "corner_case",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -500,8 +603,11 @@
       "metadata": {
         "style": "japanese_traditional",
         "room_type": "",
-        "tags": [],
-        "split": "corner_case"
+        "tags": [
+          "cluttered"
+        ],
+        "split": "corner_case",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -513,8 +619,11 @@
       "metadata": {
         "style": "european_neoclassical",
         "room_type": "",
-        "tags": [],
-        "split": "corner_case"
+        "tags": [
+          "cluttered"
+        ],
+        "split": "corner_case",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -527,7 +636,8 @@
         "style": "bauhaus",
         "room_type": "",
         "tags": [],
-        "split": "corner_case"
+        "split": "corner_case",
+        "difficulty": "medium"
       },
       "notes": ""
     },
@@ -540,7 +650,8 @@
         "style": "natural_wood",
         "room_type": "",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -553,7 +664,8 @@
         "style": "bauhaus",
         "room_type": "",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "hard"
       },
       "notes": ""
     },
@@ -566,7 +678,8 @@
         "style": "american_transitional",
         "room_type": "",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -579,7 +692,8 @@
         "style": "bohemian",
         "room_type": "",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -592,7 +706,8 @@
         "style": "industrial_loft",
         "room_type": "",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "hard"
       },
       "notes": ""
     },
@@ -605,7 +720,8 @@
         "style": "european_neoclassical",
         "room_type": "",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -618,7 +734,8 @@
         "style": "american_transitional",
         "room_type": "",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -631,7 +748,8 @@
         "style": "japanese_traditional",
         "room_type": "",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "medium"
       },
       "notes": ""
     },
@@ -644,7 +762,8 @@
         "style": "bauhaus",
         "room_type": "",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "hard"
       },
       "notes": ""
     },
@@ -657,7 +776,8 @@
         "style": "modern_luxury",
         "room_type": "",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "hard"
       },
       "notes": ""
     },
@@ -670,7 +790,8 @@
         "style": "american_transitional",
         "room_type": "",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -683,7 +804,8 @@
         "style": "bauhaus",
         "room_type": "",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -696,7 +818,8 @@
         "style": "industrial_loft",
         "room_type": "",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -707,9 +830,10 @@
       },
       "metadata": {
         "style": "natural_wood",
-        "room_type": "",
+        "room_type": "study",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -720,9 +844,10 @@
       },
       "metadata": {
         "style": "japanese_traditional",
-        "room_type": "",
+        "room_type": "study",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -733,9 +858,10 @@
       },
       "metadata": {
         "style": "modern_luxury",
-        "room_type": "",
+        "room_type": "bedroom",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -746,9 +872,10 @@
       },
       "metadata": {
         "style": "bauhaus",
-        "room_type": "",
+        "room_type": "bedroom",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -759,9 +886,10 @@
       },
       "metadata": {
         "style": "american_transitional",
-        "room_type": "",
+        "room_type": "bedroom",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -772,9 +900,10 @@
       },
       "metadata": {
         "style": "modern_minimalist",
-        "room_type": "",
+        "room_type": "bedroom",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "hard"
       },
       "notes": ""
     },
@@ -785,9 +914,10 @@
       },
       "metadata": {
         "style": "european_neoclassical",
-        "room_type": "",
+        "room_type": "bedroom",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -798,9 +928,10 @@
       },
       "metadata": {
         "style": "chinese_modern",
-        "room_type": "",
+        "room_type": "bedroom",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "hard"
       },
       "notes": ""
     },
@@ -811,9 +942,10 @@
       },
       "metadata": {
         "style": "industrial_loft",
-        "room_type": "",
+        "room_type": "bedroom",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "hard"
       },
       "notes": ""
     },
@@ -824,9 +956,10 @@
       },
       "metadata": {
         "style": "industrial_loft",
-        "room_type": "",
+        "room_type": "bedroom",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "hard"
       },
       "notes": ""
     },
@@ -837,9 +970,10 @@
       },
       "metadata": {
         "style": "modern_luxury",
-        "room_type": "",
+        "room_type": "bedroom",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "hard"
       },
       "notes": ""
     },
@@ -850,9 +984,10 @@
       },
       "metadata": {
         "style": "modern_luxury",
-        "room_type": "",
+        "room_type": "bathroom",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "hard"
       },
       "notes": ""
     },
@@ -863,9 +998,10 @@
       },
       "metadata": {
         "style": "japanese_traditional",
-        "room_type": "",
+        "room_type": "bathroom",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "medium"
       },
       "notes": ""
     },
@@ -876,9 +1012,10 @@
       },
       "metadata": {
         "style": "bohemian",
-        "room_type": "",
+        "room_type": "kitchen",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -889,9 +1026,10 @@
       },
       "metadata": {
         "style": "industrial_loft",
-        "room_type": "",
+        "room_type": "kitchen",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "hard"
       },
       "notes": ""
     },
@@ -902,9 +1040,10 @@
       },
       "metadata": {
         "style": "european_neoclassical",
-        "room_type": "",
+        "room_type": "kitchen",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -915,9 +1054,10 @@
       },
       "metadata": {
         "style": "modern_minimalist",
-        "room_type": "",
+        "room_type": "kitchen",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "hard"
       },
       "notes": ""
     },
@@ -928,9 +1068,10 @@
       },
       "metadata": {
         "style": "natural_wood",
-        "room_type": "",
+        "room_type": "kitchen",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -941,9 +1082,10 @@
       },
       "metadata": {
         "style": "japanese_traditional",
-        "room_type": "",
+        "room_type": "living_room",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -954,9 +1096,10 @@
       },
       "metadata": {
         "style": "industrial_loft",
-        "room_type": "",
+        "room_type": "living_room",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "medium"
       },
       "notes": ""
     },
@@ -967,9 +1110,10 @@
       },
       "metadata": {
         "style": "modern_minimalist",
-        "room_type": "",
+        "room_type": "living_room",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "hard"
       },
       "notes": ""
     },
@@ -980,9 +1124,10 @@
       },
       "metadata": {
         "style": "bohemian",
-        "room_type": "",
+        "room_type": "living_room",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -993,9 +1138,10 @@
       },
       "metadata": {
         "style": "modern_luxury",
-        "room_type": "",
+        "room_type": "living_room",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "hard"
       },
       "notes": ""
     },
@@ -1006,9 +1152,10 @@
       },
       "metadata": {
         "style": "bohemian",
-        "room_type": "",
+        "room_type": "living_room",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -1019,9 +1166,10 @@
       },
       "metadata": {
         "style": "industrial_loft",
-        "room_type": "",
+        "room_type": "balcony",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "hard"
       },
       "notes": ""
     },
@@ -1032,9 +1180,10 @@
       },
       "metadata": {
         "style": "industrial_loft",
-        "room_type": "",
+        "room_type": "balcony",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "hard"
       },
       "notes": ""
     },
@@ -1045,9 +1194,10 @@
       },
       "metadata": {
         "style": "natural_wood",
-        "room_type": "",
+        "room_type": "balcony",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "easy"
       },
       "notes": ""
     },
@@ -1058,9 +1208,10 @@
       },
       "metadata": {
         "style": "chinese_modern",
-        "room_type": "",
+        "room_type": "balcony",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "hard"
       },
       "notes": ""
     },
@@ -1071,9 +1222,10 @@
       },
       "metadata": {
         "style": "modern_minimalist",
-        "room_type": "",
+        "room_type": "dining_room",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "hard"
       },
       "notes": ""
     },
@@ -1084,9 +1236,10 @@
       },
       "metadata": {
         "style": "european_neoclassical",
-        "room_type": "",
+        "room_type": "dining_room",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "medium"
       },
       "notes": ""
     },
@@ -1097,9 +1250,10 @@
       },
       "metadata": {
         "style": "bohemian",
-        "room_type": "",
+        "room_type": "dining_room",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "hard"
       },
       "notes": ""
     },
@@ -1110,9 +1264,10 @@
       },
       "metadata": {
         "style": "bauhaus",
-        "room_type": "",
+        "room_type": "dining_room",
         "tags": [],
-        "split": "standard"
+        "split": "standard",
+        "difficulty": "hard"
       },
       "notes": ""
     }
