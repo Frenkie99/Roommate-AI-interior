@@ -11,7 +11,7 @@
 - **成熟度位置**：L1→L2 推进中。**已有第一个被数据证明可信的评分器**（structural_fidelity +0.418）。
 - **当前阶段**：阶段 0 ✅ · 阶段 1 ✅ · 阶段 2 🟡（结构评分器抢救成功；clip+llm_judge+iou+fid 四个无效/桩评分器已全部退役；视觉 Judge 已设计待实施）· 阶段 3(评测集) 🟡（路径A完成：85 条已可切片+失败地图；路径B采新难case押后）。
 - **看板现状**：概览/可信度只显示唯一可信指标 structural_fidelity（+0.418）。registry 现仅注册 structural_fidelity。clip/llm_judge 的数据列已从 eval_results 移除；iou/fid 本就无数据列。
-- **评测集**：85 条已激活切片——room_type(32/85)+结构难度 tags(35/85)+difficulty(85/85, 从人工 overall 反推)。回填脚本 `evals/dataset/enrich.py`(幂等)。失败地图见会话日志 2026-06-26。
+- **评测集**：85 条已激活切片。**两个难度轴并存**：`intrinsic_difficulty`(内在难度，2026-06-30 看图判定 易17/中29/难30/极难9，脚本 `apply_intrinsic_difficulty.py`+标签 `intrinsic_difficulty_labels.json`) 与 `difficulty`(结果难度，从人工 overall 反推)。room_type 38/85(看图补到)+结构 tags 35/85。早期回填脚本 `enrich.py`(幂等)。失败地图见会话日志 2026-06-26。
 - **环境**：本地 Mac（Apple Silicon arm64，系统 Python 3.9.6）。
   - venv：`evals/.venv`（已建）。
   - 轻量三件套：✅ streamlit 1.50.0 / pandas 2.3.3 / Pillow 11.3.0。
@@ -39,6 +39,19 @@
 ---
 
 ## 🗓️ 会话日志（倒序，最新在上）
+
+### 2026-06-30 · 模块一深化：看图定内在难度（取代文件名假象）+ 内化外部权威阅读
+- **背景**：用户上完张和老师第2节课（构建数据集），要把「广度+难度分布」原则落到现有 85 张评测集。第一性原理澄清：我们**不训权重→没有「训练集」**，老师那两个案例(手机人像/特斯拉)是训模型业务才需训练集；我们真正要隔离的是「开发集/dev」，且现阶段先不做隔离，专注把 85 张做对。
+- **审计发现假象**：旧难度从文件名关键词推 → 45 张 standard 全被默认「易」。审计 + 来源×难度交叉坐实是**文件名假象**。
+- **做了（看图重标）**：5 个并行子代理逐张 Read 毛坯原图，按 4 档 rubric(易/中/难/极难)看图判定内在难度；用户复核同意写回。
+  - 新增 `evals/data/intrinsic_difficulty_labels.json`(版本化看图标签) + `evals/dataset/apply_intrinsic_difficulty.py`(幂等)。
+  - real_metadata + eval_results 每对加 `intrinsic_difficulty`，**不动 `difficulty`(结果难度，人工分反推)**——两轴并存。room_type 32→38(补空6/解冲突3，原值留 metadata.room_type_original)。
+- **关键纠错**：standard 45 张 旧「易45/中0/难0/极难0」→ 看图「易12/中13/难16/极难4」。**33/45 实为中/难/极难**。
+- **新内在难度分布**：易17/中29/难30/极难9 → 易中54% / 难35% / 极难10%，**落在方法论目标曲线内**（之前担心「太软」是假象，实为适中偏难，合格）。小缺口：极难卡 10% 下限。
+- **写回后才浮现的发现**：内在难度 × 结果难度 **几乎不相关**——内在=hard 的房 70% 结果反而做得好(21/30 结果=easy)；内在=easy 的房一半以上做砸(9/17 结果=hard)。**坐实：模型失败不由房间结构难度驱动，而由美学/指令两维驱动**（我们没可信尺子那两维）→ 第 N 次指向视觉 Judge。
+- **同日**：内化两个外部权威阅读链接(Anthropic《Demystifying evals》+Hamel evals 合集 8 来源)→ 新建 `READINGS.md` + METHODOLOGY 第9节(见对应提交)。视觉 Judge 上轮做了两处免费加固(美学去耦合+两极判别力+few-shot锚定+留出)。
+- **下一步**：① 视觉 Judge 探价验证(花钱，待 APIYI_KEY)；② 或先用 structural_fidelity 手动跑通一次模块五闭环(用户倾向押后视觉 Judge 时可选)。模块一广度缺口(极难偏少/room_type 天花板32~38)已知，路径B 采难 case 仍押后。
+
 
 ### 2026-06-26 · 评测集深化路径A：激活切片能力 + 失败地图
 - **目标**：评测集深化。三岔路中选「路径A（免费）」——不采新图，先把现有 85 条变得可切片，并产出失败地图。用户原则：「先做有可信尺子能衡量的」。
