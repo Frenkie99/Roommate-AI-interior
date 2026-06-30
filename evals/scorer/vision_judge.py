@@ -143,15 +143,17 @@ def _tok(usage):
 # 把"是否遵循指令"拆成产品相关的是非题，逐条 yes/no → 加总成 [0,1] 分。
 # 结构题作为"次要交叉校验"（primary 结构分用 structural_fidelity），可关。
 
+# 题目三元组：(id, 文本, 需要 room_type)。房型匹配是实测的头号失败维（71% 跑偏 → 模型爱默认产客厅），
+# 故列首位并作"失败门"：房型跑偏 → 指令分直接封顶到 _ROOM_FAIL_CAP（frenkie 裁定：房型跑偏=严重失败）。
+_ROOM_FAIL_CAP = 0.34
 _VQA_INSTRUCTION = [
-    ("inst_style", "效果图整体是否符合目标风格「{style}」？"),
-    ("inst_room", "空间布置是否与房间类型「{room_type}」一致或合理？"),
-    ("inst_need", "是否满足用户需求「{prompt}」中的关键点？"),
-    ("inst_noviolate", "是否没有明显违背指令的硬伤（风格跑偏 / 家具明显不合理 / 答非所问）？"),
+    ("inst_room", "效果图呈现的房间功能是否与目标房型「{room_type}」一致？（房型跑偏=严重失败）", True),
+    ("inst_style", "效果图整体是否符合目标风格「{style}」？", False),
+    ("inst_need", "是否满足用户需求「{prompt}」中的关键点？", False),
 ]
 _VQA_STRUCTURE = [  # 次要交叉校验；primary 结构分=structural_fidelity
-    ("struct_walls", "对比【图1】毛坯：墙体/隔断的位置是否被如实保留、未被乱改？"),
-    ("struct_openings", "门窗的位置与数量是否与【图1】毛坯基本一致？"),
+    ("struct_walls", "对比【图1】毛坯：墙体/隔断的位置是否被如实保留、未被乱改？", False),
+    ("struct_openings", "门窗的位置与数量是否与【图1】毛坯基本一致？", False),
 ]
 
 _VQA_PROMPT = """你是资深室内设计评审。【图1】是装修前的毛坯原图，【图2】是 AI 基于它生成的效果图。
@@ -172,7 +174,11 @@ def score_instruction_vqa(input_path, output_path, style="", room_type="", promp
     if not key:
         raise RuntimeError("APIYI_KEY 未配置")
 
-    qs = list(_VQA_INSTRUCTION) + (list(_VQA_STRUCTURE) if include_structure else [])
+    has_room = bool(room_type)
+    # 房型题仅在有房型标注时纳入（未指定房型无可跑偏）
+    active = [(qid, q) for qid, q, req in _VQA_INSTRUCTION if has_room or not req]
+    struct = [(qid, q) for qid, q, _r in _VQA_STRUCTURE] if include_structure else []
+    qs = active + struct
     fmt = dict(style=style or "未指定", room_type=room_type or "未指定", prompt=(prompt or "")[:_PROMPT_CLIP])
     q_text = "\n".join(f"  [{qid}] {q.format(**fmt)}" for qid, q in qs)
     prompt_text = _VQA_PROMPT.format(questions=q_text, **fmt)
@@ -186,20 +192,25 @@ def score_instruction_vqa(input_path, output_path, style="", room_type="", promp
     data = _extract_json(text) or []
     by_id = {d.get("id"): d for d in data if isinstance(d, dict)}
     items, n_yes, n_total = [], 0, 0
-    inst_ids = {qid for qid, _ in _VQA_INSTRUCTION}
+    inst_ids = {qid for qid, _ in active}
+    room_no = False
     for qid, _q in qs:
         d = by_id.get(qid, {})
         verdict = str(d.get("verdict", "")).strip().lower()
         valid = verdict.startswith(("y", "n"))   # 只有真解析出 yes/no 才算数
         is_yes = verdict.startswith("y")
         items.append({"id": qid, "verdict": verdict or "?", "reason": d.get("reason", "")})
+        if qid == "inst_room" and valid and not is_yes:
+            room_no = True
         if qid in inst_ids and valid:  # 只有指令题且成功解析才计入主分（解析失败→不计，避免假0分）
             n_total += 1
             n_yes += int(is_yes)
+    score = (n_yes / n_total) if n_total else None   # 全部解析失败→None，不污染判别力
+    if score is not None and room_no:                # 房型跑偏=失败门：封顶到 _ROOM_FAIL_CAP
+        score = min(score, _ROOM_FAIL_CAP)
     return {
-        "score": (n_yes / n_total) if n_total else None,   # 全部解析失败→None，不污染判别力
-        "n_yes": n_yes, "n_total": n_total, "items": items,
-        "_usage": usage, "_latency": latency, "_raw": text,
+        "score": score, "n_yes": n_yes, "n_total": n_total, "room_mismatch": room_no,
+        "items": items, "_usage": usage, "_latency": latency, "_raw": text,
     }
 
 

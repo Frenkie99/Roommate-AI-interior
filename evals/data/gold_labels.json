@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "updated_at": "2026-06-21T19:14:20.697165",
+  "updated_at": "2026-06-30",
   "total": 85,
   "axes": {
     "structural": "结构保真",
@@ -182,12 +182,19 @@
       "scores": {
         "structural": 2.0,
         "aesthetic": 4.0,
-        "instruction": 4.0,
+        "instruction": 2.0,
         "overall": 2.0
       },
       "labeler": "frenkie",
       "labeled_at": "2026-06-21T17:59:41.523290",
-      "notes": ""
+      "notes": "",
+      "recalibration": {
+        "instruction_original": 4.0,
+        "room_mismatch": true,
+        "room_seen": "洗衣房",
+        "reason": "房间内有洗衣机和烘干机，通常用于洗衣功能。",
+        "by": "gpt-4o房型检测+frenkie裁定房型跑偏=失败"
+      }
     },
     {
       "pair_id": "pair_015",
@@ -230,12 +237,19 @@
       "scores": {
         "structural": 5.0,
         "aesthetic": 5.0,
-        "instruction": 5.0,
+        "instruction": 2.0,
         "overall": 5.0
       },
       "labeler": "frenkie",
       "labeled_at": "2026-06-21T18:05:24.681907",
-      "notes": "测试案例的房间功能需要分类：这个明显是卫生间，就不应该随机分配别的房间功能来测试"
+      "notes": "测试案例的房间功能需要分类：这个明显是卫生间，就不应该随机分配别的房间功能来测试",
+      "recalibration": {
+        "instruction_original": 5.0,
+        "room_mismatch": true,
+        "room_seen": "休闲区",
+        "reason": "房间内有沙发和茶几，适合休闲而非卫生间功能。",
+        "by": "gpt-4o房型检测+frenkie裁定房型跑偏=失败"
+      }
     },
     {
       "pair_id": "pair_019",
@@ -314,24 +328,38 @@
       "scores": {
         "structural": 5.0,
         "aesthetic": 5.0,
-        "instruction": 5.0,
+        "instruction": 2.0,
         "overall": 5.0
       },
       "labeler": "frenkie",
       "labeled_at": "2026-06-21T18:44:39.497085",
-      "notes": ""
+      "notes": "",
+      "recalibration": {
+        "instruction_original": 5.0,
+        "room_mismatch": true,
+        "room_seen": "客厅",
+        "reason": "房间内有沙发和茶几，通常是客厅的布置。",
+        "by": "gpt-4o房型检测+frenkie裁定房型跑偏=失败"
+      }
     },
     {
       "pair_id": "pair_026",
       "scores": {
         "structural": 5.0,
         "aesthetic": 5.0,
-        "instruction": 5.0,
+        "instruction": 2.0,
         "overall": 5.0
       },
       "labeler": "frenkie",
       "labeled_at": "2026-06-21T18:45:08.395476",
-      "notes": ""
+      "notes": "",
+      "recalibration": {
+        "instruction_original": 5.0,
+        "room_mismatch": true,
+        "room_seen": "客厅",
+        "reason": "房间内有沙发、茶几和装饰画，通常是客厅的特征。",
+        "by": "gpt-4o房型检测+frenkie裁定房型跑偏=失败"
+      }
     },
     {
       "pair_id": "pair_027",
@@ -458,24 +486,38 @@
       "scores": {
         "structural": 2.0,
         "aesthetic": 4.0,
-        "instruction": 3.0,
+        "instruction": 2.0,
         "overall": 4.0
       },
       "labeler": "frenkie",
       "labeled_at": "2026-06-21T18:51:26.336946",
-      "notes": ""
+      "notes": "",
+      "recalibration": {
+        "instruction_original": 3.0,
+        "room_mismatch": true,
+        "room_seen": "茶室",
+        "reason": "房间有榻榻米和茶具，典型的茶室布置。",
+        "by": "gpt-4o房型检测+frenkie裁定房型跑偏=失败"
+      }
     },
     {
       "pair_id": "pair_038",
       "scores": {
         "structural": 1.0,
         "aesthetic": 3.0,
-        "instruction": 3.0,
+        "instruction": 2.0,
         "overall": 4.0
       },
       "labeler": "frenkie",
       "labeled_at": "2026-06-21T18:51:38.271816",
-      "notes": ""
+      "notes": "",
+      "recalibration": {
+        "instruction_original": 3.0,
+        "room_mismatch": true,
+        "room_seen": "客厅或休息区",
+        "reason": "房间内有桌椅和壁炉，没有卫生间的设施。",
+        "by": "gpt-4o房型检测+frenkie裁定房型跑偏=失败"
+      }
     },
     {
       "pair_id": "pair_039",
@@ -650,60 +692,95 @@
       "scores": {
         "structural": 4.0,
         "aesthetic": 5.0,
-        "instruction": 4.0,
+        "instruction": 2.0,
         "overall": 4.0
       },
       "labeler": "frenkie",
       "labeled_at": "2026-06-21T18:57:42.217485",
-      "notes": ""
+      "notes": "",
+      "recalibration": {
+        "instruction_original": 4.0,
+        "room_mismatch": true,
+        "room_seen": "卧室",
+        "reason": "房间内有床和书桌，主要功能是卧室。",
+        "by": "gpt-4o房型检测+frenkie裁定房型跑偏=失败"
+      }
     },
     {
       "pair_id": "pair_054",
       "scores": {
         "structural": 4.0,
         "aesthetic": 4.0,
-        "instruction": 4.0,
+        "instruction": 2.0,
         "overall": 4.0
       },
       "labeler": "frenkie",
       "labeled_at": "2026-06-21T18:57:57.552821",
-      "notes": ""
+      "notes": "",
+      "recalibration": {
+        "instruction_original": 4.0,
+        "room_mismatch": true,
+        "room_seen": "茶室",
+        "reason": "房间内有榻榻米和茶具，典型的茶室布置。",
+        "by": "gpt-4o房型检测+frenkie裁定房型跑偏=失败"
+      }
     },
     {
       "pair_id": "pair_055",
       "scores": {
         "structural": 5.0,
         "aesthetic": 4.0,
-        "instruction": 4.0,
+        "instruction": 2.0,
         "overall": 4.0
       },
       "labeler": "frenkie",
       "labeled_at": "2026-06-21T18:58:36.110480",
-      "notes": ""
+      "notes": "",
+      "recalibration": {
+        "instruction_original": 4.0,
+        "room_mismatch": true,
+        "room_seen": "客厅",
+        "reason": "房间内有沙发和电视，通常用于客厅。",
+        "by": "gpt-4o房型检测+frenkie裁定房型跑偏=失败"
+      }
     },
     {
       "pair_id": "pair_056",
       "scores": {
         "structural": 5.0,
         "aesthetic": 4.0,
-        "instruction": 4.0,
+        "instruction": 2.0,
         "overall": 4.0
       },
       "labeler": "frenkie",
       "labeled_at": "2026-06-21T18:59:29.685784",
-      "notes": ""
+      "notes": "",
+      "recalibration": {
+        "instruction_original": 4.0,
+        "room_mismatch": true,
+        "room_seen": "客厅",
+        "reason": "房间内有沙发和茶几，通常用于客厅。",
+        "by": "gpt-4o房型检测+frenkie裁定房型跑偏=失败"
+      }
     },
     {
       "pair_id": "pair_057",
       "scores": {
         "structural": 2.0,
         "aesthetic": 5.0,
-        "instruction": 5.0,
+        "instruction": 2.0,
         "overall": 4.0
       },
       "labeler": "frenkie",
       "labeled_at": "2026-06-21T19:01:55.252919",
-      "notes": ""
+      "notes": "",
+      "recalibration": {
+        "instruction_original": 5.0,
+        "room_mismatch": true,
+        "room_seen": "书房或阅读角",
+        "reason": "房间内有书架和阅读椅，没有床。",
+        "by": "gpt-4o房型检测+frenkie裁定房型跑偏=失败"
+      }
     },
     {
       "pair_id": "pair_058",
@@ -734,12 +811,19 @@
       "scores": {
         "structural": 2.0,
         "aesthetic": 4.0,
-        "instruction": 3.0,
+        "instruction": 2.0,
         "overall": 2.0
       },
       "labeler": "frenkie",
       "labeled_at": "2026-06-21T19:03:11.418226",
-      "notes": ""
+      "notes": "",
+      "recalibration": {
+        "instruction_original": 3.0,
+        "room_mismatch": true,
+        "room_seen": "茶室",
+        "reason": "房间内有茶桌和椅子，适合品茶。",
+        "by": "gpt-4o房型检测+frenkie裁定房型跑偏=失败"
+      }
     },
     {
       "pair_id": "pair_061",
@@ -751,7 +835,14 @@
       },
       "labeler": "frenkie",
       "labeled_at": "2026-06-21T19:03:32.349411",
-      "notes": ""
+      "notes": "",
+      "recalibration": {
+        "instruction_original": 1.0,
+        "room_mismatch": true,
+        "room_seen": "客厅",
+        "reason": "房间内有沙发和茶几，通常用于客厅。",
+        "by": "gpt-4o房型检测+frenkie裁定房型跑偏=失败"
+      }
     },
     {
       "pair_id": "pair_062",
@@ -763,7 +854,14 @@
       },
       "labeler": "frenkie",
       "labeled_at": "2026-06-21T19:04:09.001347",
-      "notes": ""
+      "notes": "",
+      "recalibration": {
+        "instruction_original": 2.0,
+        "room_mismatch": true,
+        "room_seen": "客厅",
+        "reason": "房间内有沙发和书架，通常用于客厅。",
+        "by": "gpt-4o房型检测+frenkie裁定房型跑偏=失败"
+      }
     },
     {
       "pair_id": "pair_063",
@@ -794,12 +892,19 @@
       "scores": {
         "structural": 4.0,
         "aesthetic": 3.0,
-        "instruction": 3.0,
+        "instruction": 2.0,
         "overall": 3.0
       },
       "labeler": "frenkie",
       "labeled_at": "2026-06-21T19:04:49.005718",
-      "notes": ""
+      "notes": "",
+      "recalibration": {
+        "instruction_original": 3.0,
+        "room_mismatch": true,
+        "room_seen": "客厅",
+        "reason": "房间内有沙发、茶几和榻榻米，通常是客厅的特征。",
+        "by": "gpt-4o房型检测+frenkie裁定房型跑偏=失败"
+      }
     },
     {
       "pair_id": "pair_066",
@@ -811,7 +916,14 @@
       },
       "labeler": "frenkie",
       "labeled_at": "2026-06-21T19:05:48.914183",
-      "notes": ""
+      "notes": "",
+      "recalibration": {
+        "instruction_original": 2.0,
+        "room_mismatch": true,
+        "room_seen": "客厅或休息室",
+        "reason": "房间内有沙发、装饰灯和植物，没有厨房设施。",
+        "by": "gpt-4o房型检测+frenkie裁定房型跑偏=失败"
+      }
     },
     {
       "pair_id": "pair_067",
@@ -823,19 +935,33 @@
       },
       "labeler": "frenkie",
       "labeled_at": "2026-06-21T19:06:11.399977",
-      "notes": ""
+      "notes": "",
+      "recalibration": {
+        "instruction_original": 2.0,
+        "room_mismatch": true,
+        "room_seen": "洗衣房",
+        "reason": "房间内有洗衣机和洗涤用品。",
+        "by": "gpt-4o房型检测+frenkie裁定房型跑偏=失败"
+      }
     },
     {
       "pair_id": "pair_068",
       "scores": {
         "structural": 5.0,
         "aesthetic": 4.0,
-        "instruction": 4.0,
+        "instruction": 2.0,
         "overall": 4.0
       },
       "labeler": "frenkie",
       "labeled_at": "2026-06-21T19:06:36.408789",
-      "notes": ""
+      "notes": "",
+      "recalibration": {
+        "instruction_original": 4.0,
+        "room_mismatch": true,
+        "room_seen": "客厅",
+        "reason": "房间内有沙发和壁炉，典型的客厅特征。",
+        "by": "gpt-4o房型检测+frenkie裁定房型跑偏=失败"
+      }
     },
     {
       "pair_id": "pair_069",
@@ -847,31 +973,52 @@
       },
       "labeler": "frenkie",
       "labeled_at": "2026-06-21T19:07:01.743034",
-      "notes": ""
+      "notes": "",
+      "recalibration": {
+        "instruction_original": 2.0,
+        "room_mismatch": true,
+        "room_seen": "客厅",
+        "reason": "房间内有沙发和大窗户，没有厨房设施。",
+        "by": "gpt-4o房型检测+frenkie裁定房型跑偏=失败"
+      }
     },
     {
       "pair_id": "pair_070",
       "scores": {
         "structural": 2.0,
         "aesthetic": 4.0,
-        "instruction": 4.0,
+        "instruction": 2.0,
         "overall": 4.0
       },
       "labeler": "frenkie",
       "labeled_at": "2026-06-21T19:07:22.672639",
-      "notes": ""
+      "notes": "",
+      "recalibration": {
+        "instruction_original": 4.0,
+        "room_mismatch": true,
+        "room_seen": "洗衣房",
+        "reason": "房间内有洗衣机和烘干机。",
+        "by": "gpt-4o房型检测+frenkie裁定房型跑偏=失败"
+      }
     },
     {
       "pair_id": "pair_071",
       "scores": {
         "structural": 5.0,
         "aesthetic": 4.0,
-        "instruction": 4.0,
+        "instruction": 2.0,
         "overall": 4.0
       },
       "labeler": "frenkie",
       "labeled_at": "2026-06-21T19:08:41.792302",
-      "notes": ""
+      "notes": "",
+      "recalibration": {
+        "instruction_original": 4.0,
+        "room_mismatch": true,
+        "room_seen": "卧室",
+        "reason": "房间内有床，显示为卧室。",
+        "by": "gpt-4o房型检测+frenkie裁定房型跑偏=失败"
+      }
     },
     {
       "pair_id": "pair_072",
@@ -895,7 +1042,14 @@
       },
       "labeler": "frenkie",
       "labeled_at": "2026-06-21T19:09:22.731971",
-      "notes": ""
+      "notes": "",
+      "recalibration": {
+        "instruction_original": 2.0,
+        "room_mismatch": true,
+        "room_seen": "工作间",
+        "reason": "房间内有书桌和椅子，适合工作或学习。",
+        "by": "gpt-4o房型检测+frenkie裁定房型跑偏=失败"
+      }
     },
     {
       "pair_id": "pair_074",
@@ -943,7 +1097,14 @@
       },
       "labeler": "frenkie",
       "labeled_at": "2026-06-21T19:11:05.756447",
-      "notes": ""
+      "notes": "",
+      "recalibration": {
+        "instruction_original": 2.0,
+        "room_mismatch": true,
+        "room_seen": "客厅",
+        "reason": "房间有沙发和茶几，通常是客厅的布置。",
+        "by": "gpt-4o房型检测+frenkie裁定房型跑偏=失败"
+      }
     },
     {
       "pair_id": "pair_078",
@@ -962,12 +1123,19 @@
       "scores": {
         "structural": 4.0,
         "aesthetic": 4.0,
-        "instruction": 4.0,
+        "instruction": 2.0,
         "overall": 4.0
       },
       "labeler": "frenkie",
       "labeled_at": "2026-06-21T19:13:02.691053",
-      "notes": ""
+      "notes": "",
+      "recalibration": {
+        "instruction_original": 4.0,
+        "room_mismatch": true,
+        "room_seen": "客厅",
+        "reason": "房间内有沙发和茶几，典型的客厅布局。",
+        "by": "gpt-4o房型检测+frenkie裁定房型跑偏=失败"
+      }
     },
     {
       "pair_id": "pair_080",
@@ -991,19 +1159,33 @@
       },
       "labeler": "frenkie",
       "labeled_at": "2026-06-21T19:13:22.247910",
-      "notes": ""
+      "notes": "",
+      "recalibration": {
+        "instruction_original": 2.0,
+        "room_mismatch": true,
+        "room_seen": "客厅",
+        "reason": "房间内有沙发和电视，显示为客厅。",
+        "by": "gpt-4o房型检测+frenkie裁定房型跑偏=失败"
+      }
     },
     {
       "pair_id": "pair_082",
       "scores": {
         "structural": 1.0,
         "aesthetic": 4.0,
-        "instruction": 3.0,
+        "instruction": 2.0,
         "overall": 3.0
       },
       "labeler": "frenkie",
       "labeled_at": "2026-06-21T19:13:40.040728",
-      "notes": ""
+      "notes": "",
+      "recalibration": {
+        "instruction_original": 3.0,
+        "room_mismatch": true,
+        "room_seen": "客厅",
+        "reason": "房间内有沙发和茶几，典型的客厅布置。",
+        "by": "gpt-4o房型检测+frenkie裁定房型跑偏=失败"
+      }
     },
     {
       "pair_id": "pair_083",
@@ -1015,7 +1197,14 @@
       },
       "labeler": "frenkie",
       "labeled_at": "2026-06-21T19:14:10.397817",
-      "notes": ""
+      "notes": "",
+      "recalibration": {
+        "instruction_original": 2.0,
+        "room_mismatch": true,
+        "room_seen": "客厅",
+        "reason": "房间内有沙发和茶几，缺乏餐桌和餐椅。",
+        "by": "gpt-4o房型检测+frenkie裁定房型跑偏=失败"
+      }
     },
     {
       "pair_id": "pair_084",
