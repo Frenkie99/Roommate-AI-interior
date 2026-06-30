@@ -1,24 +1,20 @@
-"""视觉 Judge（阶段 3）——真正"看见图"的多维评分器。
+"""视觉 Judge（阶段 3）——真正"看见图"的评分器。v2 重写（2026-06-30）。
 
-补齐本地算法做不到的两维：**美学质量 / 指令遵循**（语义问题，只能由视觉模型判）。
-设计蓝图见 VISION_JUDGE_DESIGN.md。本文件提供可复用的打分函数 + 一个
-「探单价 + 小批验证」的命令行入口（第一步，不写回任何数据、不进 registry）。
+补齐本地算法做不到的两维：**指令遵循 / 美学质量**（语义问题，只能由视觉模型判）。
+**结构保真不在此处**——由非 VLM 的 structural_fidelity 负责（结构/几何畸变是 VLM 最弱维，见 RESEARCH_IMAGE_EVAL.md F6）。
+
+设计依据：`VISION_JUDGE_DESIGN.md` 第7节 v2 修正 + `RESEARCH_IMAGE_EVAL.md`。
+核心修正：**抛弃「四维 1-5 标量打分」**（MLLM 直接打标量分与人类对不齐），改为——
+  - 指令遵循 → **VQA 点评**：把"是否遵循"拆成一串是非题，逐条 yes/no，加总成 [0,1] 分（VQAScore/TIFA 思路）。
+  - 美学质量 → **成对 A/B**：两个效果图比哪个更美，正反各跑一次消位置偏见（视觉质量上成对 > 点评）。
 
 红线：未通过 VISION_JUDGE_DESIGN.md 第5节验收前，分不得用于任何自动决策。
+本文件不写回数据、不进 registry；需先配 APIYI_KEY（见 _load_key）。
 
-两处免费加固（2026-06-29）：
-  [加固一] 美学维去耦合 + 验证脚本「两极判别力」判定。
-    - rubric 明确：aesthetic 只评效果图本身，不得因原图是毛坯而降分（消除毛坯图对美学判断的污染）。
-    - 验证收尾打印「金标准两极分差 vs 视觉Judge两极分差」：若 Judge 拉不开好坏，与旧 llm_judge 同病，当场叫停，不往下花钱。
-  [加固二] few-shot 锚定到「你」的尺度（--anchor K）。
-    - 从 85 条人工金标准里跨低/中/高取 K 个样本，连同其权威分作为校准示例喂给模型，
-      让 Judge 对齐你的审美而非互联网平均审美。
-    - 强制「留出」：验证样本与锚点样本严格不相交，杜绝数据泄漏（对齐设计文档 2.3 防锚定原则）。
-
-用法（需先配好 APIYI_KEY，见下方 _load_key）：
-  python -m evals.scorer.vision_judge                  # 探价+验证：金标准两极各1条，默认带3个锚点
-  python -m evals.scorer.vision_judge --n 2            # 控制验证条数
-  python -m evals.scorer.vision_judge --anchor 0       # 关闭锚定，跑通用尺度（用于 A/B 对比）
+用法：
+  python -m evals.scorer.vision_judge                    # 默认 vqa：金标准两极各1条，验证指令 VQA 的判别力
+  python -m evals.scorer.vision_judge --mode vqa --n 2
+  python -m evals.scorer.vision_judge --mode pairwise    # 取美学两极的两张效果图，验证成对能否选对更美的
   python -m evals.scorer.vision_judge --model gemini-2.5-flash
 """
 
@@ -39,32 +35,11 @@ from evals.config import EVALS_DIR, PROJECT_ROOT, GOLD_LABELS_PATH, METADATA_PAT
 
 _BASE = "https://api.apiyi.com"
 _DEFAULT_MODEL = "gemini-2.5-flash"   # 理解模型；非图像生成模型
-_MAX_DIM = 768                        # 缩图上限，控 token（结构/美学判断不需原分辨率）
+_MAX_DIM = 768                        # 缩图上限，控 token（语义判断不需原分辨率）
 _PROMPT_CLIP = 300                    # 截断超长 prompt
 
-# 视觉 Judge 的输出维度（与人工金标准 axes 对齐，便于算对齐度）
-AXES = ["structural", "aesthetic", "instruction", "overall"]
 
-# [加固一] aesthetic 维明确去耦合：只评效果图自身，不得因原图是毛坯而降分。
-_RUBRIC = """你是资深室内设计评审。下面【图1】是装修前的毛坯原图，【图2】是 AI 基于它生成的效果图。
-目标风格：{style}；房间类型：{room_type}；用户需求：{prompt}。
-请严格独立评分（1-5 分，可给低分），只输出 JSON：
-{{
-  "structural": <1-5>,   // 对比【图1】与【图2】：毛坯的墙体/门窗/承重/户型结构是否被如实保留，未被乱改
-  "aesthetic":  <1-5>,   // 只评【图2】效果图本身的设计感/配色/材质/光影/美观；与【图1】毛坯无关，不得因原图是毛坯而降低此分
-  "instruction":<1-5>,   // 【图2】是否符合目标风格/房型/需求
-  "overall":    <1-5>,   // 综合主观评价
-  "reason": "<两句话理由，先说硬伤>"
-}}
-只输出 JSON。烂图必须敢给 1-2 分、好图敢给 5 分，必须拉开差距。"""
-
-# [加固二] 锚点校准引导语：把人工金标准的尺度先示范给模型。
-_ANCHOR_INTRO = (
-    "在评分前，请先校准你的尺度。以下是若干由资深评审打过权威分的【基准示例】，"
-    "请记住每个示例的图像长相对应的分数，并据此校准你接下来的打分，使你的尺度与这些基准一致。"
-)
-_ANCHOR_TAIL = "以上是基准示例。现在请沿用上面校准好的同一把尺度，为下面这一对【新图】打分："
-
+# ============================ 基础设施 ============================
 
 def _load_key():
     """取 APIYI_KEY：先环境变量，再 backend/.env 与根 .env（手动解析，不依赖 dotenv）。"""
@@ -104,74 +79,22 @@ def _img_to_b64(path, max_dim=_MAX_DIM):
     return base64.b64encode(buf.getvalue()).decode("utf-8"), img.size
 
 
-def _parse_scores(text):
-    """从模型输出抽多维分。优先整体 JSON，失败则逐维正则兜底。"""
-    # 去掉可能的 ```json 围栏
+def _img_part(b64):
+    return {"inlineData": {"mimeType": "image/jpeg", "data": b64}}
+
+
+def _extract_json(text):
+    """从模型输出抽 JSON（对象或数组），带围栏剥离 + 兜底。"""
     cleaned = re.sub(r"```(?:json)?|```", "", text).strip()
     try:
-        data = json.loads(cleaned)
+        return json.loads(cleaned)
     except json.JSONDecodeError:
-        m = re.search(r"\{.*\}", cleaned, re.DOTALL)
-        data = json.loads(m.group(0)) if m else {}
-    out = {}
-    for ax in AXES:
-        v = data.get(ax)
-        if v is None:  # 逐维正则兜底
-            mm = re.search(rf'"{ax}"\s*:\s*(\d+(?:\.\d+)?)', cleaned)
-            v = float(mm.group(1)) if mm else None
-        out[ax] = float(v) if v is not None else None
-    out["reason"] = data.get("reason", "")
-    return out
+        m = re.search(r"(\{.*\}|\[.*\])", cleaned, re.DOTALL)
+        return json.loads(m.group(0)) if m else None
 
 
-def _anchor_parts(anchors):
-    """[加固二] 把锚点样本（图+权威分）编成 few-shot parts，前置到目标图之前。"""
-    if not anchors:
-        return []
-    parts = [{"text": _ANCHOR_INTRO}]
-    for i, a in enumerate(anchors, 1):
-        in_b64, _ = _img_to_b64(_resolve(a["input_path"]))
-        out_b64, _ = _img_to_b64(_resolve(a["output_path"]))
-        g = a["scores"]
-        grade = "  ".join(f"{ax}={g.get(ax)}" for ax in AXES)
-        parts += [
-            {"text": f"【基准示例{i}·图1毛坯原图】"},
-            {"inlineData": {"mimeType": "image/jpeg", "data": in_b64}},
-            {"text": f"【基准示例{i}·图2效果图】"},
-            {"inlineData": {"mimeType": "image/jpeg", "data": out_b64}},
-            {"text": f"基准示例{i} 的权威评分：{grade}"},
-        ]
-    parts.append({"text": _ANCHOR_TAIL})
-    return parts
-
-
-def score_pair(input_path, output_path, style="", room_type="", prompt="",
-               model=_DEFAULT_MODEL, key=None, timeout=120, anchors=None):
-    """对一对图调用视觉 Judge，返回 {分维度..., reason, _usage, _latency, _raw}。
-
-    anchors: 可选的校准锚点列表，每项 {input_path, output_path, scores}（[加固二]）。
-             传入后会作为 few-shot 前置，让 Judge 对齐金标准的尺度。
-    """
-    key = key or _load_key()
-    if not key:
-        raise RuntimeError("APIYI_KEY 未配置")
-
-    in_b64, in_sz = _img_to_b64(_resolve(input_path))
-    out_b64, out_sz = _img_to_b64(_resolve(output_path))
-    rubric = _RUBRIC.format(
-        style=style or "未指定",
-        room_type=room_type or "未指定",
-        prompt=(prompt or "")[:_PROMPT_CLIP],
-    )
-    # 顺序：指令(rubric) → 锚点校准示例(可选) → 目标新图
-    parts = [{"text": rubric}]
-    parts += _anchor_parts(anchors)
-    parts += [
-        {"text": "【图1：毛坯原图】"},
-        {"inlineData": {"mimeType": "image/jpeg", "data": in_b64}},
-        {"text": "【图2：AI 效果图】"},
-        {"inlineData": {"mimeType": "image/jpeg", "data": out_b64}},
-    ]
+def _call_gemini(parts, model, key, timeout=120):
+    """单次调用 Gemini generateContent，返回 (text, usage, latency)。"""
     payload = {
         "contents": [{"parts": parts}],
         "generationConfig": {"responseModalities": ["TEXT"], "temperature": 0.2},
@@ -191,77 +114,237 @@ def score_pair(input_path, output_path, style="", room_type="", prompt="",
         for part in cand.get("content", {}).get("parts", []):
             if "text" in part:
                 text += part["text"]
-    scores = _parse_scores(text)
-    scores["_usage"] = data.get("usageMetadata", {})
-    scores["_latency"] = latency
-    scores["_in_size"] = in_sz
-    scores["_out_size"] = out_sz
-    scores["_raw"] = text
-    return scores
+    return text, data.get("usageMetadata", {}), latency
 
 
-# ----------------------------- 探价 + 小批验证 -----------------------------
+# ============================ v2-A：指令遵循 VQA ============================
+# 把"是否遵循指令"拆成产品相关的是非题，逐条 yes/no → 加总成 [0,1] 分。
+# 结构题作为"次要交叉校验"（primary 结构分用 structural_fidelity），可关。
+
+_VQA_INSTRUCTION = [
+    ("inst_style", "效果图整体是否符合目标风格「{style}」？"),
+    ("inst_room", "空间布置是否与房间类型「{room_type}」一致或合理？"),
+    ("inst_need", "是否满足用户需求「{prompt}」中的关键点？"),
+    ("inst_noviolate", "是否没有明显违背指令的硬伤（风格跑偏 / 家具明显不合理 / 答非所问）？"),
+]
+_VQA_STRUCTURE = [  # 次要交叉校验；primary 结构分=structural_fidelity
+    ("struct_walls", "对比【图1】毛坯：墙体/隔断的位置是否被如实保留、未被乱改？"),
+    ("struct_openings", "门窗的位置与数量是否与【图1】毛坯基本一致？"),
+]
+
+_VQA_PROMPT = """你是资深室内设计评审。【图1】是装修前的毛坯原图，【图2】是 AI 基于它生成的效果图。
+目标风格：{style}；房间类型：{room_type}；用户需求：{prompt}。
+请对【图2】逐条回答下列是非题，每题只答 "yes" 或 "no"，并给一句话理由。**效果差就果断答 no。**
+题目：
+{questions}
+只输出 JSON 数组，每元素 {{"id":"题号","verdict":"yes"或"no","reason":"一句话"}}，不要多余文字。"""
+
+
+def score_instruction_vqa(input_path, output_path, style="", room_type="", prompt="",
+                          include_structure=False, model=_DEFAULT_MODEL, key=None, timeout=120):
+    """指令遵循 VQA 打分。返回 {score:[0,1], n_yes, n_total, items:[...], _usage,_latency,_raw}。
+
+    score = yes 数 / 适用题数。include_structure=True 时附带结构交叉校验题（不计入主分）。
+    """
+    key = key or _load_key()
+    if not key:
+        raise RuntimeError("APIYI_KEY 未配置")
+
+    qs = list(_VQA_INSTRUCTION) + (list(_VQA_STRUCTURE) if include_structure else [])
+    q_text = "\n".join(f"  [{qid}] {q.format(style=style or '未指定', room_type=room_type or '未指定', prompt=(prompt or '')[:_PROMPT_CLIP])}"
+                       for qid, q in qs)
+    prompt_text = _VQA_PROMPT.format(
+        style=style or "未指定", room_type=room_type or "未指定",
+        prompt=(prompt or "")[:_PROMPT_CLIP], questions=q_text,
+    )
+    in_b64, _ = _img_to_b64(_resolve(input_path))
+    out_b64, _ = _img_to_b64(_resolve(output_path))
+    parts = [{"text": prompt_text}, {"text": "【图1：毛坯原图】"}, _img_part(in_b64),
+             {"text": "【图2：AI 效果图】"}, _img_part(out_b64)]
+
+    text, usage, latency = _call_gemini(parts, model, key, timeout)
+    data = _extract_json(text) or []
+    by_id = {d.get("id"): d for d in data if isinstance(d, dict)}
+    items, n_yes, n_total = [], 0, 0
+    inst_ids = {qid for qid, _ in _VQA_INSTRUCTION}
+    for qid, _q in qs:
+        d = by_id.get(qid, {})
+        verdict = str(d.get("verdict", "")).strip().lower()
+        is_yes = verdict.startswith("y")
+        items.append({"id": qid, "verdict": verdict or "?", "reason": d.get("reason", "")})
+        if qid in inst_ids:  # 只有指令题计入主分
+            n_total += 1
+            n_yes += int(is_yes)
+    return {
+        "score": (n_yes / n_total) if n_total else None,
+        "n_yes": n_yes, "n_total": n_total, "items": items,
+        "_usage": usage, "_latency": latency, "_raw": text,
+    }
+
+
+# ============================ v2-B：美学成对 A/B ============================
+# 两个效果图比哪个更美；正反各跑一次消位置偏见。
+
+_PAIRWISE_PROMPT = """你是资深室内设计评审。【图1】是装修前的毛坯原图，仅供了解原始空间。
+【方案A】和【方案B】是两个 AI 效果图。目标风格：{style}；房间类型：{room_type}。
+请**只就美学质量**（设计感 / 配色 / 材质 / 光影 / 整体美观）判断哪个方案更好，与谁更像毛坯无关。
+只输出 JSON：{{"winner":"A"或"B"或"tie","reason":"一句话理由"}}，不要多余文字。"""
+
+
+def _pairwise_once(in_b64, a_b64, b_b64, style, room_type, model, key, timeout):
+    parts = [{"text": _PAIRWISE_PROMPT.format(style=style or "未指定", room_type=room_type or "未指定")},
+             {"text": "【图1：毛坯原图】"}, _img_part(in_b64),
+             {"text": "【方案A】"}, _img_part(a_b64),
+             {"text": "【方案B】"}, _img_part(b_b64)]
+    text, usage, latency = _call_gemini(parts, model, key, timeout)
+    data = _extract_json(text) or {}
+    w = str(data.get("winner", "")).strip().upper()
+    return (w if w in ("A", "B", "TIE") else "TIE"), data.get("reason", ""), usage, latency
+
+
+def compare_pairwise(input_path, output_a, output_b, style="", room_type="",
+                     model=_DEFAULT_MODEL, key=None, timeout=120):
+    """美学成对比较。正反各跑一次（A/B 与 B/A）消位置偏见。
+
+    返回 {winner:'A'/'B'/'tie', order1, order2, consistent, reasons, _usage,_latency}。
+    winner='A' 仅当两序都判 A 更美（或一序 A 一序 tie 偏 A）；两序矛盾→tie（位置偏见，存疑）。
+    """
+    key = key or _load_key()
+    if not key:
+        raise RuntimeError("APIYI_KEY 未配置")
+    in_b64, _ = _img_to_b64(_resolve(input_path))
+    a_b64, _ = _img_to_b64(_resolve(output_a))
+    b_b64, _ = _img_to_b64(_resolve(output_b))
+
+    # 序1：A=output_a, B=output_b
+    w1, r1, u1, l1 = _pairwise_once(in_b64, a_b64, b_b64, style, room_type, model, key, timeout)
+    # 序2：交换位置，A=output_b, B=output_a → 把结果映射回原 A/B 语义
+    w2raw, r2, u2, l2 = _pairwise_once(in_b64, b_b64, a_b64, style, room_type, model, key, timeout)
+    w2 = {"A": "B", "B": "A", "TIE": "TIE"}[w2raw]
+
+    if w1 == w2 and w1 in ("A", "B"):
+        winner = w1.lower()
+    elif {w1, w2} == {"A", "TIE"}:   # 一序判A一序判平 → 偏A
+        winner = "a"
+    elif {w1, w2} == {"B", "TIE"}:   # 一序判B一序判平 → 偏B
+        winner = "b"
+    else:
+        winner = "tie"  # 两序皆平，或两序矛盾(位置偏见)→存疑
+    usage = {k: u1.get(k, 0) + u2.get(k, 0) for k in set(u1) | set(u2)}
+    return {
+        "winner": winner, "order1": w1.lower(), "order2": w2.lower(),
+        "consistent": (w1 == w2), "reasons": [r1, r2],
+        "_usage": usage, "_latency": l1 + l2,
+    }
+
+
+# ============================ 金标准 / 取样 ============================
 
 def _load_gold():
     g = json.loads(Path(GOLD_LABELS_PATH).read_text(encoding="utf-8"))
     return {e["pair_id"]: e.get("scores", {}) for e in g.get("labels", [])}
 
 
-def _rated_sorted():
-    """返回按人工 overall 升序排好的 [(pair_id, overall)]，以及 pair_id→pair 映射、gold。"""
+def _pairs_by_gold(axis):
+    """返回按指定金标准维度(overall/aesthetic/instruction…)升序排好的 [(pair, score)]，及 gold。"""
     pairs = json.loads(Path(METADATA_PATH).read_text(encoding="utf-8"))["pairs"]
     gold = _load_gold()
     pm = {p["pair_id"]: p for p in pairs}
-    rated = [(pid, gold[pid].get("overall")) for pid in pm
-             if gold.get(pid, {}).get("overall") is not None]
+    rated = [(pm[pid], gold[pid].get(axis)) for pid in pm
+             if gold.get(pid, {}).get(axis) is not None]
     rated.sort(key=lambda x: x[1])
-    return rated, pm, gold
+    return rated, gold
 
 
-def _pick_anchors(n_anchor, rated, pm, gold):
-    """[加固二] 跨低/中/高均匀取 n_anchor 个金标准样本当校准锚点。返回 (anchors, anchor_ids)。"""
-    if n_anchor <= 0 or not rated:
-        return [], set()
-    n_anchor = min(n_anchor, len(rated))
-    if n_anchor == 1:
-        idxs = [len(rated) // 2]
+# ============================ CLI：小批验证（不写回） ============================
+
+def _run_vqa(args, key):
+    rated, gold = _pairs_by_gold("instruction")
+    half = max(1, args.n // 2)
+    samples = [p for p, _ in rated[:half]] + [p for p, _ in rated[-(args.n - half):]]
+    print(f"模型：{args.model}　模式 VQA(指令遵循)　验证 {len(samples)} 条（按人工 instruction 取两极）\n")
+    tot_in = tot_out = 0
+    recs = []
+    for p in samples:
+        pid = p["pair_id"]
+        g = gold.get(pid, {})
+        try:
+            r = score_instruction_vqa(p["input_path"], p["output_path"], style=p.get("style", ""),
+                                      room_type=p.get("room_type", ""), prompt=p.get("prompt", ""),
+                                      include_structure=args.structure, model=args.model, key=key)
+        except Exception as e:
+            print(f"✗ {pid} 调用失败：{type(e).__name__}: {str(e)[:200]}")
+            continue
+        u = r["_usage"]; tot_in += u.get("promptTokenCount", 0); tot_out += u.get("candidatesTokenCount", 0)
+        recs.append((pid, g.get("instruction"), r["score"]))
+        print(f"── {pid}  延迟 {r['_latency']:.1f}s  VQA指令分={r['score']}  (yes {r['n_yes']}/{r['n_total']})")
+        for it in r["items"]:
+            print(f"     [{it['id']}] {it['verdict']:3s} {it['reason'][:50]}")
+        print(f"   人工 instruction 金标准={g.get('instruction')}\n")
+    _discrimination(recs, "VQA指令分", "instruction")
+    _cost(tot_in, tot_out, len(recs))
+
+
+def _run_pairwise(args, key):
+    rated, gold = _pairs_by_gold("aesthetic")
+    if len(rated) < 2:
+        print("金标准美学维样本不足，无法成对验证。"); return
+    low, high = rated[0][0], rated[-1][0]
+    gl, gh = rated[0][1], rated[-1][1]
+    print(f"模型：{args.model}　模式 成对(美学)　取美学两极：")
+    print(f"  方案A={low['pair_id']}(人工美学={gl})  方案B={high['pair_id']}(人工美学={gh})")
+    print(f"  期望：Judge 应判 B 更美（人工分更高）。正反各跑一次消位置偏见。\n")
+    try:
+        r = compare_pairwise(low["input_path"], low["output_path"], high["output_path"],
+                             style=high.get("style", ""), room_type=high.get("room_type", ""),
+                             model=args.model, key=key)
+    except Exception as e:
+        print(f"✗ 调用失败：{type(e).__name__}: {str(e)[:200]}"); return
+    print(f"  序1判={r['order1']}  序2判={r['order2']}  一致={r['consistent']}  → 最终 winner={r['winner']}")
+    print(f"  理由: {r['reasons']}")
+    ok = (r["winner"] == "b")
+    print("\n" + "─" * 56)
+    if ok:
+        print("  🟢 通过：Judge 选对了更美的方案，且两序一致性见上。")
+    elif r["winner"] == "tie":
+        print("  🟡 存疑：两序矛盾(位置偏见)或判平，需加样本再看。")
     else:
-        idxs = [round(i * (len(rated) - 1) / (n_anchor - 1)) for i in range(n_anchor)]
-    anchors, anchor_ids = [], set()
-    for ix in idxs:
-        pid = rated[ix][0]
-        anchor_ids.add(pid)
-        p = pm[pid]
-        anchors.append({
-            "pair_id": pid,
-            "input_path": p["input_path"],
-            "output_path": p["output_path"],
-            "scores": gold[pid],
-        })
-    return anchors, anchor_ids
+        print("  🔴 不合格：Judge 把更丑的判成更美——美学成对不可信，不要往下花钱。")
+    print("─" * 56)
+    u = r["_usage"]
+    _cost(u.get("promptTokenCount", 0), u.get("candidatesTokenCount", 0), 1, note="(含正反两次调用)")
 
 
-def _pick_pairs(n, rated, pm, exclude_ids):
-    """挑验证样本：在排除锚点后，取人工 overall 最低/最高各若干（最能检验 Judge 是否区分好坏）。"""
-    avail = [(pid, ov) for pid, ov in rated if pid not in exclude_ids]
-    picks = []
-    half = max(1, n // 2)
-    picks += [pid for pid, _ in avail[:half]]              # 最差的
-    picks += [pid for pid, _ in avail[-(n - half):]]       # 最好的
-    # 去重并保序，截到 n 条
-    seen, ordered = set(), []
-    for pid in picks:
-        if pid not in seen:
-            seen.add(pid)
-            ordered.append(pid)
-    return [pm[pid] for pid in ordered[:n]]
+def _discrimination(recs, judge_name, gold_axis):
+    valid = [(pid, g, j) for pid, g, j in recs if g is not None and j is not None]
+    if len(valid) < 2:
+        print("（有效样本<2，跳过两极判别力判定）"); return
+    worst = min(valid, key=lambda x: x[1]); best = max(valid, key=lambda x: x[1])
+    dg = best[1] - worst[1]; dj = best[2] - worst[2]
+    print("─" * 56)
+    print(f"【判别力】最差 {worst[0]}(人工{gold_axis}={worst[1]}→{judge_name}={worst[2]}) vs 最好 {best[0]}({best[1]}→{best[2]})")
+    print(f"  金标准两极差={dg:+.2f}　{judge_name}两极差={dj:+.3f}")
+    if dj <= 0:
+        print("  🔴 不合格：Judge 没把好坏拉开（同 llm_judge 病），不要往下花钱。")
+    else:
+        print("  🟢 方向一致：Judge 把两极拉开了，值得扩样算 Spearman。")
+    print("─" * 56)
+
+
+def _cost(tin, tout, n, note=""):
+    if not n:
+        return
+    print("=" * 56)
+    print(f"探价（{n} 次成功调用 {note}）：均输入≈{tin/n:.0f} / 输出≈{tout/n:.0f} token/次")
+    print(f"  → 全量85条预计 in≈{tin/n*85/1000:.0f}k / out≈{tout/n*85/1000:.1f}k token；实际人民币=token×apiyi 费率")
+    print("=" * 56)
 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--n", type=int, default=2, help="验证条数（默认2：最低+最高各1）")
-    ap.add_argument("--anchor", type=int, default=3,
-                    help="校准锚点条数（默认3，跨低/中/高；设0关闭，跑通用尺度做 A/B 对比）")
+    ap.add_argument("--mode", choices=["vqa", "pairwise"], default="vqa")
+    ap.add_argument("--n", type=int, default=2, help="vqa 模式验证条数（默认2：最低+最高各1）")
+    ap.add_argument("--structure", action="store_true", help="vqa 附带结构交叉校验题（不计入主分）")
     ap.add_argument("--model", default=_DEFAULT_MODEL)
     args = ap.parse_args()
 
@@ -270,82 +353,9 @@ def main():
         print("❌ 未找到 APIYI_KEY。请二选一后重跑：")
         print("   1) 在项目根或 backend/ 建 .env，写：APIYI_KEY=你的key")
         print("   2) 本会话临时注入：在对话框输入  ! export APIYI_KEY=你的key")
-        print("      （注意：export 不一定跨命令保留，推荐用方式1的 .env）")
         sys.exit(2)
 
-    rated, pm, gold = _rated_sorted()
-    anchors, anchor_ids = _pick_anchors(args.anchor, rated, pm, gold)
-    samples = _pick_pairs(args.n, rated, pm, anchor_ids)
-
-    mode = f"带 {len(anchors)} 个锚点(已校准到你的尺度)" if anchors else "无锚点(通用尺度)"
-    print(f"模型：{args.model}　{mode}　验证 {len(samples)} 条（按人工 overall 取两极）")
-    if anchors:
-        print("锚点样本(留出，不参与验证)：" +
-              "  ".join(f"{a['pair_id']}(overall={a['scores'].get('overall')})" for a in anchors))
-    print()
-
-    tot_in = tot_out = 0
-    ok = 0
-    records = []  # (pid, gold_overall, judge_overall)
-    for p in samples:
-        pid = p["pair_id"]
-        g = gold.get(pid, {})
-        try:
-            r = score_pair(p["input_path"], p["output_path"],
-                           style=p.get("style", ""), room_type=p.get("room_type", ""),
-                           prompt=p.get("prompt", ""), model=args.model, key=key,
-                           anchors=anchors)
-        except Exception as e:
-            print(f"✗ {pid} 调用失败：{type(e).__name__}: {str(e)[:200]}")
-            continue
-        ok += 1
-        u = r.get("_usage", {})
-        pin = u.get("promptTokenCount", 0)
-        pout = u.get("candidatesTokenCount", 0)
-        tot_in += pin
-        tot_out += pout
-        records.append((pid, g.get("overall"), r.get("overall")))
-        print(f"── {pid}  缩图 {r['_in_size']}/{r['_out_size']}  延迟 {r['_latency']:.1f}s")
-        print(f"   视觉Judge : " + "  ".join(f"{ax}={r.get(ax)}" for ax in AXES))
-        print(f"   人工金标准: " + "  ".join(f"{ax}={g.get(ax)}" for ax in AXES))
-        print(f"   理由: {r.get('reason','')[:120]}")
-        print(f"   token: in={pin} out={pout}")
-        print()
-
-    # [加固一] 两极判别力判定：Judge 能否像人一样把最差/最好拉开
-    valid = [(pid, go, jo) for pid, go, jo in records if go is not None and jo is not None]
-    if len(valid) >= 2:
-        worst = min(valid, key=lambda x: x[1])
-        best = max(valid, key=lambda x: x[1])
-        d_gold = best[1] - worst[1]
-        d_judge = best[2] - worst[2]
-        print("─" * 60)
-        print("【判别力检查】视觉Judge 能否像人一样把最差/最好拉开？")
-        print(f"  最差样本 {worst[0]}: 人工 overall={worst[1]}  →  视觉Judge overall={worst[2]}")
-        print(f"  最好样本 {best[0]}: 人工 overall={best[1]}  →  视觉Judge overall={best[2]}")
-        print(f"  金标准两极分差 Δ_gold={d_gold:+.1f}　视觉Judge两极分差 Δ_judge={d_judge:+.1f}")
-        if d_judge <= 0:
-            print("  🔴 不合格：Judge 没把好坏拉开（Δ_judge≤0），与旧 llm_judge 同病——不要往下花钱跑全量。")
-        elif d_judge < d_gold * 0.5:
-            print("  🟡 偏弱：Judge 有方向但分差不足金标准一半，可疑，建议加大样本量再判，慎重投钱。")
-        else:
-            print("  🟢 通过初判：Judge 把两极拉开了，方向与人工一致，值得扩到全量算 Spearman。")
-        print("─" * 60)
-    elif ok:
-        print("（验证条数<2 或缺金标准，跳过两极判别力判定；建议 --n 2 起步）")
-
-    if ok:
-        anchor_imgs = len(anchors) * 2  # 每个锚点 2 张图，是带锚后每次调用的固定额外开销
-        print("=" * 60)
-        print(f"探价汇总（{ok} 次成功调用，每次含 {anchor_imgs} 张锚点图 + 2 张目标图）：")
-        print(f"  平均输入 token/次 ≈ {tot_in/ok:.0f}　平均输出 token/次 ≈ {tot_out/ok:.0f}")
-        print(f"  → 全量一轮(85条)预计 in≈{tot_in/ok*85/1000:.0f}k / out≈{tot_out/ok*85/1000:.1f}k token")
-        print(f"  → 投票纠偏(85×3)预计 in≈{tot_in/ok*255/1000:.0f}k / out≈{tot_out/ok*255/1000:.1f}k token")
-        if anchors:
-            print("  注：锚点图使每次输入 token 增大（多 {} 张图），是对齐你尺度的成本；".format(anchor_imgs))
-            print("      若想看不带锚的便宜版单价，加 --anchor 0 再跑一次对比。")
-        print("  实际人民币花费 = 上述 token × apiyi 对该模型的单价（请按你账号实际费率核算）。")
-        print("=" * 60)
+    (_run_vqa if args.mode == "vqa" else _run_pairwise)(args, key)
 
 
 if __name__ == "__main__":
