@@ -5,8 +5,12 @@
 
 设计依据：`VISION_JUDGE_DESIGN.md` 第7节 v2 修正 + `RESEARCH_IMAGE_EVAL.md`。
 核心修正：**抛弃「四维 1-5 标量打分」**（MLLM 直接打标量分与人类对不齐），改为——
-  - 指令遵循 → **VQA 点评**：把"是否遵循"拆成一串是非题，逐条 yes/no，加总成 [0,1] 分（VQAScore/TIFA 思路）。
+  - 指令遵循 → **VQA 点评**：把"是否遵循"拆成一串是非题，逐条 yes/no → 加总成 [0,1] 分（VQAScore/TIFA 思路）。
   - 美学质量 → **成对 A/B**：两个效果图比哪个更美，正反各跑一次消位置偏见（视觉质量上成对 > 点评）。
+
+通道（2026-06-30 实测确定）：apiyi 这把 key 仅开通图像模型通道，纯理解模型 gemini-2.5-flash「无可用通道」。
+但 **gemini-2.5-flash-image 走 OpenAI 兼容端点 `/v1/chat/completions` 能读图+输出文字**，实测可用，故采之。
+（更高质量可换 gemini-3-pro-image-preview，更贵。）
 
 红线：未通过 VISION_JUDGE_DESIGN.md 第5节验收前，分不得用于任何自动决策。
 本文件不写回数据、不进 registry；需先配 APIYI_KEY（见 _load_key）。
@@ -15,7 +19,7 @@
   python -m evals.scorer.vision_judge                    # 默认 vqa：金标准两极各1条，验证指令 VQA 的判别力
   python -m evals.scorer.vision_judge --mode vqa --n 2
   python -m evals.scorer.vision_judge --mode pairwise    # 取美学两极的两张效果图，验证成对能否选对更美的
-  python -m evals.scorer.vision_judge --model gemini-2.5-flash
+  python -m evals.scorer.vision_judge --model gemini-3-pro-image-preview
 """
 
 import argparse
@@ -34,9 +38,10 @@ from PIL import Image
 from evals.config import EVALS_DIR, PROJECT_ROOT, GOLD_LABELS_PATH, METADATA_PATH
 
 _BASE = "https://api.apiyi.com"
-_DEFAULT_MODEL = "gemini-2.5-flash"   # 理解模型；非图像生成模型
-_MAX_DIM = 768                        # 缩图上限，控 token（语义判断不需原分辨率）
-_PROMPT_CLIP = 300                    # 截断超长 prompt
+_CHAT_URL = f"{_BASE}/v1/chat/completions"   # OpenAI 兼容端点（这把 key 唯一能跑通图像模型理解的路）
+_DEFAULT_MODEL = "gemini-2.5-flash-image"    # 多模态：能读图+输出文字。非纯理解模型（那个无通道）
+_MAX_DIM = 768                               # 缩图上限，控 token（语义判断不需原分辨率）
+_PROMPT_CLIP = 300                           # 截断超长 prompt
 
 
 # ============================ 基础设施 ============================
@@ -70,17 +75,22 @@ def _resolve(path):
     return PROJECT_ROOT / p
 
 
-def _img_to_b64(path, max_dim=_MAX_DIM):
-    """缩图到 max_dim 内，转 JPEG base64。返回 (b64, 缩后尺寸)。"""
+def _img_data_uri(path, max_dim=_MAX_DIM):
+    """缩图到 max_dim 内，转 JPEG base64 的 data URI（OpenAI image_url 格式）。返回 (uri, 尺寸)。"""
     img = Image.open(path).convert("RGB")
     img.thumbnail((max_dim, max_dim))
     buf = io.BytesIO()
     img.save(buf, format="JPEG", quality=85)
-    return base64.b64encode(buf.getvalue()).decode("utf-8"), img.size
+    b64 = base64.b64encode(buf.getvalue()).decode("utf-8")
+    return f"data:image/jpeg;base64,{b64}", img.size
 
 
-def _img_part(b64):
-    return {"inlineData": {"mimeType": "image/jpeg", "data": b64}}
+def _text(t):
+    return {"type": "text", "text": t}
+
+
+def _image(uri):
+    return {"type": "image_url", "image_url": {"url": uri}}
 
 
 def _extract_json(text):
@@ -93,28 +103,31 @@ def _extract_json(text):
         return json.loads(m.group(0)) if m else None
 
 
-def _call_gemini(parts, model, key, timeout=120):
-    """单次调用 Gemini generateContent，返回 (text, usage, latency)。"""
+def _call_api(content, model, key, max_tokens=800, timeout=120):
+    """单次调用 OpenAI 兼容 /v1/chat/completions（apiyi）。返回 (text, usage, latency)。"""
     payload = {
-        "contents": [{"parts": parts}],
-        "generationConfig": {"responseModalities": ["TEXT"], "temperature": 0.2},
+        "model": model,
+        "messages": [{"role": "user", "content": content}],
+        "temperature": 0.2,
+        "max_tokens": max_tokens,
     }
-    url = f"{_BASE}/v1beta/models/{model}:generateContent"
     t0 = time.time()
     resp = requests.post(
-        url,
+        _CHAT_URL,
         headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
         json=payload, timeout=timeout,
     )
     latency = time.time() - t0
     resp.raise_for_status()
     data = resp.json()
-    text = ""
-    for cand in data.get("candidates", []):
-        for part in cand.get("content", {}).get("parts", []):
-            if "text" in part:
-                text += part["text"]
-    return text, data.get("usageMetadata", {}), latency
+    msg = (data.get("choices") or [{}])[0].get("message", {})
+    text = msg.get("content") or ""
+    return text, data.get("usage", {}), latency
+
+
+def _tok(usage):
+    """归一 token 用量 → (in, out)。OpenAI 格式用 prompt_tokens/completion_tokens。"""
+    return usage.get("prompt_tokens", 0), usage.get("completion_tokens", 0)
 
 
 # ============================ v2-A：指令遵循 VQA ============================
@@ -151,18 +164,16 @@ def score_instruction_vqa(input_path, output_path, style="", room_type="", promp
         raise RuntimeError("APIYI_KEY 未配置")
 
     qs = list(_VQA_INSTRUCTION) + (list(_VQA_STRUCTURE) if include_structure else [])
-    q_text = "\n".join(f"  [{qid}] {q.format(style=style or '未指定', room_type=room_type or '未指定', prompt=(prompt or '')[:_PROMPT_CLIP])}"
-                       for qid, q in qs)
-    prompt_text = _VQA_PROMPT.format(
-        style=style or "未指定", room_type=room_type or "未指定",
-        prompt=(prompt or "")[:_PROMPT_CLIP], questions=q_text,
-    )
-    in_b64, _ = _img_to_b64(_resolve(input_path))
-    out_b64, _ = _img_to_b64(_resolve(output_path))
-    parts = [{"text": prompt_text}, {"text": "【图1：毛坯原图】"}, _img_part(in_b64),
-             {"text": "【图2：AI 效果图】"}, _img_part(out_b64)]
+    fmt = dict(style=style or "未指定", room_type=room_type or "未指定", prompt=(prompt or "")[:_PROMPT_CLIP])
+    q_text = "\n".join(f"  [{qid}] {q.format(**fmt)}" for qid, q in qs)
+    prompt_text = _VQA_PROMPT.format(questions=q_text, **fmt)
 
-    text, usage, latency = _call_gemini(parts, model, key, timeout)
+    in_uri, _ = _img_data_uri(_resolve(input_path))
+    out_uri, _ = _img_data_uri(_resolve(output_path))
+    content = [_text(prompt_text), _text("【图1：毛坯原图】"), _image(in_uri),
+               _text("【图2：AI 效果图】"), _image(out_uri)]
+
+    text, usage, latency = _call_api(content, model, key, max_tokens=800, timeout=timeout)
     data = _extract_json(text) or []
     by_id = {d.get("id"): d for d in data if isinstance(d, dict)}
     items, n_yes, n_total = [], 0, 0
@@ -170,13 +181,14 @@ def score_instruction_vqa(input_path, output_path, style="", room_type="", promp
     for qid, _q in qs:
         d = by_id.get(qid, {})
         verdict = str(d.get("verdict", "")).strip().lower()
+        valid = verdict.startswith(("y", "n"))   # 只有真解析出 yes/no 才算数
         is_yes = verdict.startswith("y")
         items.append({"id": qid, "verdict": verdict or "?", "reason": d.get("reason", "")})
-        if qid in inst_ids:  # 只有指令题计入主分
+        if qid in inst_ids and valid:  # 只有指令题且成功解析才计入主分（解析失败→不计，避免假0分）
             n_total += 1
             n_yes += int(is_yes)
     return {
-        "score": (n_yes / n_total) if n_total else None,
+        "score": (n_yes / n_total) if n_total else None,   # 全部解析失败→None，不污染判别力
         "n_yes": n_yes, "n_total": n_total, "items": items,
         "_usage": usage, "_latency": latency, "_raw": text,
     }
@@ -191,12 +203,12 @@ _PAIRWISE_PROMPT = """你是资深室内设计评审。【图1】是装修前的
 只输出 JSON：{{"winner":"A"或"B"或"tie","reason":"一句话理由"}}，不要多余文字。"""
 
 
-def _pairwise_once(in_b64, a_b64, b_b64, style, room_type, model, key, timeout):
-    parts = [{"text": _PAIRWISE_PROMPT.format(style=style or "未指定", room_type=room_type or "未指定")},
-             {"text": "【图1：毛坯原图】"}, _img_part(in_b64),
-             {"text": "【方案A】"}, _img_part(a_b64),
-             {"text": "【方案B】"}, _img_part(b_b64)]
-    text, usage, latency = _call_gemini(parts, model, key, timeout)
+def _pairwise_once(in_uri, a_uri, b_uri, style, room_type, model, key, timeout):
+    content = [_text(_PAIRWISE_PROMPT.format(style=style or "未指定", room_type=room_type or "未指定")),
+               _text("【图1：毛坯原图】"), _image(in_uri),
+               _text("【方案A】"), _image(a_uri),
+               _text("【方案B】"), _image(b_uri)]
+    text, usage, latency = _call_api(content, model, key, max_tokens=200, timeout=timeout)
     data = _extract_json(text) or {}
     w = str(data.get("winner", "")).strip().upper()
     return (w if w in ("A", "B", "TIE") else "TIE"), data.get("reason", ""), usage, latency
@@ -212,14 +224,14 @@ def compare_pairwise(input_path, output_a, output_b, style="", room_type="",
     key = key or _load_key()
     if not key:
         raise RuntimeError("APIYI_KEY 未配置")
-    in_b64, _ = _img_to_b64(_resolve(input_path))
-    a_b64, _ = _img_to_b64(_resolve(output_a))
-    b_b64, _ = _img_to_b64(_resolve(output_b))
+    in_uri, _ = _img_data_uri(_resolve(input_path))
+    a_uri, _ = _img_data_uri(_resolve(output_a))
+    b_uri, _ = _img_data_uri(_resolve(output_b))
 
     # 序1：A=output_a, B=output_b
-    w1, r1, u1, l1 = _pairwise_once(in_b64, a_b64, b_b64, style, room_type, model, key, timeout)
+    w1, r1, u1, l1 = _pairwise_once(in_uri, a_uri, b_uri, style, room_type, model, key, timeout)
     # 序2：交换位置，A=output_b, B=output_a → 把结果映射回原 A/B 语义
-    w2raw, r2, u2, l2 = _pairwise_once(in_b64, b_b64, a_b64, style, room_type, model, key, timeout)
+    w2raw, r2, u2, l2 = _pairwise_once(in_uri, b_uri, a_uri, style, room_type, model, key, timeout)
     w2 = {"A": "B", "B": "A", "TIE": "TIE"}[w2raw]
 
     if w1 == w2 and w1 in ("A", "B"):
@@ -230,7 +242,8 @@ def compare_pairwise(input_path, output_a, output_b, style="", room_type="",
         winner = "b"
     else:
         winner = "tie"  # 两序皆平，或两序矛盾(位置偏见)→存疑
-    usage = {k: u1.get(k, 0) + u2.get(k, 0) for k in set(u1) | set(u2)}
+    p1i, p1o = _tok(u1); p2i, p2o = _tok(u2)
+    usage = {"prompt_tokens": p1i + p2i, "completion_tokens": p1o + p2o}
     return {
         "winner": winner, "order1": w1.lower(), "order2": w2.lower(),
         "consistent": (w1 == w2), "reasons": [r1, r2],
@@ -275,7 +288,7 @@ def _run_vqa(args, key):
         except Exception as e:
             print(f"✗ {pid} 调用失败：{type(e).__name__}: {str(e)[:200]}")
             continue
-        u = r["_usage"]; tot_in += u.get("promptTokenCount", 0); tot_out += u.get("candidatesTokenCount", 0)
+        ti, to = _tok(r["_usage"]); tot_in += ti; tot_out += to
         recs.append((pid, g.get("instruction"), r["score"]))
         print(f"── {pid}  延迟 {r['_latency']:.1f}s  VQA指令分={r['score']}  (yes {r['n_yes']}/{r['n_total']})")
         for it in r["items"]:
@@ -311,8 +324,8 @@ def _run_pairwise(args, key):
     else:
         print("  🔴 不合格：Judge 把更丑的判成更美——美学成对不可信，不要往下花钱。")
     print("─" * 56)
-    u = r["_usage"]
-    _cost(u.get("promptTokenCount", 0), u.get("candidatesTokenCount", 0), 1, note="(含正反两次调用)")
+    ti, to = _tok(r["_usage"])
+    _cost(ti, to, 1, note="(含正反两次调用)")
 
 
 def _discrimination(recs, judge_name, gold_axis):
