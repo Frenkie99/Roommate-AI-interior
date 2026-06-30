@@ -21,6 +21,9 @@
 | H | Hamel《Evals Flashcards》 | 卡片（13 张） | ⚠️ 正文在图片里，仅取到 13 个主题，逐卡内容未抓到 |
 | — | 合集内 3 个 YouTube（错误分析实操 / 领域评测系统 / 工程师 PM 协作） | 视频 | ⚠️ 非文本，未抓取；要点多与 B/C/D/E 重合 |
 
+> **图像评测专题另立一册**：AI 图像产品如何评测、VLM-as-judge 是否值得花钱、VQA vs 成对、结构维怎么评 →
+> 见 `RESEARCH_IMAGE_EVAL.md`（2026-06-30 深度研究，27 来源/对抗式核实），已据其修正 `VISION_JUDGE_DESIGN.md` 第 7 节。
+
 来源页：Anthropic 单篇 + `hamel.dev/notes/llm/evals/` 合集（11 项，已逐项甄别）。
 
 ---
