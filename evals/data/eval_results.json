@@ -23,7 +23,8 @@
           "small_space"
         ],
         "split": "competitor",
-        "difficulty": "hard"
+        "difficulty": "hard",
+        "intrinsic_difficulty": "hard"
       },
       "notes": ""
     },
@@ -39,7 +40,8 @@
           "small_space"
         ],
         "split": "competitor",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "hard"
       },
       "notes": ""
     },
@@ -55,7 +57,8 @@
           "small_space"
         ],
         "split": "competitor",
-        "difficulty": "hard"
+        "difficulty": "hard",
+        "intrinsic_difficulty": "medium"
       },
       "notes": ""
     },
@@ -71,7 +74,8 @@
           "small_space"
         ],
         "split": "competitor",
-        "difficulty": "medium"
+        "difficulty": "medium",
+        "intrinsic_difficulty": "medium"
       },
       "notes": ""
     },
@@ -87,7 +91,8 @@
           "small_space"
         ],
         "split": "competitor",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "hard"
       },
       "notes": ""
     },
@@ -103,7 +108,8 @@
           "small_space"
         ],
         "split": "competitor",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "easy"
       },
       "notes": ""
     },
@@ -119,7 +125,8 @@
           "small_space"
         ],
         "split": "competitor",
-        "difficulty": "medium"
+        "difficulty": "medium",
+        "intrinsic_difficulty": "easy"
       },
       "notes": ""
     },
@@ -135,7 +142,8 @@
           "small_space"
         ],
         "split": "competitor",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "hard"
       },
       "notes": ""
     },
@@ -151,7 +159,8 @@
           "small_space"
         ],
         "split": "competitor",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "medium"
       },
       "notes": ""
     },
@@ -167,7 +176,8 @@
           "small_space"
         ],
         "split": "competitor",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "medium"
       },
       "notes": ""
     },
@@ -183,7 +193,8 @@
           "small_space"
         ],
         "split": "competitor",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "hard"
       },
       "notes": ""
     },
@@ -197,7 +208,8 @@
         "room_type": "",
         "tags": [],
         "split": "competitor",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "easy"
       },
       "notes": ""
     },
@@ -211,7 +223,8 @@
         "room_type": "",
         "tags": [],
         "split": "competitor",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "hard"
       },
       "notes": ""
     },
@@ -225,7 +238,8 @@
         "room_type": "",
         "tags": [],
         "split": "competitor",
-        "difficulty": "hard"
+        "difficulty": "hard",
+        "intrinsic_difficulty": "easy"
       },
       "notes": ""
     },
@@ -236,12 +250,13 @@
       },
       "metadata": {
         "style": "modern_minimalist",
-        "room_type": "",
+        "room_type": "balcony",
         "tags": [
           "duplex"
         ],
         "split": "competitor",
-        "difficulty": "hard"
+        "difficulty": "hard",
+        "intrinsic_difficulty": "medium"
       },
       "notes": ""
     },
@@ -257,7 +272,8 @@
           "duplex"
         ],
         "split": "competitor",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "hard"
       },
       "notes": ""
     },
@@ -273,7 +289,8 @@
           "duplex"
         ],
         "split": "competitor",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "extreme"
       },
       "notes": ""
     },
@@ -289,7 +306,8 @@
           "duplex"
         ],
         "split": "competitor",
-        "difficulty": "hard"
+        "difficulty": "hard",
+        "intrinsic_difficulty": "medium"
       },
       "notes": ""
     },
@@ -300,12 +318,13 @@
       },
       "metadata": {
         "style": "chinese_modern",
-        "room_type": "",
+        "room_type": "bathroom",
         "tags": [
           "duplex"
         ],
         "split": "competitor",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "medium"
       },
       "notes": ""
     },
@@ -321,7 +340,8 @@
           "duplex"
         ],
         "split": "competitor",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "medium"
       },
       "notes": ""
     },
@@ -337,7 +357,8 @@
           "irregular_layout"
         ],
         "split": "competitor",
-        "difficulty": "hard"
+        "difficulty": "hard",
+        "intrinsic_difficulty": "medium"
       },
       "notes": ""
     },
@@ -353,7 +374,8 @@
           "irregular_layout"
         ],
         "split": "competitor",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "hard"
       },
       "notes": ""
     },
@@ -369,7 +391,8 @@
           "irregular_layout"
         ],
         "split": "competitor",
-        "difficulty": "hard"
+        "difficulty": "hard",
+        "intrinsic_difficulty": "medium"
       },
       "notes": ""
     },
@@ -385,7 +408,8 @@
           "irregular_layout"
         ],
         "split": "competitor",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "medium"
       },
       "notes": ""
     },
@@ -401,7 +425,8 @@
           "irregular_layout"
         ],
         "split": "competitor",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "hard"
       },
       "notes": ""
     },
@@ -412,12 +437,13 @@
       },
       "metadata": {
         "style": "bauhaus",
-        "room_type": "",
+        "room_type": "balcony",
         "tags": [
           "irregular_layout"
         ],
         "split": "competitor",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "medium"
       },
       "notes": ""
     },
@@ -428,12 +454,13 @@
       },
       "metadata": {
         "style": "bohemian",
-        "room_type": "",
+        "room_type": "bathroom",
         "tags": [
           "irregular_layout"
         ],
         "split": "competitor",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "medium"
       },
       "notes": ""
     },
@@ -449,7 +476,8 @@
           "irregular_layout"
         ],
         "split": "competitor",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "hard"
       },
       "notes": ""
     },
@@ -465,7 +493,8 @@
           "exposed_beam"
         ],
         "split": "competitor",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "hard"
       },
       "notes": ""
     },
@@ -481,7 +510,8 @@
           "exposed_beam"
         ],
         "split": "competitor",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "hard"
       },
       "notes": ""
     },
@@ -497,7 +527,8 @@
           "exposed_beam"
         ],
         "split": "competitor",
-        "difficulty": "hard"
+        "difficulty": "hard",
+        "intrinsic_difficulty": "easy"
       },
       "notes": ""
     },
@@ -513,7 +544,8 @@
           "basement"
         ],
         "split": "corner_case",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "extreme"
       },
       "notes": ""
     },
@@ -529,7 +561,8 @@
           "basement"
         ],
         "split": "corner_case",
-        "difficulty": "hard"
+        "difficulty": "hard",
+        "intrinsic_difficulty": "extreme"
       },
       "notes": ""
     },
@@ -545,7 +578,8 @@
           "basement"
         ],
         "split": "corner_case",
-        "difficulty": "hard"
+        "difficulty": "hard",
+        "intrinsic_difficulty": "extreme"
       },
       "notes": ""
     },
@@ -559,7 +593,8 @@
         "room_type": "",
         "tags": [],
         "split": "corner_case",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "hard"
       },
       "notes": ""
     },
@@ -575,7 +610,8 @@
           "cluttered"
         ],
         "split": "corner_case",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "medium"
       },
       "notes": ""
     },
@@ -591,7 +627,8 @@
           "cluttered"
         ],
         "split": "corner_case",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "hard"
       },
       "notes": ""
     },
@@ -602,12 +639,13 @@
       },
       "metadata": {
         "style": "japanese_traditional",
-        "room_type": "",
+        "room_type": "bathroom",
         "tags": [
           "cluttered"
         ],
         "split": "corner_case",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "medium"
       },
       "notes": ""
     },
@@ -618,12 +656,13 @@
       },
       "metadata": {
         "style": "european_neoclassical",
-        "room_type": "",
+        "room_type": "bathroom",
         "tags": [
           "cluttered"
         ],
         "split": "corner_case",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "medium"
       },
       "notes": ""
     },
@@ -637,7 +676,8 @@
         "room_type": "",
         "tags": [],
         "split": "corner_case",
-        "difficulty": "medium"
+        "difficulty": "medium",
+        "intrinsic_difficulty": "extreme"
       },
       "notes": ""
     },
@@ -651,7 +691,8 @@
         "room_type": "",
         "tags": [],
         "split": "standard",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "easy"
       },
       "notes": ""
     },
@@ -665,7 +706,8 @@
         "room_type": "",
         "tags": [],
         "split": "standard",
-        "difficulty": "hard"
+        "difficulty": "hard",
+        "intrinsic_difficulty": "easy"
       },
       "notes": ""
     },
@@ -679,7 +721,8 @@
         "room_type": "",
         "tags": [],
         "split": "standard",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "medium"
       },
       "notes": ""
     },
@@ -693,7 +736,8 @@
         "room_type": "",
         "tags": [],
         "split": "standard",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "extreme"
       },
       "notes": ""
     },
@@ -707,7 +751,8 @@
         "room_type": "",
         "tags": [],
         "split": "standard",
-        "difficulty": "hard"
+        "difficulty": "hard",
+        "intrinsic_difficulty": "easy"
       },
       "notes": ""
     },
@@ -721,7 +766,8 @@
         "room_type": "",
         "tags": [],
         "split": "standard",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "extreme"
       },
       "notes": ""
     },
@@ -735,7 +781,8 @@
         "room_type": "",
         "tags": [],
         "split": "standard",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "easy"
       },
       "notes": ""
     },
@@ -749,7 +796,8 @@
         "room_type": "",
         "tags": [],
         "split": "standard",
-        "difficulty": "medium"
+        "difficulty": "medium",
+        "intrinsic_difficulty": "extreme"
       },
       "notes": ""
     },
@@ -763,7 +811,8 @@
         "room_type": "",
         "tags": [],
         "split": "standard",
-        "difficulty": "hard"
+        "difficulty": "hard",
+        "intrinsic_difficulty": "easy"
       },
       "notes": ""
     },
@@ -777,7 +826,8 @@
         "room_type": "",
         "tags": [],
         "split": "standard",
-        "difficulty": "hard"
+        "difficulty": "hard",
+        "intrinsic_difficulty": "easy"
       },
       "notes": ""
     },
@@ -791,7 +841,8 @@
         "room_type": "",
         "tags": [],
         "split": "standard",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "extreme"
       },
       "notes": ""
     },
@@ -805,7 +856,8 @@
         "room_type": "",
         "tags": [],
         "split": "standard",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "medium"
       },
       "notes": ""
     },
@@ -819,7 +871,8 @@
         "room_type": "",
         "tags": [],
         "split": "standard",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "easy"
       },
       "notes": ""
     },
@@ -833,7 +886,8 @@
         "room_type": "study",
         "tags": [],
         "split": "standard",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "medium"
       },
       "notes": ""
     },
@@ -844,10 +898,11 @@
       },
       "metadata": {
         "style": "japanese_traditional",
-        "room_type": "study",
+        "room_type": "balcony",
         "tags": [],
         "split": "standard",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "hard"
       },
       "notes": ""
     },
@@ -861,7 +916,8 @@
         "room_type": "bedroom",
         "tags": [],
         "split": "standard",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "hard"
       },
       "notes": ""
     },
@@ -875,7 +931,8 @@
         "room_type": "bedroom",
         "tags": [],
         "split": "standard",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "hard"
       },
       "notes": ""
     },
@@ -889,7 +946,8 @@
         "room_type": "bedroom",
         "tags": [],
         "split": "standard",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "medium"
       },
       "notes": ""
     },
@@ -903,7 +961,8 @@
         "room_type": "bedroom",
         "tags": [],
         "split": "standard",
-        "difficulty": "hard"
+        "difficulty": "hard",
+        "intrinsic_difficulty": "hard"
       },
       "notes": ""
     },
@@ -917,7 +976,8 @@
         "room_type": "bedroom",
         "tags": [],
         "split": "standard",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "hard"
       },
       "notes": ""
     },
@@ -931,7 +991,8 @@
         "room_type": "bedroom",
         "tags": [],
         "split": "standard",
-        "difficulty": "hard"
+        "difficulty": "hard",
+        "intrinsic_difficulty": "hard"
       },
       "notes": ""
     },
@@ -945,7 +1006,8 @@
         "room_type": "bedroom",
         "tags": [],
         "split": "standard",
-        "difficulty": "hard"
+        "difficulty": "hard",
+        "intrinsic_difficulty": "medium"
       },
       "notes": ""
     },
@@ -959,7 +1021,8 @@
         "room_type": "bedroom",
         "tags": [],
         "split": "standard",
-        "difficulty": "hard"
+        "difficulty": "hard",
+        "intrinsic_difficulty": "hard"
       },
       "notes": ""
     },
@@ -970,10 +1033,11 @@
       },
       "metadata": {
         "style": "modern_luxury",
-        "room_type": "bedroom",
+        "room_type": "balcony",
         "tags": [],
         "split": "standard",
-        "difficulty": "hard"
+        "difficulty": "hard",
+        "intrinsic_difficulty": "hard"
       },
       "notes": ""
     },
@@ -987,7 +1051,8 @@
         "room_type": "bathroom",
         "tags": [],
         "split": "standard",
-        "difficulty": "hard"
+        "difficulty": "hard",
+        "intrinsic_difficulty": "easy"
       },
       "notes": ""
     },
@@ -1001,7 +1066,8 @@
         "room_type": "bathroom",
         "tags": [],
         "split": "standard",
-        "difficulty": "medium"
+        "difficulty": "medium",
+        "intrinsic_difficulty": "easy"
       },
       "notes": ""
     },
@@ -1015,7 +1081,8 @@
         "room_type": "kitchen",
         "tags": [],
         "split": "standard",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "medium"
       },
       "notes": ""
     },
@@ -1026,10 +1093,11 @@
       },
       "metadata": {
         "style": "industrial_loft",
-        "room_type": "kitchen",
+        "room_type": "bathroom",
         "tags": [],
         "split": "standard",
-        "difficulty": "hard"
+        "difficulty": "hard",
+        "intrinsic_difficulty": "medium"
       },
       "notes": ""
     },
@@ -1043,7 +1111,8 @@
         "room_type": "kitchen",
         "tags": [],
         "split": "standard",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "hard"
       },
       "notes": ""
     },
@@ -1057,7 +1126,8 @@
         "room_type": "kitchen",
         "tags": [],
         "split": "standard",
-        "difficulty": "hard"
+        "difficulty": "hard",
+        "intrinsic_difficulty": "hard"
       },
       "notes": ""
     },
@@ -1071,7 +1141,8 @@
         "room_type": "kitchen",
         "tags": [],
         "split": "standard",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "medium"
       },
       "notes": ""
     },
@@ -1085,7 +1156,8 @@
         "room_type": "living_room",
         "tags": [],
         "split": "standard",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "hard"
       },
       "notes": ""
     },
@@ -1099,7 +1171,8 @@
         "room_type": "living_room",
         "tags": [],
         "split": "standard",
-        "difficulty": "medium"
+        "difficulty": "medium",
+        "intrinsic_difficulty": "medium"
       },
       "notes": ""
     },
@@ -1113,7 +1186,8 @@
         "room_type": "living_room",
         "tags": [],
         "split": "standard",
-        "difficulty": "hard"
+        "difficulty": "hard",
+        "intrinsic_difficulty": "medium"
       },
       "notes": ""
     },
@@ -1127,7 +1201,8 @@
         "room_type": "living_room",
         "tags": [],
         "split": "standard",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "hard"
       },
       "notes": ""
     },
@@ -1141,7 +1216,8 @@
         "room_type": "living_room",
         "tags": [],
         "split": "standard",
-        "difficulty": "hard"
+        "difficulty": "hard",
+        "intrinsic_difficulty": "medium"
       },
       "notes": ""
     },
@@ -1155,7 +1231,8 @@
         "room_type": "living_room",
         "tags": [],
         "split": "standard",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "medium"
       },
       "notes": ""
     },
@@ -1169,7 +1246,8 @@
         "room_type": "balcony",
         "tags": [],
         "split": "standard",
-        "difficulty": "hard"
+        "difficulty": "hard",
+        "intrinsic_difficulty": "easy"
       },
       "notes": ""
     },
@@ -1183,7 +1261,8 @@
         "room_type": "balcony",
         "tags": [],
         "split": "standard",
-        "difficulty": "hard"
+        "difficulty": "hard",
+        "intrinsic_difficulty": "easy"
       },
       "notes": ""
     },
@@ -1197,7 +1276,8 @@
         "room_type": "balcony",
         "tags": [],
         "split": "standard",
-        "difficulty": "easy"
+        "difficulty": "easy",
+        "intrinsic_difficulty": "hard"
       },
       "notes": ""
     },
@@ -1211,7 +1291,8 @@
         "room_type": "balcony",
         "tags": [],
         "split": "standard",
-        "difficulty": "hard"
+        "difficulty": "hard",
+        "intrinsic_difficulty": "hard"
       },
       "notes": ""
     },
@@ -1225,7 +1306,8 @@
         "room_type": "dining_room",
         "tags": [],
         "split": "standard",
-        "difficulty": "hard"
+        "difficulty": "hard",
+        "intrinsic_difficulty": "hard"
       },
       "notes": ""
     },
@@ -1239,7 +1321,8 @@
         "room_type": "dining_room",
         "tags": [],
         "split": "standard",
-        "difficulty": "medium"
+        "difficulty": "medium",
+        "intrinsic_difficulty": "easy"
       },
       "notes": ""
     },
@@ -1253,7 +1336,8 @@
         "room_type": "dining_room",
         "tags": [],
         "split": "standard",
-        "difficulty": "hard"
+        "difficulty": "hard",
+        "intrinsic_difficulty": "medium"
       },
       "notes": ""
     },
@@ -1267,7 +1351,8 @@
         "room_type": "dining_room",
         "tags": [],
         "split": "standard",
-        "difficulty": "hard"
+        "difficulty": "hard",
+        "intrinsic_difficulty": "hard"
       },
       "notes": ""
     }

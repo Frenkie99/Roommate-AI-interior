@@ -17,7 +17,8 @@
       "metadata": {
         "source_filename": "competitor_small_apartment_bare_walls_b2d9dab8.jpg",
         "original_category": "competitor"
-      }
+      },
+      "intrinsic_difficulty": "hard"
     },
     {
       "pair_id": "pair_001",
@@ -33,7 +34,8 @@
       "metadata": {
         "source_filename": "competitor_小户型毛坯房_1aab5cc3.jpg",
         "original_category": "competitor"
-      }
+      },
+      "intrinsic_difficulty": "hard"
     },
     {
       "pair_id": "pair_002",
@@ -49,7 +51,8 @@
       "metadata": {
         "source_filename": "competitor_小户型毛坯房_32bff511.jpg",
         "original_category": "competitor"
-      }
+      },
+      "intrinsic_difficulty": "medium"
     },
     {
       "pair_id": "pair_003",
@@ -65,7 +68,8 @@
       "metadata": {
         "source_filename": "competitor_小户型毛坯房_5df76954.jpg",
         "original_category": "competitor"
-      }
+      },
+      "intrinsic_difficulty": "medium"
     },
     {
       "pair_id": "pair_004",
@@ -81,7 +85,8 @@
       "metadata": {
         "source_filename": "competitor_小户型毛坯房_6b6fd039.jpg",
         "original_category": "competitor"
-      }
+      },
+      "intrinsic_difficulty": "hard"
     },
     {
       "pair_id": "pair_005",
@@ -97,7 +102,8 @@
       "metadata": {
         "source_filename": "competitor_小户型毛坯房_75beca8f.jpg",
         "original_category": "competitor"
-      }
+      },
+      "intrinsic_difficulty": "easy"
     },
     {
       "pair_id": "pair_006",
@@ -113,7 +119,8 @@
       "metadata": {
         "source_filename": "competitor_小户型毛坯房_979d4483.jpg",
         "original_category": "competitor"
-      }
+      },
+      "intrinsic_difficulty": "easy"
     },
     {
       "pair_id": "pair_007",
@@ -129,7 +136,8 @@
       "metadata": {
         "source_filename": "competitor_小户型毛坯房_979ff839.jpg",
         "original_category": "competitor"
-      }
+      },
+      "intrinsic_difficulty": "hard"
     },
     {
       "pair_id": "pair_008",
@@ -145,7 +153,8 @@
       "metadata": {
         "source_filename": "competitor_小户型毛坯房_9e41611c.jpg",
         "original_category": "competitor"
-      }
+      },
+      "intrinsic_difficulty": "medium"
     },
     {
       "pair_id": "pair_009",
@@ -161,7 +170,8 @@
       "metadata": {
         "source_filename": "competitor_小户型毛坯房_af720a4d.jpg",
         "original_category": "competitor"
-      }
+      },
+      "intrinsic_difficulty": "medium"
     },
     {
       "pair_id": "pair_010",
@@ -177,7 +187,8 @@
       "metadata": {
         "source_filename": "competitor_小户型毛坯房_f3ef198d.jpg",
         "original_category": "competitor"
-      }
+      },
+      "intrinsic_difficulty": "hard"
     },
     {
       "pair_id": "pair_011",
@@ -191,7 +202,8 @@
       "metadata": {
         "source_filename": "competitor_极简风格毛坯房_15edebaa.jpg",
         "original_category": "competitor"
-      }
+      },
+      "intrinsic_difficulty": "easy"
     },
     {
       "pair_id": "pair_012",
@@ -205,7 +217,8 @@
       "metadata": {
         "source_filename": "competitor_极简风格毛坯房_95b3fc0a.jpg",
         "original_category": "competitor"
-      }
+      },
+      "intrinsic_difficulty": "hard"
     },
     {
       "pair_id": "pair_013",
@@ -219,7 +232,8 @@
       "metadata": {
         "source_filename": "competitor_极简风格毛坯房_c1caff52.jpg",
         "original_category": "competitor"
-      }
+      },
+      "intrinsic_difficulty": "easy"
     },
     {
       "pair_id": "pair_014",
@@ -227,7 +241,7 @@
       "output_path": "output/20260507_124757_30765b1a_output_0.png",
       "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 现代简约 interior.\n\n## ATMOSPHERE & VIBE: Clean, airy, and architecturally pure with intentional negative space\n\nCRITICAL",
       "style": "modern_minimalist",
-      "room_type": "",
+      "room_type": "balcony",
       "tags": [
         "duplex"
       ],
@@ -235,7 +249,8 @@
       "metadata": {
         "source_filename": "competitor_毛坯房复式_3d6bf166.jpg",
         "original_category": "competitor"
-      }
+      },
+      "intrinsic_difficulty": "medium"
     },
     {
       "pair_id": "pair_015",
@@ -251,7 +266,8 @@
       "metadata": {
         "source_filename": "competitor_毛坯房复式_899e84b4.jpg",
         "original_category": "competitor"
-      }
+      },
+      "intrinsic_difficulty": "hard"
     },
     {
       "pair_id": "pair_016",
@@ -267,7 +283,8 @@
       "metadata": {
         "source_filename": "competitor_毛坯房复式_8b434449.jpg",
         "original_category": "competitor"
-      }
+      },
+      "intrinsic_difficulty": "extreme"
     },
     {
       "pair_id": "pair_017",
@@ -283,7 +300,8 @@
       "metadata": {
         "source_filename": "competitor_毛坯房复式_9a7be67f.jpg",
         "original_category": "competitor"
-      }
+      },
+      "intrinsic_difficulty": "medium"
     },
     {
       "pair_id": "pair_018",
@@ -291,7 +309,7 @@
       "output_path": "output/20260507_125008_53e4a015_output_0.png",
       "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 新中式 interior.\n\n## ATMOSPHERE & VIBE: Serene, balanced, and culturally rooted with modern simplicity\n\nCRITICAL STRUCTU",
       "style": "chinese_modern",
-      "room_type": "",
+      "room_type": "bathroom",
       "tags": [
         "duplex"
       ],
@@ -299,7 +317,8 @@
       "metadata": {
         "source_filename": "competitor_毛坯房复式_b8b448b5.jpg",
         "original_category": "competitor"
-      }
+      },
+      "intrinsic_difficulty": "medium"
     },
     {
       "pair_id": "pair_019",
@@ -315,7 +334,8 @@
       "metadata": {
         "source_filename": "competitor_毛坯房复式_de8a2281.jpg",
         "original_category": "competitor"
-      }
+      },
+      "intrinsic_difficulty": "medium"
     },
     {
       "pair_id": "pair_020",
@@ -331,7 +351,8 @@
       "metadata": {
         "source_filename": "competitor_毛坯房异形户型_03f3cd3f.jpg",
         "original_category": "competitor"
-      }
+      },
+      "intrinsic_difficulty": "medium"
     },
     {
       "pair_id": "pair_021",
@@ -347,7 +368,8 @@
       "metadata": {
         "source_filename": "competitor_毛坯房异形户型_09c63cf7.jpg",
         "original_category": "competitor"
-      }
+      },
+      "intrinsic_difficulty": "hard"
     },
     {
       "pair_id": "pair_022",
@@ -363,7 +385,8 @@
       "metadata": {
         "source_filename": "competitor_毛坯房异形户型_13c8b608.jpg",
         "original_category": "competitor"
-      }
+      },
+      "intrinsic_difficulty": "medium"
     },
     {
       "pair_id": "pair_023",
@@ -379,7 +402,8 @@
       "metadata": {
         "source_filename": "competitor_毛坯房异形户型_2c8314a0.jpg",
         "original_category": "competitor"
-      }
+      },
+      "intrinsic_difficulty": "medium"
     },
     {
       "pair_id": "pair_024",
@@ -395,7 +419,8 @@
       "metadata": {
         "source_filename": "competitor_毛坯房异形户型_45a98508.jpg",
         "original_category": "competitor"
-      }
+      },
+      "intrinsic_difficulty": "hard"
     },
     {
       "pair_id": "pair_025",
@@ -403,7 +428,7 @@
       "output_path": "output/20260507_191558_1f7104d3_output_0.png",
       "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 包豪斯 interior.\n\n## ATMOSPHERE & VIBE: Functional, geometric, and artistically modernist with primary color accents\n\nCR",
       "style": "bauhaus",
-      "room_type": "",
+      "room_type": "balcony",
       "tags": [
         "irregular_layout"
       ],
@@ -411,7 +436,8 @@
       "metadata": {
         "source_filename": "competitor_毛坯房异形户型_d972fbe7.jpg",
         "original_category": "competitor"
-      }
+      },
+      "intrinsic_difficulty": "medium"
     },
     {
       "pair_id": "pair_026",
@@ -419,7 +445,7 @@
       "output_path": "output/20260507_191636_1eaa3446_output_0.png",
       "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 波西米亚 interior.\n\n## ATMOSPHERE & VIBE: Free-spirited, eclectic, and artistically layered with global influences\n\nCRITI",
       "style": "bohemian",
-      "room_type": "",
+      "room_type": "bathroom",
       "tags": [
         "irregular_layout"
       ],
@@ -427,7 +453,8 @@
       "metadata": {
         "source_filename": "competitor_毛坯房异形户型_ee37dbc6.jpg",
         "original_category": "competitor"
-      }
+      },
+      "intrinsic_difficulty": "medium"
     },
     {
       "pair_id": "pair_027",
@@ -443,7 +470,8 @@
       "metadata": {
         "source_filename": "competitor_毛坯房异形户型_fab1f651.jpg",
         "original_category": "competitor"
-      }
+      },
+      "intrinsic_difficulty": "hard"
     },
     {
       "pair_id": "pair_028",
@@ -459,7 +487,8 @@
       "metadata": {
         "source_filename": "competitor_毛坯房横梁_2f8c4501.jpg",
         "original_category": "competitor"
-      }
+      },
+      "intrinsic_difficulty": "hard"
     },
     {
       "pair_id": "pair_029",
@@ -475,7 +504,8 @@
       "metadata": {
         "source_filename": "competitor_毛坯房横梁_32d9df30.jpg",
         "original_category": "competitor"
-      }
+      },
+      "intrinsic_difficulty": "hard"
     },
     {
       "pair_id": "pair_030",
@@ -491,7 +521,8 @@
       "metadata": {
         "source_filename": "competitor_毛坯房横梁_849480fd.jpg",
         "original_category": "competitor"
-      }
+      },
+      "intrinsic_difficulty": "easy"
     },
     {
       "pair_id": "pair_031",
@@ -507,7 +538,8 @@
       "metadata": {
         "source_filename": "corner_case_unfinished_basement_1e8db33e.jpg",
         "original_category": "corner_case"
-      }
+      },
+      "intrinsic_difficulty": "extreme"
     },
     {
       "pair_id": "pair_032",
@@ -523,7 +555,8 @@
       "metadata": {
         "source_filename": "corner_case_unfinished_basement_61db2239.jpg",
         "original_category": "corner_case"
-      }
+      },
+      "intrinsic_difficulty": "extreme"
     },
     {
       "pair_id": "pair_033",
@@ -539,7 +572,8 @@
       "metadata": {
         "source_filename": "corner_case_unfinished_basement_e2559747.jpg",
         "original_category": "corner_case"
-      }
+      },
+      "intrinsic_difficulty": "extreme"
     },
     {
       "pair_id": "pair_034",
@@ -553,7 +587,8 @@
       "metadata": {
         "source_filename": "corner_case_暗光毛坯房_0f74bbbd.jpg",
         "original_category": "corner_case"
-      }
+      },
+      "intrinsic_difficulty": "hard"
     },
     {
       "pair_id": "pair_035",
@@ -569,7 +604,8 @@
       "metadata": {
         "source_filename": "corner_case_杂物毛坯房_411649f3.jpg",
         "original_category": "corner_case"
-      }
+      },
+      "intrinsic_difficulty": "medium"
     },
     {
       "pair_id": "pair_036",
@@ -585,7 +621,8 @@
       "metadata": {
         "source_filename": "corner_case_杂物毛坯房_5a7a19e9.jpg",
         "original_category": "corner_case"
-      }
+      },
+      "intrinsic_difficulty": "hard"
     },
     {
       "pair_id": "pair_037",
@@ -593,7 +630,7 @@
       "output_path": "output/20260507_192343_546e0a4d_output_0.png",
       "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 日式 interior.\n\n## ATMOSPHERE & VIBE: Zen, tranquil, and authentically Japanese with mindful simplicity\n\nCRITICAL STRUC",
       "style": "japanese_traditional",
-      "room_type": "",
+      "room_type": "bathroom",
       "tags": [
         "cluttered"
       ],
@@ -601,7 +638,8 @@
       "metadata": {
         "source_filename": "corner_case_杂物毛坯房_d0cce877.jpg",
         "original_category": "corner_case"
-      }
+      },
+      "intrinsic_difficulty": "medium"
     },
     {
       "pair_id": "pair_038",
@@ -609,7 +647,7 @@
       "output_path": "output/20260507_192419_bf9eb19c_output_0.png",
       "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 欧式风格 interior.\n\n## ATMOSPHERE & VIBE: Elegant, timeless, and romantically European with classical proportions\n\nCRITIC",
       "style": "european_neoclassical",
-      "room_type": "",
+      "room_type": "bathroom",
       "tags": [
         "cluttered"
       ],
@@ -617,7 +655,8 @@
       "metadata": {
         "source_filename": "corner_case_杂物毛坯房_ec364564.jpg",
         "original_category": "corner_case"
-      }
+      },
+      "intrinsic_difficulty": "medium"
     },
     {
       "pair_id": "pair_039",
@@ -631,7 +670,8 @@
       "metadata": {
         "source_filename": "corner_case_毛坯房阁楼_09acdab1.jpg",
         "original_category": "corner_case"
-      }
+      },
+      "intrinsic_difficulty": "extreme"
     },
     {
       "pair_id": "pair_040",
@@ -645,7 +685,8 @@
       "metadata": {
         "source_filename": "standard_bare_room_renovation_2815fa65.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "easy"
     },
     {
       "pair_id": "pair_041",
@@ -659,7 +700,8 @@
       "metadata": {
         "source_filename": "standard_bare_room_renovation_4c265fa8.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "easy"
     },
     {
       "pair_id": "pair_042",
@@ -673,7 +715,8 @@
       "metadata": {
         "source_filename": "standard_bare_room_renovation_fe59a9a2.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "medium"
     },
     {
       "pair_id": "pair_043",
@@ -687,7 +730,8 @@
       "metadata": {
         "source_filename": "standard_raw_concrete_room_8363c07d.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "extreme"
     },
     {
       "pair_id": "pair_044",
@@ -701,7 +745,8 @@
       "metadata": {
         "source_filename": "standard_unfinished_room_interior_08275371.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "easy"
     },
     {
       "pair_id": "pair_045",
@@ -715,7 +760,8 @@
       "metadata": {
         "source_filename": "standard_unfinished_room_interior_14561874.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "extreme"
     },
     {
       "pair_id": "pair_046",
@@ -729,7 +775,8 @@
       "metadata": {
         "source_filename": "standard_unfinished_room_interior_37ee6b9b.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "easy"
     },
     {
       "pair_id": "pair_047",
@@ -743,7 +790,8 @@
       "metadata": {
         "source_filename": "standard_unfinished_room_interior_3f856ce1.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "extreme"
     },
     {
       "pair_id": "pair_048",
@@ -757,7 +805,8 @@
       "metadata": {
         "source_filename": "standard_unfinished_room_interior_415a6067.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "easy"
     },
     {
       "pair_id": "pair_049",
@@ -771,7 +820,8 @@
       "metadata": {
         "source_filename": "standard_unfinished_room_interior_cd46403b.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "easy"
     },
     {
       "pair_id": "pair_050",
@@ -785,7 +835,8 @@
       "metadata": {
         "source_filename": "standard_unfinished_room_interior_d57b44aa.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "extreme"
     },
     {
       "pair_id": "pair_051",
@@ -799,7 +850,8 @@
       "metadata": {
         "source_filename": "standard_unfinished_room_interior_d6c6cc5f.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "medium"
     },
     {
       "pair_id": "pair_052",
@@ -813,7 +865,8 @@
       "metadata": {
         "source_filename": "standard_unfinished_room_interior_fa3d6c43.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "easy"
     },
     {
       "pair_id": "pair_053",
@@ -827,7 +880,8 @@
       "metadata": {
         "source_filename": "standard_毛坯房书房_9c26fd45.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "medium"
     },
     {
       "pair_id": "pair_054",
@@ -835,13 +889,15 @@
       "output_path": "output/20260507_193540_bb9dedcd_output_0.png",
       "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 日式 interior.\n\n## ATMOSPHERE & VIBE: Zen, tranquil, and authentically Japanese with mindful simplicity\n\nCRITICAL STRUC",
       "style": "japanese_traditional",
-      "room_type": "study",
+      "room_type": "balcony",
       "tags": [],
       "dataset_split": "standard",
       "metadata": {
         "source_filename": "standard_毛坯房书房_a948fff4.jpg",
-        "original_category": "standard"
-      }
+        "original_category": "standard",
+        "room_type_original": "study"
+      },
+      "intrinsic_difficulty": "hard"
     },
     {
       "pair_id": "pair_055",
@@ -855,7 +911,8 @@
       "metadata": {
         "source_filename": "standard_毛坯房卧室_284402f6.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "hard"
     },
     {
       "pair_id": "pair_056",
@@ -869,7 +926,8 @@
       "metadata": {
         "source_filename": "standard_毛坯房卧室_2a09b816.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "hard"
     },
     {
       "pair_id": "pair_057",
@@ -883,7 +941,8 @@
       "metadata": {
         "source_filename": "standard_毛坯房卧室_32dcd737.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "medium"
     },
     {
       "pair_id": "pair_058",
@@ -897,7 +956,8 @@
       "metadata": {
         "source_filename": "standard_毛坯房卧室_70c6ecdd.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "hard"
     },
     {
       "pair_id": "pair_059",
@@ -911,7 +971,8 @@
       "metadata": {
         "source_filename": "standard_毛坯房卧室_7f37d9fe.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "hard"
     },
     {
       "pair_id": "pair_060",
@@ -925,7 +986,8 @@
       "metadata": {
         "source_filename": "standard_毛坯房卧室_89f6a9a5.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "hard"
     },
     {
       "pair_id": "pair_061",
@@ -939,7 +1001,8 @@
       "metadata": {
         "source_filename": "standard_毛坯房卧室_a420d73f.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "medium"
     },
     {
       "pair_id": "pair_062",
@@ -953,7 +1016,8 @@
       "metadata": {
         "source_filename": "standard_毛坯房卧室_c8d2c355.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "hard"
     },
     {
       "pair_id": "pair_063",
@@ -961,13 +1025,15 @@
       "output_path": "output/20260507_194045_64a10c8a_output_0.png",
       "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 现代轻奢 interior.\n\n## ATMOSPHERE & VIBE: Sophisticated, refined, and high-end with a sense of understated elegance\n\nCRIT",
       "style": "modern_luxury",
-      "room_type": "bedroom",
+      "room_type": "balcony",
       "tags": [],
       "dataset_split": "standard",
       "metadata": {
         "source_filename": "standard_毛坯房卧室_fcc0c383.jpg",
-        "original_category": "standard"
-      }
+        "original_category": "standard",
+        "room_type_original": "bedroom"
+      },
+      "intrinsic_difficulty": "hard"
     },
     {
       "pair_id": "pair_064",
@@ -981,7 +1047,8 @@
       "metadata": {
         "source_filename": "standard_毛坯房卫生间_b35f14d5.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "easy"
     },
     {
       "pair_id": "pair_065",
@@ -995,7 +1062,8 @@
       "metadata": {
         "source_filename": "standard_毛坯房卫生间_e30a970f.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "easy"
     },
     {
       "pair_id": "pair_066",
@@ -1009,7 +1077,8 @@
       "metadata": {
         "source_filename": "standard_毛坯房厨房_27feb81e.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "medium"
     },
     {
       "pair_id": "pair_067",
@@ -1017,13 +1086,15 @@
       "output_path": "output/20260507_194304_f9aeaa9c_output_0.png",
       "prompt": "## ROLE: Professional Architectural Renderer\n\nTask: Transform this raw room into a 工业风 interior.\n\n## ATMOSPHERE & VIBE: Raw, edgy, and urban with refined industrial aesthetics\n\nCRITICAL STRUCTURAL CON",
       "style": "industrial_loft",
-      "room_type": "kitchen",
+      "room_type": "bathroom",
       "tags": [],
       "dataset_split": "standard",
       "metadata": {
         "source_filename": "standard_毛坯房厨房_594c0e77.jpg",
-        "original_category": "standard"
-      }
+        "original_category": "standard",
+        "room_type_original": "kitchen"
+      },
+      "intrinsic_difficulty": "medium"
     },
     {
       "pair_id": "pair_068",
@@ -1037,7 +1108,8 @@
       "metadata": {
         "source_filename": "standard_毛坯房厨房_745ac877.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "hard"
     },
     {
       "pair_id": "pair_069",
@@ -1051,7 +1123,8 @@
       "metadata": {
         "source_filename": "standard_毛坯房厨房_a5d6ac53.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "hard"
     },
     {
       "pair_id": "pair_070",
@@ -1065,7 +1138,8 @@
       "metadata": {
         "source_filename": "standard_毛坯房厨房_b4d1ddb2.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "medium"
     },
     {
       "pair_id": "pair_071",
@@ -1079,7 +1153,8 @@
       "metadata": {
         "source_filename": "standard_毛坯房客厅_5209f15b.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "hard"
     },
     {
       "pair_id": "pair_072",
@@ -1093,7 +1168,8 @@
       "metadata": {
         "source_filename": "standard_毛坯房客厅_7780b503.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "medium"
     },
     {
       "pair_id": "pair_073",
@@ -1107,7 +1183,8 @@
       "metadata": {
         "source_filename": "standard_毛坯房客厅_97fb2ade.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "medium"
     },
     {
       "pair_id": "pair_074",
@@ -1121,7 +1198,8 @@
       "metadata": {
         "source_filename": "standard_毛坯房客厅_a661ffad.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "hard"
     },
     {
       "pair_id": "pair_075",
@@ -1135,7 +1213,8 @@
       "metadata": {
         "source_filename": "standard_毛坯房客厅_d4ac6023.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "medium"
     },
     {
       "pair_id": "pair_076",
@@ -1149,7 +1228,8 @@
       "metadata": {
         "source_filename": "standard_毛坯房客厅_ddb25462.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "medium"
     },
     {
       "pair_id": "pair_077",
@@ -1163,7 +1243,8 @@
       "metadata": {
         "source_filename": "standard_毛坯房阳台_16f74f1c.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "easy"
     },
     {
       "pair_id": "pair_078",
@@ -1177,7 +1258,8 @@
       "metadata": {
         "source_filename": "standard_毛坯房阳台_9cd06538.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "easy"
     },
     {
       "pair_id": "pair_079",
@@ -1191,7 +1273,8 @@
       "metadata": {
         "source_filename": "standard_毛坯房阳台_bbb072f4.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "hard"
     },
     {
       "pair_id": "pair_080",
@@ -1205,7 +1288,8 @@
       "metadata": {
         "source_filename": "standard_毛坯房阳台_c04af9ac.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "hard"
     },
     {
       "pair_id": "pair_081",
@@ -1219,7 +1303,8 @@
       "metadata": {
         "source_filename": "standard_毛坯房餐厅_1db915c5.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "hard"
     },
     {
       "pair_id": "pair_082",
@@ -1233,7 +1318,8 @@
       "metadata": {
         "source_filename": "standard_毛坯房餐厅_2f140812.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "easy"
     },
     {
       "pair_id": "pair_083",
@@ -1247,7 +1333,8 @@
       "metadata": {
         "source_filename": "standard_毛坯房餐厅_99264716.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "medium"
     },
     {
       "pair_id": "pair_084",
@@ -1261,7 +1348,8 @@
       "metadata": {
         "source_filename": "standard_毛坯房餐厅_c8f866a1.jpg",
         "original_category": "standard"
-      }
+      },
+      "intrinsic_difficulty": "hard"
     }
   ]
 }

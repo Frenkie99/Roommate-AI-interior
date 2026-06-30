@@ -1,0 +1,519 @@
+{
+  "version": "1.0",
+  "created_at": "2026-06-30",
+  "method": "5 个并行子代理逐张 Read 毛坯原图,按 4 档内在难度 rubric(易/中/难/极难=easy/medium/hard/extreme)判定;room_type 仅在有固着线索时给。用户(frenkie)复核后同意直接写回。这是看图(look-at-image)标签,取代旧的文件名推定难度。",
+  "rubric": "易=方正规整采光正常;中=小户型局促或轻度不规则;难=异形/横梁外露/杂物遮挡;极难=复式挑空/地下室/严重暗光/多难点叠加",
+  "total": 85,
+  "labels": {
+    "competitor_small_apartment_bare_walls_b2d9dab8.jpg": {
+      "intrinsic_difficulty": "hard",
+      "intrinsic_difficulty_zh": "难",
+      "room_type_seen": "",
+      "reason": "斜顶阁楼带天窗,杂物堆积"
+    },
+    "competitor_极简风格毛坯房_15edebaa.jpg": {
+      "intrinsic_difficulty": "easy",
+      "intrinsic_difficulty_zh": "易",
+      "room_type_seen": "",
+      "reason": "方正矩形,飘窗采光充足"
+    },
+    "competitor_极简风格毛坯房_95b3fc0a.jpg": {
+      "intrinsic_difficulty": "hard",
+      "intrinsic_difficulty_zh": "难",
+      "room_type_seen": "",
+      "reason": "横梁外露,多门洞开间"
+    },
+    "competitor_极简风格毛坯房_c1caff52.jpg": {
+      "intrinsic_difficulty": "easy",
+      "intrinsic_difficulty_zh": "易",
+      "room_type_seen": "",
+      "reason": "方正小间,墙体规整"
+    },
+    "competitor_毛坯房复式_3d6bf166.jpg": {
+      "intrinsic_difficulty": "medium",
+      "intrinsic_difficulty_zh": "中",
+      "room_type_seen": "balcony",
+      "reason": "栏杆加防水层排水立管,狭长"
+    },
+    "competitor_毛坯房复式_899e84b4.jpg": {
+      "intrinsic_difficulty": "hard",
+      "intrinsic_difficulty_zh": "难",
+      "room_type_seen": "",
+      "reason": "多根梁柱外露,大开间偏暗"
+    },
+    "competitor_毛坯房复式_8b434449.jpg": {
+      "intrinsic_difficulty": "extreme",
+      "intrinsic_difficulty_zh": "极难",
+      "room_type_seen": "",
+      "reason": "挑空高窗带夹层栏杆,复式"
+    },
+    "competitor_毛坯房复式_9a7be67f.jpg": {
+      "intrinsic_difficulty": "medium",
+      "intrinsic_difficulty_zh": "中",
+      "room_type_seen": "",
+      "reason": "带柱凹窗,略不规则"
+    },
+    "competitor_毛坯房复式_b8b448b5.jpg": {
+      "intrinsic_difficulty": "medium",
+      "intrinsic_difficulty_zh": "中",
+      "room_type_seen": "bathroom",
+      "reason": "小开间防水层加排水立管"
+    },
+    "competitor_毛坯房复式_de8a2281.jpg": {
+      "intrinsic_difficulty": "medium",
+      "intrinsic_difficulty_zh": "中",
+      "room_type_seen": "",
+      "reason": "落地窗较规整,带梁柱"
+    },
+    "competitor_毛坯房横梁_2f8c4501.jpg": {
+      "intrinsic_difficulty": "hard",
+      "intrinsic_difficulty_zh": "难",
+      "room_type_seen": "",
+      "reason": "横梁外露贯穿顶面"
+    },
+    "competitor_毛坯房横梁_32d9df30.jpg": {
+      "intrinsic_difficulty": "hard",
+      "intrinsic_difficulty_zh": "难",
+      "room_type_seen": "",
+      "reason": "横梁梁柱外露,门洞错落"
+    },
+    "competitor_毛坯房横梁_849480fd.jpg": {
+      "intrinsic_difficulty": "easy",
+      "intrinsic_difficulty_zh": "易",
+      "room_type_seen": "",
+      "reason": "方正规整,窗外栏杆"
+    },
+    "competitor_毛坯房异形户型_03f3cd3f.jpg": {
+      "intrinsic_difficulty": "medium",
+      "intrinsic_difficulty_zh": "中",
+      "room_type_seen": "",
+      "reason": "大空间带梁,墙体略错位"
+    },
+    "competitor_毛坯房异形户型_09c63cf7.jpg": {
+      "intrinsic_difficulty": "hard",
+      "intrinsic_difficulty_zh": "难",
+      "room_type_seen": "",
+      "reason": "狭窄异形,强逆光看不清"
+    },
+    "competitor_毛坯房异形户型_13c8b608.jpg": {
+      "intrinsic_difficulty": "medium",
+      "intrinsic_difficulty_zh": "中",
+      "room_type_seen": "",
+      "reason": "转角略不规则,带梁立管"
+    },
+    "competitor_毛坯房异形户型_2c8314a0.jpg": {
+      "intrinsic_difficulty": "medium",
+      "intrinsic_difficulty_zh": "中",
+      "room_type_seen": "",
+      "reason": "L型大空间带梁,略不规则"
+    },
+    "competitor_毛坯房异形户型_45a98508.jpg": {
+      "intrinsic_difficulty": "hard",
+      "intrinsic_difficulty_zh": "难",
+      "room_type_seen": "",
+      "reason": "大开间露梁,多扇凸窗墙垛错落"
+    },
+    "competitor_毛坯房异形户型_d972fbe7.jpg": {
+      "intrinsic_difficulty": "medium",
+      "intrinsic_difficulty_zh": "中",
+      "room_type_seen": "balcony",
+      "reason": "落地门外挑带栏杆,逆光半边暗"
+    },
+    "competitor_毛坯房异形户型_ee37dbc6.jpg": {
+      "intrinsic_difficulty": "medium",
+      "intrinsic_difficulty_zh": "中",
+      "room_type_seen": "bathroom",
+      "reason": "凹槽内立排水管加黑色防水层"
+    },
+    "competitor_毛坯房异形户型_fab1f651.jpg": {
+      "intrinsic_difficulty": "hard",
+      "intrinsic_difficulty_zh": "难",
+      "room_type_seen": "",
+      "reason": "多处梁柱外露,空间被柱体切割"
+    },
+    "competitor_小户型毛坯房_1aab5cc3.jpg": {
+      "intrinsic_difficulty": "hard",
+      "intrinsic_difficulty_zh": "难",
+      "room_type_seen": "",
+      "reason": "斜向承重横梁外露,多阳台口"
+    },
+    "competitor_小户型毛坯房_32bff511.jpg": {
+      "intrinsic_difficulty": "medium",
+      "intrinsic_difficulty_zh": "中",
+      "room_type_seen": "",
+      "reason": "入户门侧小开间,顶部露梁"
+    },
+    "competitor_小户型毛坯房_5df76954.jpg": {
+      "intrinsic_difficulty": "medium",
+      "intrinsic_difficulty_zh": "中",
+      "room_type_seen": "",
+      "reason": "狭长局促,绿色防水层立管"
+    },
+    "competitor_小户型毛坯房_6b6fd039.jpg": {
+      "intrinsic_difficulty": "hard",
+      "intrinsic_difficulty_zh": "难",
+      "room_type_seen": "",
+      "reason": "斜向横梁外露横跨顶面"
+    },
+    "competitor_小户型毛坯房_75beca8f.jpg": {
+      "intrinsic_difficulty": "easy",
+      "intrinsic_difficulty_zh": "易",
+      "room_type_seen": "",
+      "reason": "方正矩形,采光正常,墙体规整"
+    },
+    "competitor_小户型毛坯房_979d4483.jpg": {
+      "intrinsic_difficulty": "easy",
+      "intrinsic_difficulty_zh": "易",
+      "room_type_seen": "",
+      "reason": "方正小卧,单窗规整明亮"
+    },
+    "competitor_小户型毛坯房_979ff839.jpg": {
+      "intrinsic_difficulty": "hard",
+      "intrinsic_difficulty_zh": "难",
+      "room_type_seen": "",
+      "reason": "露梁加开间错落,堆有杂物"
+    },
+    "competitor_小户型毛坯房_9e41611c.jpg": {
+      "intrinsic_difficulty": "medium",
+      "intrinsic_difficulty_zh": "中",
+      "room_type_seen": "",
+      "reason": "中部墙垛凸出,主体尚规整"
+    },
+    "competitor_小户型毛坯房_af720a4d.jpg": {
+      "intrinsic_difficulty": "medium",
+      "intrinsic_difficulty_zh": "中",
+      "room_type_seen": "",
+      "reason": "中柱外凸,凹槽蓝色防水偏暗"
+    },
+    "competitor_小户型毛坯房_f3ef198d.jpg": {
+      "intrinsic_difficulty": "hard",
+      "intrinsic_difficulty_zh": "难",
+      "room_type_seen": "",
+      "reason": "多根承重柱外露,大开间错层"
+    },
+    "corner_case_unfinished_basement_1e8db33e.jpg": {
+      "intrinsic_difficulty": "extreme",
+      "intrinsic_difficulty_zh": "极难",
+      "room_type_seen": "",
+      "reason": "半地下露管低顶,严重逆光过曝"
+    },
+    "corner_case_unfinished_basement_61db2239.jpg": {
+      "intrinsic_difficulty": "extreme",
+      "intrinsic_difficulty_zh": "极难",
+      "room_type_seen": "",
+      "reason": "地下室露管顶,小高窗堆杂物"
+    },
+    "corner_case_unfinished_basement_e2559747.jpg": {
+      "intrinsic_difficulty": "extreme",
+      "intrinsic_difficulty_zh": "极难",
+      "room_type_seen": "",
+      "reason": "半地下空间,顶部降梁横跨"
+    },
+    "corner_case_暗光毛坯房_0f74bbbd.jpg": {
+      "intrinsic_difficulty": "hard",
+      "intrinsic_difficulty_zh": "难",
+      "room_type_seen": "",
+      "reason": "多根承重柱与横梁外露,大空间"
+    },
+    "corner_case_毛坯房阁楼_09acdab1.jpg": {
+      "intrinsic_difficulty": "extreme",
+      "intrinsic_difficulty_zh": "极难",
+      "room_type_seen": "",
+      "reason": "门洞见楼梯,夹层阁楼结构"
+    },
+    "corner_case_杂物毛坯房_411649f3.jpg": {
+      "intrinsic_difficulty": "medium",
+      "intrinsic_difficulty_zh": "中",
+      "room_type_seen": "",
+      "reason": "主体方正,顶部可见承重横梁"
+    },
+    "corner_case_杂物毛坯房_5a7a19e9.jpg": {
+      "intrinsic_difficulty": "hard",
+      "intrinsic_difficulty_zh": "难",
+      "room_type_seen": "",
+      "reason": "粗大横梁外露明显"
+    },
+    "corner_case_杂物毛坯房_d0cce877.jpg": {
+      "intrinsic_difficulty": "medium",
+      "intrinsic_difficulty_zh": "中",
+      "room_type_seen": "bathroom",
+      "reason": "狭小开间,墙角排水立管"
+    },
+    "corner_case_杂物毛坯房_ec364564.jpg": {
+      "intrinsic_difficulty": "medium",
+      "intrinsic_difficulty_zh": "中",
+      "room_type_seen": "bathroom",
+      "reason": "狭长开间,绿色防水层加排水管"
+    },
+    "standard_bare_room_renovation_2815fa65.jpg": {
+      "intrinsic_difficulty": "easy",
+      "intrinsic_difficulty_zh": "易",
+      "room_type_seen": "",
+      "reason": "方正明亮,结构清晰"
+    },
+    "standard_bare_room_renovation_4c265fa8.jpg": {
+      "intrinsic_difficulty": "easy",
+      "intrinsic_difficulty_zh": "易",
+      "room_type_seen": "",
+      "reason": "方正房间,大窗采光"
+    },
+    "standard_bare_room_renovation_fe59a9a2.jpg": {
+      "intrinsic_difficulty": "medium",
+      "intrinsic_difficulty_zh": "中",
+      "room_type_seen": "",
+      "reason": "墙体拆改露龙骨,工具堆积"
+    },
+    "standard_raw_concrete_room_8363c07d.jpg": {
+      "intrinsic_difficulty": "extreme",
+      "intrinsic_difficulty_zh": "极难",
+      "room_type_seen": "",
+      "reason": "挑空双层,层高超高"
+    },
+    "standard_unfinished_room_interior_08275371.jpg": {
+      "intrinsic_difficulty": "easy",
+      "intrinsic_difficulty_zh": "易",
+      "room_type_seen": "",
+      "reason": "方正明亮,墙面平整"
+    },
+    "standard_unfinished_room_interior_14561874.jpg": {
+      "intrinsic_difficulty": "extreme",
+      "intrinsic_difficulty_zh": "极难",
+      "room_type_seen": "",
+      "reason": "俯视弧形墙加通高窗,挑空"
+    },
+    "standard_unfinished_room_interior_37ee6b9b.jpg": {
+      "intrinsic_difficulty": "easy",
+      "intrinsic_difficulty_zh": "易",
+      "room_type_seen": "",
+      "reason": "方正房间,采光好"
+    },
+    "standard_unfinished_room_interior_3f856ce1.jpg": {
+      "intrinsic_difficulty": "extreme",
+      "intrinsic_difficulty_zh": "极难",
+      "room_type_seen": "",
+      "reason": "室内见楼梯,复式结构"
+    },
+    "standard_unfinished_room_interior_415a6067.jpg": {
+      "intrinsic_difficulty": "easy",
+      "intrinsic_difficulty_zh": "易",
+      "room_type_seen": "",
+      "reason": "方正明亮,少量材料堆放"
+    },
+    "standard_unfinished_room_interior_cd46403b.jpg": {
+      "intrinsic_difficulty": "easy",
+      "intrinsic_difficulty_zh": "易",
+      "room_type_seen": "",
+      "reason": "方正明亮,大窗采光"
+    },
+    "standard_unfinished_room_interior_d57b44aa.jpg": {
+      "intrinsic_difficulty": "extreme",
+      "intrinsic_difficulty_zh": "极难",
+      "room_type_seen": "",
+      "reason": "俯视通高墙加高窗,挑空"
+    },
+    "standard_unfinished_room_interior_d6c6cc5f.jpg": {
+      "intrinsic_difficulty": "medium",
+      "intrinsic_difficulty_zh": "中",
+      "room_type_seen": "",
+      "reason": "墙顶电线水管杂乱悬垂"
+    },
+    "standard_unfinished_room_interior_fa3d6c43.jpg": {
+      "intrinsic_difficulty": "easy",
+      "intrinsic_difficulty_zh": "易",
+      "room_type_seen": "",
+      "reason": "方正规整,墙面平整采光足"
+    },
+    "standard_毛坯房餐厅_1db915c5.jpg": {
+      "intrinsic_difficulty": "hard",
+      "intrinsic_difficulty_zh": "难",
+      "room_type_seen": "",
+      "reason": "顶部承重横梁加梁柱外露"
+    },
+    "standard_毛坯房餐厅_2f140812.jpg": {
+      "intrinsic_difficulty": "easy",
+      "intrinsic_difficulty_zh": "易",
+      "room_type_seen": "",
+      "reason": "大开间方正,落地窗采光足"
+    },
+    "standard_毛坯房餐厅_99264716.jpg": {
+      "intrinsic_difficulty": "medium",
+      "intrinsic_difficulty_zh": "中",
+      "room_type_seen": "",
+      "reason": "带管井小间,门洞过梁"
+    },
+    "standard_毛坯房餐厅_c8f866a1.jpg": {
+      "intrinsic_difficulty": "hard",
+      "intrinsic_difficulty_zh": "难",
+      "room_type_seen": "",
+      "reason": "多道横梁外露,大跨度开放空间"
+    },
+    "standard_毛坯房厨房_27feb81e.jpg": {
+      "intrinsic_difficulty": "medium",
+      "intrinsic_difficulty_zh": "中",
+      "room_type_seen": "kitchen",
+      "reason": "地面上下水接口,小间水路"
+    },
+    "standard_毛坯房厨房_594c0e77.jpg": {
+      "intrinsic_difficulty": "medium",
+      "intrinsic_difficulty_zh": "中",
+      "room_type_seen": "bathroom",
+      "reason": "蓝色防水层加排水立管,小开间"
+    },
+    "standard_毛坯房厨房_745ac877.jpg": {
+      "intrinsic_difficulty": "hard",
+      "intrinsic_difficulty_zh": "难",
+      "room_type_seen": "",
+      "reason": "梁柱外露,地面下沉防水坑"
+    },
+    "standard_毛坯房厨房_a5d6ac53.jpg": {
+      "intrinsic_difficulty": "hard",
+      "intrinsic_difficulty_zh": "难",
+      "room_type_seen": "",
+      "reason": "横梁外露,地面碎石堆积"
+    },
+    "standard_毛坯房厨房_b4d1ddb2.jpg": {
+      "intrinsic_difficulty": "medium",
+      "intrinsic_difficulty_zh": "中",
+      "room_type_seen": "kitchen",
+      "reason": "地面上下水管,矮台水路小间"
+    },
+    "standard_毛坯房客厅_5209f15b.jpg": {
+      "intrinsic_difficulty": "hard",
+      "intrinsic_difficulty_zh": "难",
+      "room_type_seen": "",
+      "reason": "顶部横梁加立柱外露"
+    },
+    "standard_毛坯房客厅_7780b503.jpg": {
+      "intrinsic_difficulty": "medium",
+      "intrinsic_difficulty_zh": "中",
+      "room_type_seen": "",
+      "reason": "中部立柱外露,余规整明亮"
+    },
+    "standard_毛坯房客厅_97fb2ade.jpg": {
+      "intrinsic_difficulty": "medium",
+      "intrinsic_difficulty_zh": "中",
+      "room_type_seen": "",
+      "reason": "立柱门洞分隔,采光良好"
+    },
+    "standard_毛坯房客厅_a661ffad.jpg": {
+      "intrinsic_difficulty": "hard",
+      "intrinsic_difficulty_zh": "难",
+      "room_type_seen": "",
+      "reason": "门洞内狭小间,碎石堆积"
+    },
+    "standard_毛坯房客厅_d4ac6023.jpg": {
+      "intrinsic_difficulty": "medium",
+      "intrinsic_difficulty_zh": "中",
+      "room_type_seen": "",
+      "reason": "落地窗采光足,顶部有梁"
+    },
+    "standard_毛坯房客厅_ddb25462.jpg": {
+      "intrinsic_difficulty": "medium",
+      "intrinsic_difficulty_zh": "中",
+      "room_type_seen": "",
+      "reason": "狭长走道,光线偏暗"
+    },
+    "standard_毛坯房书房_9c26fd45.jpg": {
+      "intrinsic_difficulty": "medium",
+      "intrinsic_difficulty_zh": "中",
+      "room_type_seen": "",
+      "reason": "方正小间但空间局促,采光正常"
+    },
+    "standard_毛坯房书房_a948fff4.jpg": {
+      "intrinsic_difficulty": "hard",
+      "intrinsic_difficulty_zh": "难",
+      "room_type_seen": "balcony",
+      "reason": "狭长封闭阳台,带栏杆落地窗"
+    },
+    "standard_毛坯房卫生间_b35f14d5.jpg": {
+      "intrinsic_difficulty": "easy",
+      "intrinsic_difficulty_zh": "易",
+      "room_type_seen": "bathroom",
+      "reason": "方正小间,顶部密集排水管"
+    },
+    "standard_毛坯房卫生间_e30a970f.jpg": {
+      "intrinsic_difficulty": "easy",
+      "intrinsic_difficulty_zh": "易",
+      "room_type_seen": "",
+      "reason": "已家具化方正房间,采光正常"
+    },
+    "standard_毛坯房卧室_284402f6.jpg": {
+      "intrinsic_difficulty": "hard",
+      "intrinsic_difficulty_zh": "难",
+      "room_type_seen": "",
+      "reason": "多根承重柱外露,空间不规整"
+    },
+    "standard_毛坯房卧室_2a09b816.jpg": {
+      "intrinsic_difficulty": "hard",
+      "intrinsic_difficulty_zh": "难",
+      "room_type_seen": "",
+      "reason": "多道横梁梁柱外露"
+    },
+    "standard_毛坯房卧室_32dcd737.jpg": {
+      "intrinsic_difficulty": "medium",
+      "intrinsic_difficulty_zh": "中",
+      "room_type_seen": "",
+      "reason": "狭小局促,角落立管"
+    },
+    "standard_毛坯房卧室_70c6ecdd.jpg": {
+      "intrinsic_difficulty": "hard",
+      "intrinsic_difficulty_zh": "难",
+      "room_type_seen": "",
+      "reason": "横梁外露加梁柱,飘窗"
+    },
+    "standard_毛坯房卧室_7f37d9fe.jpg": {
+      "intrinsic_difficulty": "hard",
+      "intrinsic_difficulty_zh": "难",
+      "room_type_seen": "",
+      "reason": "明显横梁外露,凹凸墙体"
+    },
+    "standard_毛坯房卧室_89f6a9a5.jpg": {
+      "intrinsic_difficulty": "hard",
+      "intrinsic_difficulty_zh": "难",
+      "room_type_seen": "",
+      "reason": "狭长空间,碎砖杂物堆积遮挡"
+    },
+    "standard_毛坯房卧室_a420d73f.jpg": {
+      "intrinsic_difficulty": "medium",
+      "intrinsic_difficulty_zh": "中",
+      "room_type_seen": "",
+      "reason": "规整但带过梁,套间局部偏暗"
+    },
+    "standard_毛坯房卧室_c8d2c355.jpg": {
+      "intrinsic_difficulty": "hard",
+      "intrinsic_difficulty_zh": "难",
+      "room_type_seen": "",
+      "reason": "横梁加梁柱外露,套间结构"
+    },
+    "standard_毛坯房卧室_fcc0c383.jpg": {
+      "intrinsic_difficulty": "hard",
+      "intrinsic_difficulty_zh": "难",
+      "room_type_seen": "balcony",
+      "reason": "狭长封闭阳台,栏杆带立管"
+    },
+    "standard_毛坯房阳台_16f74f1c.jpg": {
+      "intrinsic_difficulty": "easy",
+      "intrinsic_difficulty_zh": "易",
+      "room_type_seen": "",
+      "reason": "方正大间明亮,带飘窗"
+    },
+    "standard_毛坯房阳台_9cd06538.jpg": {
+      "intrinsic_difficulty": "easy",
+      "intrinsic_difficulty_zh": "易",
+      "room_type_seen": "balcony",
+      "reason": "半开放外挑,玻璃栏杆采光好"
+    },
+    "standard_毛坯房阳台_bbb072f4.jpg": {
+      "intrinsic_difficulty": "hard",
+      "intrinsic_difficulty_zh": "难",
+      "room_type_seen": "",
+      "reason": "横梁梁柱外露,大空间不规整"
+    },
+    "standard_毛坯房阳台_c04af9ac.jpg": {
+      "intrinsic_difficulty": "hard",
+      "intrinsic_difficulty_zh": "难",
+      "room_type_seen": "balcony",
+      "reason": "狭长封闭阳台,栏杆落地窗"
+    }
+  }
+}
