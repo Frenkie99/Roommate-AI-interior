@@ -39,18 +39,23 @@ from evals.config import EVALS_DIR, PROJECT_ROOT, GOLD_LABELS_PATH, METADATA_PAT
 
 _BASE = "https://api.apiyi.com"
 _CHAT_URL = f"{_BASE}/v1/chat/completions"   # OpenAI 兼容端点（这把 key 唯一能跑通图像模型理解的路）
-_DEFAULT_MODEL = "gemini-2.5-flash-image"    # 多模态：能读图+输出文字。非纯理解模型（那个无通道）
+_DEFAULT_MODEL = "gpt-4o"                     # 图像理解评委（VIEScore 同款）；用 GRADER_APIYI_KEY 专用通道
 _MAX_DIM = 768                               # 缩图上限，控 token（语义判断不需原分辨率）
 _PROMPT_CLIP = 300                           # 截断超长 prompt
 
 
 # ============================ 基础设施 ============================
 
+_KEY_NAMES = ("GRADER_APIYI_KEY", "APIYI_KEY", "LLM_APIYI_KEY")  # grader 专用 key 优先
+
+
 def _load_key():
-    """取 APIYI_KEY：先环境变量，再 backend/.env 与根 .env（手动解析，不依赖 dotenv）。"""
-    key = os.getenv("APIYI_KEY") or os.getenv("LLM_APIYI_KEY")
-    if key:
-        return key
+    """取评测 key：优先 GRADER_APIYI_KEY（图像理解评委专用），回退产品 key。
+    先环境变量，再 backend/.env 与根 .env（手动解析，不依赖 dotenv）。"""
+    for name in _KEY_NAMES:
+        if os.getenv(name):
+            return os.getenv(name)
+    found = {}  # 收集 .env 里所有匹配项，最后按 _KEY_NAMES 优先级返回（而非文件顺序）
     for envf in (PROJECT_ROOT / "backend" / ".env", PROJECT_ROOT / ".env"):
         if not envf.exists():
             continue
@@ -59,10 +64,14 @@ def _load_key():
             if line.startswith("#") or "=" not in line:
                 continue
             k, _, v = line.partition("=")
-            if k.strip() in ("APIYI_KEY", "LLM_APIYI_KEY"):
+            k = k.strip()
+            if k in _KEY_NAMES and k not in found:
                 v = v.strip().strip('"').strip("'")
-                if v and v != "your_apiyi_key_here" and v != "your_llm_apiyi_key_here":
-                    return v
+                if v and not v.startswith("your_"):
+                    found[k] = v
+    for name in _KEY_NAMES:   # 按优先级取
+        if name in found:
+            return found[name]
     return None
 
 
