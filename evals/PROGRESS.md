@@ -21,12 +21,18 @@
 - **数据**：85 对真实评测图齐全；`eval_results.json` 含 85 条真实分（clip/structural_fidelity/llm_judge）。
 - **金标准**：`gold_labels.json` 已存在，**85/85 全标完**（标注人 frenkie），四维度均用满 1-5、方差充足，是有效的真值尺。
 
-## ⏭️ 下一步立即行动
+## ⏭️ 下一步立即行动（2026-06-30 晚更新）
 
-1. **实施视觉 Judge（阶段 3，需花钱）**：方案见 `VISION_JUDGE_DESIGN.md`。第一步=探单价+1-2 条小验，达标再跑全量。补齐美学/指令两维——目前这两维无任何可信信号。
-2. **评测集深化·路径B（押后至视觉 Judge 之后）**：采集「领先当前能力」的难 case。已同意押后——因美学/指令两维现无可信尺子，过早采难 case 在最关键两维无法衡量。路径A（切片+失败地图）已于 2026-06-26 完成。
-3. ~~**（可选）iou/fid 处置**~~ ✅ **已完成（2026-06-25）**：iou/fid 已从 registry 退役（同 clip/llm_judge），runner 重跑不再注入假分/null。.py 文件保留备查。
-4. ~~**侧边栏死滑块**~~ ✅ **已根治（2026-06-25）**：新增 `ResultStore.get_active_metrics()`（返回数据中实有非空分值的指标）；`sidebar.py` 改为只对活跃指标渲染滑块，`app.py` 传入。现侧边栏只剩 structural_fidelity 一个滑块，iou/fid/clip/llm_judge 四个死滑块全灭。config.METRIC_RANGES 保留全量定义（备查 .py 文件不会因缺 key 报错）。UI 从此数据驱动，后续退役/新增指标自动跟随。
+> **新主线 = 接入真实用户 trace**（用户独立想到的关键方向：真实使用记录才是评测集头号来源）。
+> 在做"trace 管道"6 步里的第 3 步，卡在**两个等用户拍板的点**（明天继续）：
+
+1. **【当前卡点】后端埋点（trace 管道第3步）——等用户拍板两点：**
+   - (a) trace 文件**写在哪**？我建议 `backend/data/traces.jsonl`，需用户确认服务器上是否有更合适的持久化位置、会不会被部署流程覆盖。
+   - (b) 改动**由用户部署**（推上线+重启服务有风险，我不擅自碰）——需确认部署方式。
+   - 方案已定：只加新代码不动现有生图逻辑；写 trace 包 try/except 绝不拖垮生图；追加写 JSONL；后端不 import evals（独立 `write_trace`）。埋点位置=`image.py` 生成流程末尾（input路径/用户选的style+room_type+custom_prompt/enhanced_prompt/model/vision_analysis_ok/output/耗时/成败 全齐）。
+2. **trace 管道剩余步骤**：第4步=用户反馈采集（动前端，记 留用/重生成/下载/弃用 = bad case 金矿）；第5步=server traces.jsonl 同步到本地评测平台 + 经 `Trace.to_image_pair()` 转评测样本。
+3. **视觉 Judge 现状（半成品，待 trace 解锁）**：v2 已重写为 VQA(指令)+成对(美学)；grader 用 **gpt-4o**（GRADER_APIYI_KEY，已配通）。成对美学验证 75%(可用)；**VQA 指令验证卡住**——因评测集是"不传room_type"的非真实路径生成的，无法公平验证指令遵循。**trace 接入后用真实数据重测才有意义。**
+4. **路径B（采难case）** 仍押后。
 
 ---
 
@@ -40,7 +46,18 @@
 
 ## 🗓️ 会话日志（倒序，最新在上）
 
-### 2026-06-30 · 模块一深化：看图定内在难度（取代文件名假象）+ 内化外部权威阅读
+### 2026-06-30（下半场）· 视觉Judge v2实战 → 挖出产品房型缺陷(实为评测集缺陷) → pivot真实trace
+- **内化外部阅读 + grader 设计转向**：深度研究(27来源/对抗式核实)→ `RESEARCH_IMAGE_EVAL.md` + `VISION_JUDGE_DESIGN.md`第7节。
+  关键结论：MLLM 直接打标量分不可信，**成对(pairwise)/VQA 拆是非题才与人类一致**；VIEScore(条件合成评测)≈0.4 接近人类上限(人-人才0.45)；结构维是 VLM 最弱(继续用 structural_fidelity)；成本 ≈$0.05/次。
+- **视觉Judge v2重写**(提交 447aa02)：四维标量 → `score_instruction_vqa`(指令拆是非题)+ `compare_pairwise`(美学两图比，正反消位置偏见)。
+- **grader API 通道折腾**：产品 key 仅图像生成模型通道，纯理解模型 gemini-2.5-flash「无可用通道」。先用 gemini-2.5-flash-image(图像模型)顶替→当评委太宽松(同 llm_judge 病)。**用户新开专用 grader key**(`GRADER_APIYI_KEY`，gpt-4o 已配通，vision_judge 默认改 gpt-4o + 优先读此 key)。
+- **首轮验证(gpt-4o)**：成对美学 **75% 通过**(扩到12对)；**VQA 指令与人工金标准仍不相关**——但根因是 criteria 错配：gpt-4o 严格揪房型不符，而人工 instruction 分当时在评风格。
+- **⚠️ 一次错误 + 回滚(重要教训)**：据"房型跑偏=失败"重校准了 instruction 金标准(砍27个)。**用户第一性原理质疑**→复核发现：前端真实用户**会选 room_type 并传后端**(RoomTypeSelector+api.js)，而评测集 `batch_generate` **故意不传 room_type**(走真实用户不走的降级路径)。所以"71%房型跑偏"是**评测集生成方式的产物，非产品 bug**；重校准前提错误(生成时没给房型指令，做成客厅不算违背)→ **已回滚**(提交见 revert)，gold 恢复原状。教训：**不明确的先问、动生产代码前先核实真实路径，别下结论。**
+- **顺带定位的真隐患(不影响真实用户)**：产品 `analyze_room_and_generate_prompt` 想用 Gemini 视觉识别房型，但产品 key 无该通道 → 静默降级到盲 DeepSeek(看不见图)。真实用户因为传了 room_type 不受影响，但这条静默降级路径仍是隐患(记备查)。
+- **pivot：真实用户 trace = 评测集头号来源**(用户独立想到，契合 Hamel"Source from Reality"/Anthropic trace)。已做：(1)排查确认无集中式 trace(前端仅 localStorage、后端仅存未关联的图片文件)；(2)**定义 `Trace` 数据结构**写进 `schemas.py`(含 to_image_pair 转换器，用户决策：v1只记首次生图不含精修、用户量~十几无隐私顾虑)。下一步=后端埋点(见"下一步立即行动"两个卡点)。
+- **保留未动**：VQA 房型门(对真实用法有效，待评测集有真实room_type再验证)；intrinsic_difficulty(上半场成果，有效)。
+
+### 2026-06-30（上半场）· 模块一深化：看图定内在难度（取代文件名假象）+ 内化外部权威阅读
 - **背景**：用户上完张和老师第2节课（构建数据集），要把「广度+难度分布」原则落到现有 85 张评测集。第一性原理澄清：我们**不训权重→没有「训练集」**，老师那两个案例(手机人像/特斯拉)是训模型业务才需训练集；我们真正要隔离的是「开发集/dev」，且现阶段先不做隔离，专注把 85 张做对。
 - **审计发现假象**：旧难度从文件名关键词推 → 45 张 standard 全被默认「易」。审计 + 来源×难度交叉坐实是**文件名假象**。
 - **做了（看图重标）**：5 个并行子代理逐张 Read 毛坯原图，按 4 档 rubric(易/中/难/极难)看图判定内在难度；用户复核同意写回。
