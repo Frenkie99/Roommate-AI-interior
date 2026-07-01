@@ -21,16 +21,14 @@
 - **数据**：85 对真实评测图齐全；`eval_results.json` 含 85 条真实分（clip/structural_fidelity/llm_judge）。
 - **金标准**：`gold_labels.json` 已存在，**85/85 全标完**（标注人 frenkie），四维度均用满 1-5、方差充足，是有效的真值尺。
 
-## ⏭️ 下一步立即行动（2026-07-01 更新）
+## ⏭️ 下一步立即行动（2026-07-01 晚更新）
 
-> **新主线 = 接入真实用户 trace**（用户独立想到的关键方向：真实使用记录才是评测集头号来源）。
-> trace 管道第 3 步「后端埋点」**代码已完成并 push 到 main**，接下来 = 用户部署 → 攒真实数据 → 第 4/5 步。
+> **用户拍板节奏**：trace 相关本地代码先攒着**不 push**，等本地全搞好再**统一 push + 部署**。用户已 pivot 到**模块二（评测环境 / eval harness）**开始上网课学习。
+> trace 管道：第3步(埋点)+第5步(导入)**本地代码已完成并本地测通**，只差①部署 ②第4步用户点评埋点（已降为待办）。
 
-1. **【等用户操作】部署后端埋点到生产**：CI 已禁用(纯手工)，推 main 不会自动上线。用户择时在服务器 `git pull` + 重启 `roommate-backend.service`。
-   - 生效后每次真实用户成功生图 → 追加一条到 `backend/data/traces.jsonl`（env `TRACE_LOG_PATH` 可改路径；已 gitignore，不入库、部署不冲掉）。
-   - 部署后可跟踪 `vision_analysis_ok` 字段统计**静默降级到盲 DeepSeek 的真实频率**（记忆里的隐患，现在能量化了）。
-2. **第4步 = 用户反馈采集（动前端）**：记 留用/重生成/下载/弃用 → 写进 trace 的 `feedback` 字段 = bad case 金矿。同时前端生成 `session_id` 回传后端串联同一人多次操作（当前埋点 session_id 先留空）。
-3. **第5步 = server traces.jsonl 同步到本地评测平台** + 经 `Trace.to_image_pair()` 转评测样本（端到端契合已验证：from_dict→to_image_pair 产出 `dataset_split=production` 的 ImagePair）。
+1. **【新主线】模块二 = 搭建评测环境 / eval harness**（用户正在学这节网课）。这是把"数据集 + 评分器 + 执行器 + 报告"串成一条能一键跑的流水线。**下次开工先跟用户对齐 harness 现状与缺口**（executor/ 已有骨架，需盘点）。
+2. **【待办·后面再做】第4步 = 用户点评埋点（动前端）**：生成的效果图下面加按钮「满意/重新生成/下载/不要了」，用户一点就写进 trace 的 `feedback` 字段 = bad case 金矿；同时前端生成 `session_id` 回传后端（当前埋点 session_id 先留空）。用户已确认：**这是个独立埋点，先记着，后面搞**。
+3. **【等用户操作·攒着一起来】部署 trace 到生产**：CI 已禁用(纯手工)。等本地都好了，统一 push → 服务器 `git pull` + 重启 `roommate-backend.service`。生效后每次真实用户成功生图 → 追加一条到 `backend/data/traces.jsonl`；之后用 `python -m evals.dataset.import_traces <拉回本地的traces.jsonl>` 导入评测集（幂等，只导入成功生图，缺图跳过）。可统计 `vision_analysis_ok` 量化"静默降级到盲DeepSeek"的真实频率。
 3. **视觉 Judge 现状（半成品，待 trace 解锁）**：v2 已重写为 VQA(指令)+成对(美学)；grader 用 **gpt-4o**（GRADER_APIYI_KEY，已配通）。成对美学验证 75%(可用)；**VQA 指令验证卡住**——因评测集是"不传room_type"的非真实路径生成的，无法公平验证指令遵循。**trace 接入后用真实数据重测才有意义。**
 4. **路径B（采难case）** 仍押后。
 
@@ -55,6 +53,9 @@
   2. `llm_client.analyze_room_and_generate_prompt`：两个返回点注入 `data["vision_used"]`（视觉成功=True / 静默降级盲DeepSeek=False）——原本两条路都返回 code:0 无法区分，这是量化「静默降级隐患频率」的关键。
   3. `image.py` /generate 末尾埋点：input相对路径+hash / style+room_type+custom_prompt+aspect_ratio(=真实指令) / enhanced_prompt / model_used / vision_analysis_ok / latency_ms / output相对路径 / success。**v1 只记成功生图**（失败会删 input 图、且 to_image_pair 需 output → 失败 bad case 留给第4步反馈捕获，不动失败清理逻辑）。
 - **验证**：3 文件 py_compile 通过；`write_trace` 独立冒烟（写临时路径，丢多余键、补 created_at 均 OK）；端到端 `Trace.from_dict → to_image_pair` 产出 `dataset_split=production` 的 ImagePair（第5步依赖已提前验掉）。
+- **第5步导入器完成**（新建 `evals/dataset/import_traces.py`，本地测通、真数据未碰）：读 traces.jsonl → 逐条 `to_image_pair` → 合并进 `real_metadata.json`（split=production）。**幂等**（按 trace_id 去重，跑两次第二次新增0）、**只导入 success=True 且图片本地存在**的 trace（缺图/失败/坏JSON行均跳过告警）、pair_id 用 `prod_NNN` 续接。用法 `python -m evals.dataset.import_traces <路径> [--images-root ..] [--no-require-images]`。
+- **节奏调整**：本地 trace 代码（埋点+导入器）先**不 push**，攒着等第4步或部署时统一上。用户 pivot 到模块二。
+- **第4步（用户点评埋点）降为待办**：见「下一步」第2条。
 
 ### 2026-06-30（下半场）· 视觉Judge v2实战 → 挖出产品房型缺陷(实为评测集缺陷) → pivot真实trace
 - **内化外部阅读 + grader 设计转向**：深度研究(27来源/对抗式核实)→ `RESEARCH_IMAGE_EVAL.md` + `VISION_JUDGE_DESIGN.md`第7节。
