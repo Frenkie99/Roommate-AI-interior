@@ -86,5 +86,8 @@ frontend/test-*.html
 # RAG知识库向量数据（运行时生成）
 backend/data/chroma/
 
+# 真实用户 trace 埋点（运行时追加写，含用户输入不入库）
+backend/data/traces.jsonl
+
 # 评测平台测试集图像已纳入版本控制（candidates/images/test_input）
 .claude/

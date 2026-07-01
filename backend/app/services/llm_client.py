@@ -111,7 +111,10 @@ class LLMClient:
                 result = response.json()
                 if "candidates" in result and len(result["candidates"]) > 0:
                     content = result["candidates"][0]["content"]["parts"][0]["text"]
-                    return self._parse_llm_response(content, style, room_type, custom_prompt)
+                    parsed = self._parse_llm_response(content, style, room_type, custom_prompt)
+                    if parsed.get("code") == 0 and isinstance(parsed.get("data"), dict):
+                        parsed["data"]["vision_used"] = True  # 视觉识别真实成功（trace 埋点用）
+                    return parsed
             except Exception as e:
                 print(f"[LLM] Gemini 视觉模型 {vision_model} 失败: {e}, 尝试下一个...")
                 continue
@@ -126,7 +129,10 @@ class LLMClient:
                 system_prompt="你是专业室内设计师，擅长分析空间并生成设计提示词。",
                 max_tokens=2048
             )
-            return self._parse_llm_response(text_result, style, room_type, custom_prompt)
+            parsed = self._parse_llm_response(text_result, style, room_type, custom_prompt)
+            if parsed.get("code") == 0 and isinstance(parsed.get("data"), dict):
+                parsed["data"]["vision_used"] = False  # 静默降级到盲 DeepSeek（隐患频率 trace 埋点用）
+            return parsed
         except Exception as e:
             return {
                 "code": -1,

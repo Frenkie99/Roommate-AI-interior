@@ -21,16 +21,16 @@
 - **数据**：85 对真实评测图齐全；`eval_results.json` 含 85 条真实分（clip/structural_fidelity/llm_judge）。
 - **金标准**：`gold_labels.json` 已存在，**85/85 全标完**（标注人 frenkie），四维度均用满 1-5、方差充足，是有效的真值尺。
 
-## ⏭️ 下一步立即行动（2026-06-30 晚更新）
+## ⏭️ 下一步立即行动（2026-07-01 更新）
 
 > **新主线 = 接入真实用户 trace**（用户独立想到的关键方向：真实使用记录才是评测集头号来源）。
-> 在做"trace 管道"6 步里的第 3 步，卡在**两个等用户拍板的点**（明天继续）：
+> trace 管道第 3 步「后端埋点」**代码已完成并 push 到 main**，接下来 = 用户部署 → 攒真实数据 → 第 4/5 步。
 
-1. **【当前卡点】后端埋点（trace 管道第3步）——等用户拍板两点：**
-   - (a) trace 文件**写在哪**？我建议 `backend/data/traces.jsonl`，需用户确认服务器上是否有更合适的持久化位置、会不会被部署流程覆盖。
-   - (b) 改动**由用户部署**（推上线+重启服务有风险，我不擅自碰）——需确认部署方式。
-   - 方案已定：只加新代码不动现有生图逻辑；写 trace 包 try/except 绝不拖垮生图；追加写 JSONL；后端不 import evals（独立 `write_trace`）。埋点位置=`image.py` 生成流程末尾（input路径/用户选的style+room_type+custom_prompt/enhanced_prompt/model/vision_analysis_ok/output/耗时/成败 全齐）。
-2. **trace 管道剩余步骤**：第4步=用户反馈采集（动前端，记 留用/重生成/下载/弃用 = bad case 金矿）；第5步=server traces.jsonl 同步到本地评测平台 + 经 `Trace.to_image_pair()` 转评测样本。
+1. **【等用户操作】部署后端埋点到生产**：CI 已禁用(纯手工)，推 main 不会自动上线。用户择时在服务器 `git pull` + 重启 `roommate-backend.service`。
+   - 生效后每次真实用户成功生图 → 追加一条到 `backend/data/traces.jsonl`（env `TRACE_LOG_PATH` 可改路径；已 gitignore，不入库、部署不冲掉）。
+   - 部署后可跟踪 `vision_analysis_ok` 字段统计**静默降级到盲 DeepSeek 的真实频率**（记忆里的隐患，现在能量化了）。
+2. **第4步 = 用户反馈采集（动前端）**：记 留用/重生成/下载/弃用 → 写进 trace 的 `feedback` 字段 = bad case 金矿。同时前端生成 `session_id` 回传后端串联同一人多次操作（当前埋点 session_id 先留空）。
+3. **第5步 = server traces.jsonl 同步到本地评测平台** + 经 `Trace.to_image_pair()` 转评测样本（端到端契合已验证：from_dict→to_image_pair 产出 `dataset_split=production` 的 ImagePair）。
 3. **视觉 Judge 现状（半成品，待 trace 解锁）**：v2 已重写为 VQA(指令)+成对(美学)；grader 用 **gpt-4o**（GRADER_APIYI_KEY，已配通）。成对美学验证 75%(可用)；**VQA 指令验证卡住**——因评测集是"不传room_type"的非真实路径生成的，无法公平验证指令遵循。**trace 接入后用真实数据重测才有意义。**
 4. **路径B（采难case）** 仍押后。
 
@@ -45,6 +45,16 @@
 ---
 
 ## 🗓️ 会话日志（倒序，最新在上）
+
+### 2026-07-01 · trace 管道第3步：后端埋点落地（代码完成 push，待用户部署）
+- **两个卡点拍板**（查服务器运维记忆后收窄）：
+  - (a) trace 路径 → `backend/data/traces.jsonl`，但**统一读 env `TRACE_LOG_PATH`**（服务器想换仓库外只改 .env）。已核实：部署脚本的 `git checkout -- .`/`git pull` 只动**已跟踪**文件，未跟踪的 jsonl 不会被冲掉 → 放仓库内安全。已加进 `.gitignore`。
+  - (b) 部署方式 → CI(`deploy.yml`) 6/12 起禁用、纯手工，推 main 不自动上线 → **立即 commit+push**，用户择时手动 `git pull`+重启后端。
+- **三处改动（只加不改，不动生图逻辑）**：
+  1. 新建 `backend/app/utils/trace_logger.py`：`write_trace/new_trace_id/image_hash`，全程 try/except 吞异常（绝不拖垮生图），追加写 JSONL，字段与 `schemas.py::Trace` 对齐但**不 import evals**（解耦），白名单丢多余键、自动补 trace_id/created_at。
+  2. `llm_client.analyze_room_and_generate_prompt`：两个返回点注入 `data["vision_used"]`（视觉成功=True / 静默降级盲DeepSeek=False）——原本两条路都返回 code:0 无法区分，这是量化「静默降级隐患频率」的关键。
+  3. `image.py` /generate 末尾埋点：input相对路径+hash / style+room_type+custom_prompt+aspect_ratio(=真实指令) / enhanced_prompt / model_used / vision_analysis_ok / latency_ms / output相对路径 / success。**v1 只记成功生图**（失败会删 input 图、且 to_image_pair 需 output → 失败 bad case 留给第4步反馈捕获，不动失败清理逻辑）。
+- **验证**：3 文件 py_compile 通过；`write_trace` 独立冒烟（写临时路径，丢多余键、补 created_at 均 OK）；端到端 `Trace.from_dict → to_image_pair` 产出 `dataset_split=production` 的 ImagePair（第5步依赖已提前验掉）。
 
 ### 2026-06-30（下半场）· 视觉Judge v2实战 → 挖出产品房型缺陷(实为评测集缺陷) → pivot真实trace
 - **内化外部阅读 + grader 设计转向**：深度研究(27来源/对抗式核实)→ `RESEARCH_IMAGE_EVAL.md` + `VISION_JUDGE_DESIGN.md`第7节。

@@ -4,6 +4,7 @@
 """
 
 import os
+import time
 import uuid
 import aiofiles
 from datetime import datetime
@@ -14,6 +15,7 @@ from app.services.getgoapi_client import getgoapi_client, GetGoModel, AspectRati
 from app.services.llm_client import llm_client, LLMModel
 from app.services.image_processor import image_processor
 from app.utils.prompt_builder import build_prompt, STYLE_PROMPTS, ROOM_TYPE_PROMPTS
+from app.utils.trace_logger import write_trace, new_trace_id, image_hash
 
 router = APIRouter()
 
@@ -42,6 +44,9 @@ async def generate_renovation_image(
     2. 选择装修风格
     3. 调用API易平台生成效果图
     """
+    # trace 埋点计时起点（只加新代码，不影响生图逻辑）
+    _t_start = time.perf_counter()
+
     # 0. 校验 style 和 room_type
     if style not in STYLE_PROMPTS:
         available_styles = list(STYLE_PROMPTS.keys())
@@ -83,7 +88,8 @@ async def generate_renovation_image(
     # 3. 使用 LLM 智能分析并生成提示词
     use_llm = os.getenv("USE_LLM_PROMPT", "true").lower() == "true"
     llm_analysis = None
-    
+    vision_analysis_ok = None  # trace 埋点：None=未走LLM / True=视觉成功 / False=静默降级到盲DeepSeek
+
     if use_llm:
         try:
             print(f"[LLM] 开始分析毛坯房图片...")
@@ -93,17 +99,20 @@ async def generate_renovation_image(
                 room_type=room_type,
                 custom_prompt=custom_prompt,
             )
-            
+
             if llm_result.get("code") == 0:
                 llm_analysis = llm_result.get("data", {})
                 prompt = llm_analysis.get("enhanced_prompt", "")
+                vision_analysis_ok = llm_analysis.get("vision_used")
                 print(f"[LLM] 智能提示词生成成功")
             else:
                 print(f"[LLM] 分析失败: {llm_result.get('message')}, 使用静态提示词")
                 prompt = build_prompt(style, room_type, custom_prompt)
+                vision_analysis_ok = False
         except Exception as e:
             print(f"[LLM] 异常: {str(e)}, 使用静态提示词")
             prompt = build_prompt(style, room_type, custom_prompt)
+            vision_analysis_ok = False
     else:
         prompt = build_prompt(style, room_type, custom_prompt)
     
@@ -169,7 +178,31 @@ async def generate_renovation_image(
         async with aiofiles.open(output_path, 'wb') as f:
             await f.write(img_data["data"])
         output_urls.append(f"/output/{output_filename}")
-    
+
+    # 8. trace 埋点：真实用户「上传毛坯 → 首次生图成功」的完整记录（评测集头号来源）
+    #    只加新代码；write_trace 内部全程 try/except，绝不拖垮生图。
+    write_trace({
+        "trace_id": new_trace_id(),
+        "session_id": "",  # 第4步前端反馈接入后串联同一人多次操作
+        # —— 输入（存相对路径，便于第5步同步到本地评测平台后解析）——
+        "input_image_path": f"input/{input_filename}",
+        "input_image_hash": image_hash(processed_image),
+        # —— 用户真实选择 = 评测「指令」——
+        "style": style,
+        "room_type": room_type or "",
+        "custom_prompt": custom_prompt or "",
+        "aspect_ratio": aspect_ratio,
+        # —— 产品内部过程（诊断用）——
+        "enhanced_prompt": prompt,
+        "model_used": data.get("used_model", "unknown"),
+        "vision_analysis_ok": vision_analysis_ok,
+        "latency_ms": int((time.perf_counter() - _t_start) * 1000),
+        # —— 输出 ——
+        "output_image_paths": [u.lstrip("/") for u in output_urls],
+        "success": True,
+        "error": "",
+    })
+
     return JSONResponse({
         "code": 0,
         "message": "success",
