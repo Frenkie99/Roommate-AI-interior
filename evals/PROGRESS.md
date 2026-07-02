@@ -48,6 +48,15 @@
 
 ## 🗓️ 会话日志（倒序，最新在上）
 
+### 2026-07-02（下半场）· 模块二第二刀：「用户使用过程」呈现端（本地，不部署）
+- **背景**：用户追问「用户使用过程能否在模块二完整呈现」。诚实答：现做不到=正是要素④(Trace)，采集没部署(0真实数据)+看板无呈现界面。用户拍板：**本地先搭「呈现」不部署**(不碰生产、不破坏「攒着」)。
+- **做了**：
+  1. 新建看板第7个 tab「用户使用过程」(`ui/components/trace_viewer.py`)：按会话分组→选一个用户→把每次使用还原成**5步时间线**(①上传毛坯 ②用户指令style/room/prompt/比例 ③AI中间过程 vision_analysis_ok/enhanced_prompt/model/耗时 ④输出效果图 ⑤用户反馈)。安全路径解析(只allow input//output/，防遍历)、图损坏不崩。
+  2. 示例数据 `data/sample_traces.jsonl`(3条，指向真实input/output图)：含**两个诊断亮点**——sess_A 重生成→满意的两次操作串联；sess_B `vision_analysis_ok=false`(静默降级)+房型做错的bad case。真实traces.jsonl存在则读真实、否则回退示例并挂横幅。**故意不写生产trace路径**，避免日后被import当真实数据。
+  3. `config.py` 加 `TRACE_LOG_PATH`(读env,默认backend/data/traces.jsonl) + `SAMPLE_TRACES_PATH`。
+- **验证**：全py_compile过；`_load_traces`回退示例3条、会话分组A2/B1正确；真实图解析且存在、越权路径(../etc、data/前缀)被拒；整UI导入OK；看板重启 http://localhost:8501 第7tab可见。
+- **仍缺(要素④真正完整还差)**：①埋点部署上线(要动生产+等用户)才有真实数据；②中途节点记更全(现只记vision_ok/enhanced_prompt，分割/视觉原始返回未记=尚不够白盒)。**未push**。
+
 ### 2026-07-02 · 模块二第一刀：eval harness「骨架合体」（免费，本地测通）
 - **背景**：用户看完模块二网课（eval harness 架构/执行环境/调试工具/控制变量）。用最后一张「Eval Harness 五大要素」(Anthropic 框架：①Loader筛选 ②Runner批量 ③环境隔离/可复现 ④Trace日志 ⑤Aggregator分维度) 逐条映射现有代码 → 结论：**零件基本都有，缺的是「串起来+接上」**。用户拍板先做免费的「骨架合体」(接通 ①②③⑤，④trace部署 与 生成式重跑 押后)。
 - **动手前核到两个雷**（都躲过）：

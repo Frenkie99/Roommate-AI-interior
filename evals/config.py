@@ -1,5 +1,6 @@
 """评测平台全局配置"""
 
+import os
 from pathlib import Path
 
 # 路径
@@ -16,6 +17,13 @@ BADCASE_NOTES_PATH = DATA_DIR / "badcase_notes.json"
 GOLD_LABELS_PATH = DATA_DIR / "gold_labels.json"  # 人工金标准标注（评分器可信度的真值来源）
 EVAL_REPORT_MD_PATH = DATA_DIR / "eval_report.md"      # Aggregator 产出的分维度聚合报告（人读）
 EVAL_REPORT_JSON_PATH = DATA_DIR / "eval_report.json"  # 同一份报告的结构化版（程序/看板读）
+
+# Trace（真实用户使用记录）——「用户使用过程」看板页数据源
+#   真实数据由后端埋点追加写（默认 backend/data/traces.jsonl，可用 env TRACE_LOG_PATH 改）；
+#   部署前 traces.jsonl 不存在 → 看板回退读 sample_traces.jsonl（示例假数据，仅供预览界面）。
+TRACE_LOG_PATH = os.environ.get("TRACE_LOG_PATH",
+                                str(PROJECT_ROOT / "backend" / "data" / "traces.jsonl"))
+SAMPLE_TRACES_PATH = DATA_DIR / "sample_traces.jsonl"
 
 # 指标范围: (min, max, higher_is_better)
 METRIC_RANGES = {
