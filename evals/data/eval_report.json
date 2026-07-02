@@ -1,0 +1,507 @@
+{
+  "n_results": 85,
+  "metrics": [
+    "structural_fidelity"
+  ],
+  "overall": {
+    "structural_fidelity": {
+      "n": 85,
+      "scored": 85,
+      "null": 0,
+      "mean": 57.4093,
+      "min": 48.68,
+      "max": 68.93,
+      "std": 4.8821
+    }
+  },
+  "by_dimension": {
+    "split": {
+      "competitor": {
+        "n": 31,
+        "metrics": {
+          "structural_fidelity": {
+            "n": 31,
+            "scored": 31,
+            "null": 0,
+            "mean": 57.1045,
+            "min": 48.68,
+            "max": 68.67,
+            "std": 4.9791
+          }
+        }
+      },
+      "corner_case": {
+        "n": 9,
+        "metrics": {
+          "structural_fidelity": {
+            "n": 9,
+            "scored": 9,
+            "null": 0,
+            "mean": 60.5533,
+            "min": 51.72,
+            "max": 68.93,
+            "std": 5.2005
+          }
+        }
+      },
+      "standard": {
+        "n": 45,
+        "metrics": {
+          "structural_fidelity": {
+            "n": 45,
+            "scored": 45,
+            "null": 0,
+            "mean": 56.9904,
+            "min": 50.54,
+            "max": 68.06,
+            "std": 4.5075
+          }
+        }
+      }
+    },
+    "room_type": {
+      "<空>": {
+        "n": 47,
+        "metrics": {
+          "structural_fidelity": {
+            "n": 47,
+            "scored": 47,
+            "null": 0,
+            "mean": 57.8064,
+            "min": 48.68,
+            "max": 68.93,
+            "std": 5.4316
+          }
+        }
+      },
+      "balcony": {
+        "n": 8,
+        "metrics": {
+          "structural_fidelity": {
+            "n": 8,
+            "scored": 8,
+            "null": 0,
+            "mean": 57.2712,
+            "min": 51.94,
+            "max": 68.06,
+            "std": 5.8313
+          }
+        }
+      },
+      "bathroom": {
+        "n": 7,
+        "metrics": {
+          "structural_fidelity": {
+            "n": 7,
+            "scored": 7,
+            "null": 0,
+            "mean": 57.0657,
+            "min": 54.35,
+            "max": 62.38,
+            "std": 2.6507
+          }
+        }
+      },
+      "bedroom": {
+        "n": 8,
+        "metrics": {
+          "structural_fidelity": {
+            "n": 8,
+            "scored": 8,
+            "null": 0,
+            "mean": 55.9838,
+            "min": 50.54,
+            "max": 60.41,
+            "std": 3.3767
+          }
+        }
+      },
+      "dining_room": {
+        "n": 4,
+        "metrics": {
+          "structural_fidelity": {
+            "n": 4,
+            "scored": 4,
+            "null": 0,
+            "mean": 55.1875,
+            "min": 52.42,
+            "max": 58.79,
+            "std": 2.3038
+          }
+        }
+      },
+      "kitchen": {
+        "n": 4,
+        "metrics": {
+          "structural_fidelity": {
+            "n": 4,
+            "scored": 4,
+            "null": 0,
+            "mean": 55.7975,
+            "min": 52.36,
+            "max": 57.7,
+            "std": 2.041
+          }
+        }
+      },
+      "living_room": {
+        "n": 6,
+        "metrics": {
+          "structural_fidelity": {
+            "n": 6,
+            "scored": 6,
+            "null": 0,
+            "mean": 59.7283,
+            "min": 52.96,
+            "max": 63.81,
+            "std": 4.0113
+          }
+        }
+      },
+      "study": {
+        "n": 1,
+        "metrics": {
+          "structural_fidelity": {
+            "n": 1,
+            "scored": 1,
+            "null": 0,
+            "mean": 55.08,
+            "min": 55.08,
+            "max": 55.08,
+            "std": 0.0
+          }
+        }
+      }
+    },
+    "difficulty": {
+      "easy": {
+        "n": 48,
+        "metrics": {
+          "structural_fidelity": {
+            "n": 48,
+            "scored": 48,
+            "null": 0,
+            "mean": 57.7002,
+            "min": 49.6,
+            "max": 68.67,
+            "std": 4.9964
+          }
+        }
+      },
+      "hard": {
+        "n": 30,
+        "metrics": {
+          "structural_fidelity": {
+            "n": 30,
+            "scored": 30,
+            "null": 0,
+            "mean": 56.54,
+            "min": 48.68,
+            "max": 68.93,
+            "std": 4.5808
+          }
+        }
+      },
+      "medium": {
+        "n": 7,
+        "metrics": {
+          "structural_fidelity": {
+            "n": 7,
+            "scored": 7,
+            "null": 0,
+            "mean": 59.14,
+            "min": 53.75,
+            "max": 67.09,
+            "std": 4.636
+          }
+        }
+      }
+    },
+    "intrinsic_difficulty": {
+      "easy": {
+        "n": 17,
+        "metrics": {
+          "structural_fidelity": {
+            "n": 17,
+            "scored": 17,
+            "null": 0,
+            "mean": 57.5371,
+            "min": 50.57,
+            "max": 68.31,
+            "std": 5.3789
+          }
+        }
+      },
+      "extreme": {
+        "n": 9,
+        "metrics": {
+          "structural_fidelity": {
+            "n": 9,
+            "scored": 9,
+            "null": 0,
+            "mean": 58.8644,
+            "min": 51.32,
+            "max": 68.93,
+            "std": 5.7112
+          }
+        }
+      },
+      "hard": {
+        "n": 30,
+        "metrics": {
+          "structural_fidelity": {
+            "n": 30,
+            "scored": 30,
+            "null": 0,
+            "mean": 58.0983,
+            "min": 49.6,
+            "max": 68.67,
+            "std": 4.8076
+          }
+        }
+      },
+      "medium": {
+        "n": 29,
+        "metrics": {
+          "structural_fidelity": {
+            "n": 29,
+            "scored": 29,
+            "null": 0,
+            "mean": 56.17,
+            "min": 48.68,
+            "max": 66.36,
+            "std": 4.0215
+          }
+        }
+      }
+    },
+    "style": {
+      "american_transitional": {
+        "n": 9,
+        "metrics": {
+          "structural_fidelity": {
+            "n": 9,
+            "scored": 9,
+            "null": 0,
+            "mean": 57.1333,
+            "min": 51.32,
+            "max": 68.67,
+            "std": 5.2502
+          }
+        }
+      },
+      "bauhaus": {
+        "n": 9,
+        "metrics": {
+          "structural_fidelity": {
+            "n": 9,
+            "scored": 9,
+            "null": 0,
+            "mean": 64.0389,
+            "min": 57.22,
+            "max": 68.93,
+            "std": 3.9555
+          }
+        }
+      },
+      "bohemian": {
+        "n": 9,
+        "metrics": {
+          "structural_fidelity": {
+            "n": 9,
+            "scored": 9,
+            "null": 0,
+            "mean": 57.9889,
+            "min": 51.72,
+            "max": 68.31,
+            "std": 5.0664
+          }
+        }
+      },
+      "chinese_modern": {
+        "n": 7,
+        "metrics": {
+          "structural_fidelity": {
+            "n": 7,
+            "scored": 7,
+            "null": 0,
+            "mean": 55.62,
+            "min": 53.75,
+            "max": 58.67,
+            "std": 1.5148
+          }
+        }
+      },
+      "european_neoclassical": {
+        "n": 8,
+        "metrics": {
+          "structural_fidelity": {
+            "n": 8,
+            "scored": 8,
+            "null": 0,
+            "mean": 56.19,
+            "min": 52.66,
+            "max": 60.58,
+            "std": 2.5952
+          }
+        }
+      },
+      "industrial_loft": {
+        "n": 8,
+        "metrics": {
+          "structural_fidelity": {
+            "n": 8,
+            "scored": 8,
+            "null": 0,
+            "mean": 54.0188,
+            "min": 50.54,
+            "max": 62.87,
+            "std": 3.7155
+          }
+        }
+      },
+      "japanese_traditional": {
+        "n": 9,
+        "metrics": {
+          "structural_fidelity": {
+            "n": 9,
+            "scored": 9,
+            "null": 0,
+            "mean": 57.6911,
+            "min": 49.6,
+            "max": 63.24,
+            "std": 4.5165
+          }
+        }
+      },
+      "modern_luxury": {
+        "n": 9,
+        "metrics": {
+          "structural_fidelity": {
+            "n": 9,
+            "scored": 9,
+            "null": 0,
+            "mean": 55.5222,
+            "min": 48.68,
+            "max": 66.96,
+            "std": 4.8025
+          }
+        }
+      },
+      "modern_minimalist": {
+        "n": 9,
+        "metrics": {
+          "structural_fidelity": {
+            "n": 9,
+            "scored": 9,
+            "null": 0,
+            "mean": 57.24,
+            "min": 53.26,
+            "max": 60.28,
+            "std": 2.1157
+          }
+        }
+      },
+      "natural_wood": {
+        "n": 8,
+        "metrics": {
+          "structural_fidelity": {
+            "n": 8,
+            "scored": 8,
+            "null": 0,
+            "mean": 57.7812,
+            "min": 52.36,
+            "max": 68.06,
+            "std": 5.4144
+          }
+        }
+      }
+    },
+    "tags": {
+      "basement": {
+        "n": 3,
+        "metrics": {
+          "structural_fidelity": {
+            "n": 3,
+            "scored": 3,
+            "null": 0,
+            "mean": 61.7933,
+            "min": 56.17,
+            "max": 68.93,
+            "std": 5.318
+          }
+        }
+      },
+      "cluttered": {
+        "n": 4,
+        "metrics": {
+          "structural_fidelity": {
+            "n": 4,
+            "scored": 4,
+            "null": 0,
+            "mean": 58.1175,
+            "min": 51.72,
+            "max": 62.78,
+            "std": 4.6697
+          }
+        }
+      },
+      "duplex": {
+        "n": 6,
+        "metrics": {
+          "structural_fidelity": {
+            "n": 6,
+            "scored": 6,
+            "null": 0,
+            "mean": 52.9183,
+            "min": 48.68,
+            "max": 55.36,
+            "std": 2.3474
+          }
+        }
+      },
+      "exposed_beam": {
+        "n": 3,
+        "metrics": {
+          "structural_fidelity": {
+            "n": 3,
+            "scored": 3,
+            "null": 0,
+            "mean": 54.42,
+            "min": 52.66,
+            "max": 55.64,
+            "std": 1.2751
+          }
+        }
+      },
+      "irregular_layout": {
+        "n": 8,
+        "metrics": {
+          "structural_fidelity": {
+            "n": 8,
+            "scored": 8,
+            "null": 0,
+            "mean": 57.9087,
+            "min": 52.9,
+            "max": 66.36,
+            "std": 4.0908
+          }
+        }
+      },
+      "small_space": {
+        "n": 11,
+        "metrics": {
+          "structural_fidelity": {
+            "n": 11,
+            "scored": 11,
+            "null": 0,
+            "mean": 58.1309,
+            "min": 49.6,
+            "max": 68.67,
+            "std": 5.3522
+          }
+        }
+      }
+    }
+  }
+}

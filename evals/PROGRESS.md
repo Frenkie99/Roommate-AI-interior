@@ -21,12 +21,16 @@
 - **数据**：85 对真实评测图齐全；`eval_results.json` 含 85 条真实分（clip/structural_fidelity/llm_judge）。
 - **金标准**：`gold_labels.json` 已存在，**85/85 全标完**（标注人 frenkie），四维度均用满 1-5、方差充足，是有效的真值尺。
 
-## ⏭️ 下一步立即行动（2026-07-01 晚更新）
+## ⏭️ 下一步立即行动（2026-07-02 更新）
 
-> **用户拍板节奏**：trace 相关本地代码先攒着**不 push**，等本地全搞好再**统一 push + 部署**。用户已 pivot 到**模块二（评测环境 / eval harness）**开始上网课学习。
+> **用户拍板节奏**：trace 相关本地代码先攒着**不 push**，等本地全搞好再**统一 push + 部署**。模块二已开工。
 > trace 管道：第3步(埋点)+第5步(导入)**本地代码已完成并本地测通**，只差①部署 ②第4步用户点评埋点（已降为待办）。
 
-1. **【新主线】模块二 = 搭建评测环境 / eval harness**（用户正在学这节网课）。这是把"数据集 + 评分器 + 执行器 + 报告"串成一条能一键跑的流水线。**下次开工先跟用户对齐 harness 现状与缺口**（executor/ 已有骨架，需盘点）。
+0. **【本轮完成·待 push】模块二第一刀「骨架合体」**：`executor/runner.py` 重写(CLI筛选/失败隔离/续跑/合并非破坏/run快照) + 新 `executor/aggregator.py`(分维度报告)。本地测通。见会话日志 2026-07-02。**未 push**(等 trace 一起)。
+1. **【模块二 后续候选】** 对齐五大要素后剩下的缺口：
+   - **④ Trace 部署**(要动生产+等用户)：把埋点部署到服务器真正开始采集，并补记「中途节点」(分割/视觉原始返回)让 trace 从黑盒→白盒。
+   - **生成式重跑**(花钱+动生图)：让 Runner 真能「喂 case 重跑生图」，做模型/prompt 版本的控制变量对比。
+   - **把聚合报告接进看板**：现在报告是 md/json 文件，可在 Streamlit 加一个「分维度报告」tab 直接读 eval_report.json。
 2. **【待办·后面再做】第4步 = 用户点评埋点（动前端）**：生成的效果图下面加按钮「满意/重新生成/下载/不要了」，用户一点就写进 trace 的 `feedback` 字段 = bad case 金矿；同时前端生成 `session_id` 回传后端（当前埋点 session_id 先留空）。用户已确认：**这是个独立埋点，先记着，后面搞**。
 3. **【等用户操作·攒着一起来】部署 trace 到生产**：CI 已禁用(纯手工)。等本地都好了，统一 push → 服务器 `git pull` + 重启 `roommate-backend.service`。生效后每次真实用户成功生图 → 追加一条到 `backend/data/traces.jsonl`；之后用 `python -m evals.dataset.import_traces <拉回本地的traces.jsonl>` 导入评测集（幂等，只导入成功生图，缺图跳过）。可统计 `vision_analysis_ok` 量化"静默降级到盲DeepSeek"的真实频率。
 3. **视觉 Judge 现状（半成品，待 trace 解锁）**：v2 已重写为 VQA(指令)+成对(美学)；grader 用 **gpt-4o**（GRADER_APIYI_KEY，已配通）。成对美学验证 75%(可用)；**VQA 指令验证卡住**——因评测集是"不传room_type"的非真实路径生成的，无法公平验证指令遵循。**trace 接入后用真实数据重测才有意义。**
@@ -43,6 +47,19 @@
 ---
 
 ## 🗓️ 会话日志（倒序，最新在上）
+
+### 2026-07-02 · 模块二第一刀：eval harness「骨架合体」（免费，本地测通）
+- **背景**：用户看完模块二网课（eval harness 架构/执行环境/调试工具/控制变量）。用最后一张「Eval Harness 五大要素」(Anthropic 框架：①Loader筛选 ②Runner批量 ③环境隔离/可复现 ④Trace日志 ⑤Aggregator分维度) 逐条映射现有代码 → 结论：**零件基本都有，缺的是「串起来+接上」**。用户拍板先做免费的「骨架合体」(接通 ①②③⑤，④trace部署 与 生成式重跑 押后)。
+- **动手前核到两个雷**（都躲过）：
+  - (a) 旧 `runner.py` 写结果时只带 style/room_type/tags/split 四维 → **直接重跑会把 difficulty/intrinsic_difficulty 两个切片维度冲掉**。
+  - (b) `intrinsic_difficulty` 存 pair **顶层**但**不是 ImagePair 字段**(from_dict 丢弃)；`difficulty` **源数据根本没有**(只在 eval_results，人工分反推)。→ 这俩维度 runner **无法从输入重算**，必须**合并写盘时保留既有结果的维度**。
+- **做了（3 文件）**：
+  1. 新建 `executor/aggregator.py`(要素⑤)：`aggregate()` 出总览 + 按 split/room_type/difficulty/intrinsic_difficulty/style/tags 分组；`to_markdown()` 每组按均值降序(最烂一眼可见)；产出 `data/eval_report.md`(人读)+`eval_report.json`(程序读)。
+  2. 重写 `executor/runner.py`：`--split/--room-type/--difficulty/--intrinsic-difficulty/--tags` 筛 case 子集(①)；`scorer.score` 套 try/except **失败隔离**(单点报错记 None 继续不崩整轮)(②)；`--resume` 续跑；**合并写盘非破坏性**(保留既有富化维度+retired_metrics，只更新分数与基础属性)；`last_run` 快照(筛选/指标/mock/耗时/计数)存进结果文件(③)；`--dry-run`/`--report-only`/`--no-merge`。跑完自动出聚合报告(⑤)。
+  3. `config.py` 加 `EVAL_REPORT_MD_PATH`/`EVAL_REPORT_JSON_PATH`。
+- **验证(全程不碰真 eval_results，用临时副本)**：三文件 py_compile 过；`--report-only` 对真85条出6维报告正常；`--dry-run --intrinsic-difficulty extreme` 命中9(与分布吻合)；临时副本跑 `--room-type study` → 合并后仍85条、study分更新、**difficulty/intrinsic维度保留**、retired_metrics保留、last_run快照完整、未跑的pair_001分与维度不变；失败隔离：喂坏图→记None+n_errors=1+不崩+仍合并85。真实数据零污染复核通过。
+- **一句话读数据**（免费副产品，来自新报告）：structural_fidelity 在各维度间**普遍平**(split 56.99~60.55 / 难度档 56.5~59.1)——再次印证它「聚焦结构单维、不随美学难度起伏」，模型好坏主因仍在美学/指令两维(没可信尺子)。
+- **未 push**：本地 commit，因 origin 前还压着未推的 trace 第5步(用户「攒着」)，push 决策交用户。
 
 ### 2026-07-01 · trace 管道第3步：后端埋点落地（代码完成 push，待用户部署）
 - **两个卡点拍板**（查服务器运维记忆后收窄）：
