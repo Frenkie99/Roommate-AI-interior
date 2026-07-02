@@ -64,11 +64,14 @@ class Trace:
     custom_prompt: str = ""
     aspect_ratio: str = ""
 
-    # —— 产品内部过程（诊断用）——
+    # —— 产品内部过程（诊断用 / 白盒中间步骤）——
     enhanced_prompt: str = ""                  # 实际发给图像模型的完整 prompt
+    prompt_source: str = ""                    # prompt 来源：llm_vision/blind_deepseek/static/static_on_error
+    vision_analysis: Dict[str, Any] = field(default_factory=dict)  # AI 对房间的原始理解（出问题先看这里）
     model_used: str = ""
     vision_analysis_ok: Optional[bool] = None  # 视觉识别成功 / 静默降级到盲 DeepSeek（记录隐患频率）
     latency_ms: Optional[int] = None
+    latency_breakdown: Dict[str, Any] = field(default_factory=dict)  # 各阶段耗时 {vision_ms, generate_ms}
 
     # —— 输出 ——
     output_image_paths: List[str] = field(default_factory=list)
@@ -101,6 +104,8 @@ class Trace:
                 "trace_id": self.trace_id,
                 "session_id": self.session_id,
                 "enhanced_prompt": self.enhanced_prompt,
+                "prompt_source": self.prompt_source,
+                "vision_analysis": self.vision_analysis,
                 "model_used": self.model_used,
                 "vision_analysis_ok": self.vision_analysis_ok,
                 "feedback": self.feedback,

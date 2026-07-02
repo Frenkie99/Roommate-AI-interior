@@ -26,7 +26,8 @@ _TRACE_FIELDS = (
     "trace_id", "created_at", "session_id",
     "input_image_path", "input_image_hash",
     "style", "room_type", "custom_prompt", "aspect_ratio",
-    "enhanced_prompt", "model_used", "vision_analysis_ok", "latency_ms",
+    "enhanced_prompt", "prompt_source", "vision_analysis",
+    "model_used", "vision_analysis_ok", "latency_ms", "latency_breakdown",
     "output_image_paths", "success", "error",
     "feedback", "metadata",
 )

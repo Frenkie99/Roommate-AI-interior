@@ -48,6 +48,21 @@
 
 ## 🗓️ 会话日志（倒序，最新在上）
 
+### 2026-07-02（第三刀）· 记全中间步骤：trace 从「半白盒」→ 真白盒（本地，不部署）
+- **背景**：用户认可呈现端后拍板「继续记全中间步骤」。核管道(image.py /generate + llm_client)发现：`llm_analysis.get("analysis")`(AI对房间的原始理解)**返回给前端了但trace没记**，是最该补的白盒产物。
+- **补记3样中间步骤(全程只加不改生图逻辑)**：
+  1. `vision_analysis` = AI对房间的原始理解(识别房型/布局/采光)；
+  2. `prompt_source` = enhanced_prompt走了哪条路(llm_vision/blind_deepseek/static_on_error/static)；
+  3. `latency_breakdown` = 分阶段耗时{vision_ms, generate_ms}(哪步慢一眼见)。
+- **改动4处**：
+  - `evals/dataset/schemas.py::Trace` 加3字段(向后兼容)，`to_image_pair` metadata带上 prompt_source+vision_analysis。
+  - `backend/app/routes/image.py` 分阶段计时(视觉/生图) + 按分支定 prompt_source + 捕获 vision_analysis，写进 write_trace(**只加新代码**)。
+  - `backend/app/utils/trace_logger.py` 白名单加3新键(否则被丢弃)。
+  - `ui/components/trace_viewer.py` ③中间过程改版：提示词来源标签+分阶段耗时+`st.json`展开AI理解+**房型跑偏红字告警**(AI识别房型≠用户选→点名根因)。
+  - 示例 `sample_traces.jsonl` 补齐新字段：demo_b1 演示「用户选bedroom→盲降级→AI猜living_room→生成客厅→弃用」，中间步骤记全后一眼定位根因。
+- **验证**：后端3+evals2文件 py_compile过；后端白名单写→读回3新键放行、junk键丢弃；示例贯通(source/vision_ok/detected_room_type/耗时拆解全出)；to_image_pair带新metadata；跑偏检测 demo_b1 selected≠detected=True；UI导入OK+看板重启。**未push**。
+- **要素④仍差最后一步**：埋点部署上线才有真实数据(要动生产+等用户)。至此「记录」维度已白盒，「采集」开关待开。
+
 ### 2026-07-02（下半场）· 模块二第二刀：「用户使用过程」呈现端（本地，不部署）
 - **背景**：用户追问「用户使用过程能否在模块二完整呈现」。诚实答：现做不到=正是要素④(Trace)，采集没部署(0真实数据)+看板无呈现界面。用户拍板：**本地先搭「呈现」不部署**(不碰生产、不破坏「攒着」)。
 - **做了**：

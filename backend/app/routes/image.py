@@ -89,8 +89,12 @@ async def generate_renovation_image(
     use_llm = os.getenv("USE_LLM_PROMPT", "true").lower() == "true"
     llm_analysis = None
     vision_analysis_ok = None  # trace 埋点：None=未走LLM / True=视觉成功 / False=静默降级到盲DeepSeek
+    vision_analysis = {}       # trace 埋点：AI 对房间的原始理解（白盒中间产物，出问题先看这里）
+    prompt_source = "static"   # trace 埋点：enhanced_prompt 走了哪条路径
+    _vision_ms = None          # trace 埋点：视觉分析阶段耗时
 
     if use_llm:
+        _t_vision = time.perf_counter()
         try:
             print(f"[LLM] 开始分析毛坯房图片...")
             llm_result = await llm_client.analyze_room_and_generate_prompt(
@@ -104,15 +108,21 @@ async def generate_renovation_image(
                 llm_analysis = llm_result.get("data", {})
                 prompt = llm_analysis.get("enhanced_prompt", "")
                 vision_analysis_ok = llm_analysis.get("vision_used")
+                vision_analysis = llm_analysis.get("analysis") or {}
+                prompt_source = "llm_vision" if vision_analysis_ok else "blind_deepseek"
                 print(f"[LLM] 智能提示词生成成功")
             else:
                 print(f"[LLM] 分析失败: {llm_result.get('message')}, 使用静态提示词")
                 prompt = build_prompt(style, room_type, custom_prompt)
                 vision_analysis_ok = False
+                prompt_source = "static_on_error"
         except Exception as e:
             print(f"[LLM] 异常: {str(e)}, 使用静态提示词")
             prompt = build_prompt(style, room_type, custom_prompt)
             vision_analysis_ok = False
+            prompt_source = "static_on_error"
+        finally:
+            _vision_ms = int((time.perf_counter() - _t_vision) * 1000)
     else:
         prompt = build_prompt(style, room_type, custom_prompt)
     
@@ -128,6 +138,7 @@ async def generate_renovation_image(
     mapped_ratio = ratio_map.get(aspect_ratio, "4:3")
     
     # 5. 调用 API易 生成效果图（使用模型降级机制）
+    _t_gen = time.perf_counter()  # trace 埋点：生图阶段计时起点
     result = await getgoapi_client.generate_with_fallback(
         prompt=prompt,
         reference_image=processed_image,
@@ -135,6 +146,7 @@ async def generate_renovation_image(
         aspect_ratio=mapped_ratio,
         image_size=image_size
     )
+    _gen_ms = int((time.perf_counter() - _t_gen) * 1000)  # trace 埋点：生图阶段耗时
     
     # 6. 处理结果
     # 6. 处理结果
@@ -192,11 +204,14 @@ async def generate_renovation_image(
         "room_type": room_type or "",
         "custom_prompt": custom_prompt or "",
         "aspect_ratio": aspect_ratio,
-        # —— 产品内部过程（诊断用）——
+        # —— 产品内部过程（诊断用 / 白盒中间步骤）——
         "enhanced_prompt": prompt,
+        "prompt_source": prompt_source,
+        "vision_analysis": vision_analysis,
         "model_used": data.get("used_model", "unknown"),
         "vision_analysis_ok": vision_analysis_ok,
         "latency_ms": int((time.perf_counter() - _t_start) * 1000),
+        "latency_breakdown": {"vision_ms": _vision_ms, "generate_ms": _gen_ms},
         # —— 输出 ——
         "output_image_paths": [u.lstrip("/") for u in output_urls],
         "success": True,

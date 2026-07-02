@@ -97,16 +97,46 @@ def _render_one_trace(t: Trace) -> None:
         f"- 自定义描述：{t.custom_prompt or '（无）'}"
     )
 
-    # [3] AI 中间过程（诊断用 —— 课程强调「中途节点也要记」）
+    # [3] AI 中间过程（白盒中间步骤 —— 课程强调「中途节点也要记」）
     st.caption("③ AI 中间过程（诊断）")
-    if t.vision_analysis_ok is True:
-        st.markdown("- 视觉识别：✅ 成功（看到了图）")
+
+    # 3.1 提示词走了哪条路（视觉成功 / 盲降级 / 静态回退）
+    source_label = {
+        "llm_vision": "✅ 视觉识别成功（AI 真的看了图）",
+        "blind_deepseek": "⚠️ **视觉失败，静默降级到盲 DeepSeek（没看图）** — 房型/内容判断可能出错",
+        "static_on_error": "⚠️ LLM 异常，回退静态模板提示词（没看图）",
+        "static": "— 未启用 LLM，用静态模板",
+    }.get(t.prompt_source)
+    if source_label:
+        st.markdown(f"- 提示词来源：{source_label}")
+    elif t.vision_analysis_ok is True:
+        st.markdown("- 视觉识别：✅ 成功")
     elif t.vision_analysis_ok is False:
-        st.markdown("- 视觉识别：⚠️ **失败，静默降级到盲 DeepSeek（没看图）** — 房型/内容判断可能出错")
+        st.markdown("- 视觉识别：⚠️ 静默降级到盲 DeepSeek（没看图）")
     else:
         st.markdown("- 视觉识别：—（未走该分支）")
-    lat = f"{t.latency_ms} ms" if t.latency_ms is not None else "—"
-    st.markdown(f"- 使用模型：`{t.model_used or '—'}`　耗时：{lat}")
+
+    # 3.2 分阶段耗时（哪一步慢一眼看到）
+    lb = t.latency_breakdown or {}
+    parts = []
+    if lb.get("vision_ms") is not None:
+        parts.append(f"视觉分析 {lb['vision_ms']}ms")
+    if lb.get("generate_ms") is not None:
+        parts.append(f"生图 {lb['generate_ms']}ms")
+    total = f"{t.latency_ms} ms" if t.latency_ms is not None else "—"
+    breakdown = f"（{' + '.join(parts)}）" if parts else ""
+    st.markdown(f"- 使用模型：`{t.model_used or '—'}`　总耗时：{total}{breakdown}")
+
+    # 3.3 AI 对房间的原始理解（白盒关键产物 —— 出问题先看这里）
+    if t.vision_analysis:
+        # 自动比对：AI 识别的房型 vs 用户选的房型，跑偏就红字点名（根因一眼定位）
+        detected = t.vision_analysis.get("room_analysis", {}).get("detected_room_type")
+        if detected and t.room_type and detected != t.room_type:
+            st.error(f"🚨 房型跑偏：用户选了 **{t.room_type}**，但 AI 识别成 **{detected}** "
+                     f"→ 生成结果很可能不符。根因大概率在上面的「提示词来源」。")
+        with st.expander("🔍 AI 对房间的理解（vision_analysis —— 出问题时先看这里）"):
+            st.json(t.vision_analysis)
+
     with st.expander("实际发给图像模型的完整 prompt（enhanced_prompt）"):
         st.code(t.enhanced_prompt or "（空）", language=None)
 
