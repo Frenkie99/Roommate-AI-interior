@@ -9,8 +9,15 @@
 ## 📍 当前状态快照
 
 - **成熟度位置**：L1→L2 推进中。**已有第一个被数据证明可信的评分器**（structural_fidelity +0.418）。
+- **课程进度（用户上网课，按模块推进）**：模块一(数据集) ✅ · **模块二(eval harness) ✅ 收官**(除「部署采集」这一开关，五大要素 ①②③⑤ 全通 + ④记录已白盒) · **用户正在看剩余模块（模块三起，预计=评分器 Grader），看完回来继续**。
+- **模块二成果（2026-07-02 四刀，全部本地测通、未 push、ahead 5）**：
+  1. CLI Runner：按 split/房型/难度/tags 筛子集跑、失败隔离、--resume 续跑、合并写盘非破坏（保富化维度）、last_run 快照、--dry-run/--report-only；
+  2. 看板「用户使用过程」tab：trace 5 步时间线回放（示例数据预览，真实 traces.jsonl 一进自动切换）；
+  3. trace 白盒化：补记 vision_analysis(AI对房间的理解)/prompt_source(提示词走哪条路)/latency_breakdown(分阶段耗时)，房型跑偏红字告警；
+  4. 科学护栏（Fable 5 审计后修缮）：小样本⚠️、组间差vs全体std噪声判定、读数须知、反静默丢case告警、看板「分维度报告」tab。
+- **审计钉在墙上的三件事**：(a) 评测集 85 条全是非真实路径生成，指令维度不能代表产品（解药=trace 部署）；(b) structural_fidelity 各切片差异全在噪声内 = **现有唯一尺子的信息已挤干，瓶颈在尺子数量**（美学/指令两维无可信尺）；(c) difficulty 是结果反推，勿倒果为因。
 - **当前阶段**：阶段 0 ✅ · 阶段 1 ✅ · 阶段 2 🟡（结构评分器抢救成功；clip+llm_judge+iou+fid 四个无效/桩评分器已全部退役；视觉 Judge 已设计待实施）· 阶段 3(评测集) 🟡（路径A完成：85 条已可切片+失败地图；路径B采新难case押后）。
-- **看板现状**：概览/可信度只显示唯一可信指标 structural_fidelity（+0.418）。registry 现仅注册 structural_fidelity。clip/llm_judge 的数据列已从 eval_results 移除；iou/fid 本就无数据列。
+- **看板现状**：8 个 tab（新增「用户使用过程」「分维度报告」）。概览/可信度只显示唯一可信指标 structural_fidelity（+0.418）。registry 现仅注册 structural_fidelity。clip/llm_judge 的数据列已从 eval_results 移除；iou/fid 本就无数据列。
 - **评测集**：85 条已激活切片。**两个难度轴并存**：`intrinsic_difficulty`(内在难度，2026-06-30 看图判定 易17/中29/难30/极难9，脚本 `apply_intrinsic_difficulty.py`+标签 `intrinsic_difficulty_labels.json`) 与 `difficulty`(结果难度，从人工 overall 反推)。room_type 38/85(看图补到)+结构 tags 35/85。早期回填脚本 `enrich.py`(幂等)。失败地图见会话日志 2026-06-26。
 - **环境**：本地 Mac（Apple Silicon arm64，系统 Python 3.9.6）。
   - venv：`evals/.venv`（已建）。
@@ -21,16 +28,15 @@
 - **数据**：85 对真实评测图齐全；`eval_results.json` 含 85 条真实分（clip/structural_fidelity/llm_judge）。
 - **金标准**：`gold_labels.json` 已存在，**85/85 全标完**（标注人 frenkie），四维度均用满 1-5、方差充足，是有效的真值尺。
 
-## ⏭️ 下一步立即行动（2026-07-02 更新）
+## ⏭️ 下一步立即行动（2026-07-02 夜 更新）
 
-> **用户拍板节奏**：trace 相关本地代码先攒着**不 push**，等本地全搞好再**统一 push + 部署**。模块二已开工。
-> trace 管道：第3步(埋点)+第5步(导入)**本地代码已完成并本地测通**，只差①部署 ②第4步用户点评埋点（已降为待办）。
+> **用户动向**：模块二收官（除部署），**用户去看剩余网课模块（模块三起），看完回来继续**。
+> **攒着不 push**：本地 ahead 5（trace第5步导入器 + 模块二四刀），等 trace 部署时统一 push。
 
-0. **【本轮完成·待 push】模块二第一刀「骨架合体」**：`executor/runner.py` 重写(CLI筛选/失败隔离/续跑/合并非破坏/run快照) + 新 `executor/aggregator.py`(分维度报告)。本地测通。见会话日志 2026-07-02。**未 push**(等 trace 一起)。
-1. **【模块二 后续候选】** 对齐五大要素后剩下的缺口：
-   - **④ Trace 部署**(要动生产+等用户)：把埋点部署到服务器真正开始采集，并补记「中途节点」(分割/视觉原始返回)让 trace 从黑盒→白盒。
-   - **生成式重跑**(花钱+动生图)：让 Runner 真能「喂 case 重跑生图」，做模型/prompt 版本的控制变量对比。
-   - **把聚合报告接进看板**：现在报告是 md/json 文件，可在 Streamlit 加一个「分维度报告」tab 直接读 eval_report.json。
+1. **【等用户回来】对齐下一个课程模块**：用户看完课先对齐模块讲了什么再动手（模块二的经验：先对齐框架→逐条映射现状→再拍板动哪刀，很顺）。预计模块三=评分器(Grader)，恰好接上咱们最大瓶颈：**美学/指令两维没有可信尺子**（视觉 Judge v2 半成品在 `vision_judge.py`+`VISION_JUDGE_DESIGN.md`，卡在需要真实 room_type 数据验证）。
+2. **【待用户拍板】部署 trace 采集**（模块二唯一没通电的开关）：统一 push → 服务器 `git pull` + 重启 `roommate-backend.service`。生效后真实用户数据流入 `backend/data/traces.jsonl`，看板「用户使用过程」页自动从示例切真实；再用 `python -m evals.dataset.import_traces` 导入评测集。**这一步同时解锁**：真实评测集（治有效性缺陷）+ 视觉 Judge 验证数据。
+3. **【待办·独立】第4步用户点评埋点**（动前端）：效果图下加「满意/重新生成/下载/不要了」按钮写 feedback + 前端生成 session_id 回传。bad case 金矿。
+4. **【远期】生成式重跑**（花钱）：Runner 真「喂 case 重跑生图」做控制变量对比。等评分器补齐再议。
 2. **【待办·后面再做】第4步 = 用户点评埋点（动前端）**：生成的效果图下面加按钮「满意/重新生成/下载/不要了」，用户一点就写进 trace 的 `feedback` 字段 = bad case 金矿；同时前端生成 `session_id` 回传后端（当前埋点 session_id 先留空）。用户已确认：**这是个独立埋点，先记着，后面搞**。
 3. **【等用户操作·攒着一起来】部署 trace 到生产**：CI 已禁用(纯手工)。等本地都好了，统一 push → 服务器 `git pull` + 重启 `roommate-backend.service`。生效后每次真实用户成功生图 → 追加一条到 `backend/data/traces.jsonl`；之后用 `python -m evals.dataset.import_traces <拉回本地的traces.jsonl>` 导入评测集（幂等，只导入成功生图，缺图跳过）。可统计 `vision_analysis_ok` 量化"静默降级到盲DeepSeek"的真实频率。
 3. **视觉 Judge 现状（半成品，待 trace 解锁）**：v2 已重写为 VQA(指令)+成对(美学)；grader 用 **gpt-4o**（GRADER_APIYI_KEY，已配通）。成对美学验证 75%(可用)；**VQA 指令验证卡住**——因评测集是"不传room_type"的非真实路径生成的，无法公平验证指令遵循。**trace 接入后用真实数据重测才有意义。**
