@@ -66,7 +66,7 @@ def _show_image(path: str, caption: str) -> None:
     resolved = _resolve(path)
     if resolved and resolved.exists():
         try:
-            st.image(Image.open(resolved), caption=caption, use_container_width=True)
+            st.image(Image.open(resolved), caption=caption, width="stretch")
             return
         except Exception as e:  # 图损坏/读失败不拖垮页面
             logger.warning(f"图片打开失败 {path}: {e}")

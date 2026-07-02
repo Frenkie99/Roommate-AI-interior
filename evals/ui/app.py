@@ -20,6 +20,7 @@ from evals.ui.components.badcase_panel import render_badcase_panel
 from evals.ui.components.gold_labeling import render_gold_labeling
 from evals.ui.components.credibility_panel import render_credibility_panel
 from evals.ui.components.trace_viewer import render_trace_viewer
+from evals.ui.components.report_panel import render_report_panel
 
 st.set_page_config(
     page_title="Roommate Eval Platform",
@@ -50,8 +51,9 @@ except FileNotFoundError:
 filters = render_sidebar(loader, store.get_active_metrics())
 
 # 主内容区
-tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(
-    ["概览", "数据表", "图像对比", "Badcase 分析", "金标准标注", "评分器可信度", "用户使用过程"]
+tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs(
+    ["概览", "数据表", "图像对比", "Badcase 分析", "金标准标注", "评分器可信度",
+     "用户使用过程", "分维度报告"]
 )
 
 with tab1:
@@ -74,3 +76,6 @@ with tab6:
 
 with tab7:
     render_trace_viewer()
+
+with tab8:
+    render_report_panel(store)

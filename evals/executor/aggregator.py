@@ -19,6 +19,15 @@ from evals.dataset.schemas import EvalResult
 # tags 是多值（一个 case 可命中多个标签），单独处理。
 GROUP_DIMENSIONS = ["split", "room_type", "difficulty", "intrinsic_difficulty", "style"]
 
+# 维度语义注解——防倒果为因：difficulty 是「结果难度」(人工分反推)，不是输入属性
+DIMENSION_NOTES = {
+    "difficulty": "结果难度：由人工 overall 反推，属「模型表现」而非输入属性，勿倒果为因",
+    "intrinsic_difficulty": "内在难度：看图判定的房间固有难度，是输入属性",
+}
+
+# 小样本阈值：组内样本数低于此值时标 ⚠️，均值仅作方向性参考
+SMALL_N = 5
+
 
 def _summarize(values: List[Any]) -> Dict[str, Any]:
     """对一组分值出统计量；None（评分器报错/缺分）计入 null，不参与均值。"""
@@ -40,6 +49,7 @@ def _summarize(values: List[Any]) -> Dict[str, Any]:
 
 def _group_block(results: List[EvalResult], metrics: List[str]) -> Dict[str, Any]:
     return {"n": len(results),
+            "small_sample": len(results) < SMALL_N,
             "metrics": {m: _summarize([r.scores.get(m) for r in results]) for m in metrics}}
 
 
@@ -111,6 +121,13 @@ def to_markdown(report: Dict[str, Any], run_config: Optional[Dict[str, Any]] = N
     lines.append("")
     lines.append(f"样本数：**{report['n_results']}** · 指标：{', '.join(metrics) or '（无）'}")
 
+    # 读数护栏——报告是「下结论的界面」，必须自带防误读说明
+    lines.append("")
+    lines.append("> **读数须知**：")
+    lines.append(f"> [1] 组名带 ⚠️ = 小样本（n<{SMALL_N}），均值仅方向性参考，不作结论；")
+    lines.append("> [2] 各表附「组间差 vs 全体标准差」——组间差小于全体 std 时，差异大概率是噪声；")
+    lines.append("> [3] difficulty 是**结果难度**（人工分反推），解读时勿倒果为因（「hard 组分低」是定义使然）。")
+
     # 总览
     lines.append("\n## 总览")
     lines.append("| 指标 | n | 均值 | 最小 | 最大 | 标准差 | 空值 |")
@@ -123,17 +140,32 @@ def to_markdown(report: Dict[str, Any], run_config: Optional[Dict[str, Any]] = N
     # 分维度：每个维度 × 每个指标一张表
     for dim, groups in report["by_dimension"].items():
         for m in metrics:
+            note = DIMENSION_NOTES.get(dim)
             lines.append(f"\n## 按 {dim} 分组 — {m}")
+            if note:
+                lines.append(f"> {note}")
             lines.append(f"| {dim} | n | 均值 | 最小 | 最大 | 标准差 | 空值 |")
             lines.append("|---|---|---|---|---|---|---|")
-            # 按均值降序排，最烂的一眼可见（均值 None 排最后）
+            # 按均值降序排，最烂的一眼可见（均值 None 排最后）；小样本组标 ⚠️
             def sort_key(item):
                 s = item[1]["metrics"][m]
                 return (s["mean"] is None, -(s["mean"] or 0))
             for key, block in sorted(groups.items(), key=sort_key):
                 s = block["metrics"][m]
-                lines.append(f"| {key} | {block['n']} | {_fmt(s['mean'])} | {_fmt(s['min'])} | "
+                label = f"{key} ⚠️" if block.get("small_sample") else str(key)
+                lines.append(f"| {label} | {block['n']} | {_fmt(s['mean'])} | {_fmt(s['min'])} | "
                              f"{_fmt(s['max'])} | {_fmt(s['std'])} | {s['null']} |")
+            # 噪声提示：组间均值差 vs 全体 std（只看非小样本组，够不上就直说没法比）
+            overall_std = report["overall"][m]["std"]
+            big_means = [b["metrics"][m]["mean"] for b in groups.values()
+                         if not b.get("small_sample") and b["metrics"][m]["mean"] is not None]
+            if overall_std is not None and len(big_means) >= 2:
+                spread = round(max(big_means) - min(big_means), 2)
+                verdict = ("**差异在噪声量级内，不宜下结论**" if spread < overall_std
+                           else "组间差超过全体 std，可能是真信号（仍建议复核样本）")
+                lines.append(f"\n组间差（非小样本组）= {spread}，全体 std = {_fmt(overall_std)} → {verdict}")
+            elif len(big_means) < 2:
+                lines.append(f"\n非小样本组不足 2 个，本维度暂无法做组间比较。")
 
     return "\n".join(lines) + "\n"
 

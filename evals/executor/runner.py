@@ -44,6 +44,14 @@ class Runner:
         if difficulty or intrinsic_difficulty:
             existing = {r["pair_id"]: r.get("metadata", {})
                         for r in self.store.load().get("results", [])}
+            dim = "difficulty" if difficulty else "intrinsic_difficulty"
+            # 反静默：没评过分/无该维度标注的 case（如新导入的 production 数据）无法按难度
+            # 过滤，会被排除——必须显式告警，绝不无声吞掉。
+            unlabeled = [p.pair_id for p in pairs if not existing.get(p.pair_id, {}).get(dim)]
+            if unlabeled:
+                shown = ", ".join(unlabeled[:5]) + ("…" if len(unlabeled) > 5 else "")
+                print(f"  ⚠️ {len(unlabeled)} 条 case 缺 {dim} 标注，无法按难度筛选、已被排除：{shown}\n"
+                      f"     （新导入的数据需先跑一轮全量评分/富化才能进难度切片）")
             if difficulty:
                 pairs = [p for p in pairs if existing.get(p.pair_id, {}).get("difficulty") == difficulty]
             if intrinsic_difficulty:
