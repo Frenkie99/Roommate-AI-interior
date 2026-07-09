@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "updated_at": "2026-06-30",
+  "updated_at": "2026-07-09T23:10:12.817171",
   "total": 85,
   "axes": {
     "structural": "结构保真",
@@ -18,8 +18,10 @@
         "overall": 1.0
       },
       "labeler": "frenkie",
-      "labeled_at": "2026-06-21T17:45:48.544909",
-      "notes": "视角和原毛坯图完全不一致"
+      "labeled_at": "2026-07-09T23:04:25.865315",
+      "notes": "视角和原毛坯图完全不一致",
+      "binary_verdict": "fail",
+      "critique": "视角和原图不一致，盲目猜测了房屋剩余结构"
     },
     {
       "pair_id": "pair_001",
@@ -49,13 +51,14 @@
       "pair_id": "pair_003",
       "scores": {
         "structural": 2.0,
-        "aesthetic": 5.0,
+        "aesthetic": 4.0,
         "instruction": 3.0,
         "overall": 3.0
       },
-      "labeler": "frenkie",
-      "labeled_at": "2026-06-21T17:52:08.677134",
-      "notes": ""
+      "labeler": "",
+      "labeled_at": "2026-07-09T22:38:42.599673",
+      "notes": "没有遵循毛坯图结构，门洞位置错误",
+      "binary_verdict": "fail"
     },
     {
       "pair_id": "pair_004",
@@ -89,9 +92,10 @@
         "instruction": 3.0,
         "overall": 3.0
       },
-      "labeler": "frenkie",
-      "labeled_at": "2026-06-21T17:56:03.240819",
-      "notes": ""
+      "labeler": "",
+      "labeled_at": "2026-07-09T22:58:47.504822",
+      "notes": "对毛坯原图进行了自动扩图，不一定还原了房间原貌",
+      "binary_verdict": "fail"
     },
     {
       "pair_id": "pair_007",
@@ -186,8 +190,10 @@
         "overall": 2.0
       },
       "labeler": "frenkie",
-      "labeled_at": "2026-06-21T17:59:41.523290",
-      "notes": ""
+      "labeled_at": "2026-07-09T23:06:17.670017",
+      "notes": "",
+      "binary_verdict": "fail",
+      "critique": "视角矫正是好的，但是阳台进深估计错误，不符合现实"
     },
     {
       "pair_id": "pair_015",
@@ -210,8 +216,10 @@
         "overall": 5.0
       },
       "labeler": "frenkie",
-      "labeled_at": "2026-06-21T18:02:48.315597",
-      "notes": "当原毛坯图摄影角度一般的时候，该案例进行了很好的角度矫正，该行为是模型的自动行为还是什么有待考证，是否需要固化为该产品的系统提示词？待定"
+      "labeled_at": "2026-07-09T23:07:14.583807",
+      "notes": "当原毛坯图摄影角度一般的时候，该案例进行了很好的角度矫正，该行为是模型的自动行为还是什么有待考证，是否需要固化为该产品的系统提示词？待定",
+      "binary_verdict": "pass",
+      "critique": "自动矫正了视角，ok的"
     },
     {
       "pair_id": "pair_017",
@@ -234,8 +242,10 @@
         "overall": 5.0
       },
       "labeler": "frenkie",
-      "labeled_at": "2026-06-21T18:05:24.681907",
-      "notes": "测试案例的房间功能需要分类：这个明显是卫生间，就不应该随机分配别的房间功能来测试"
+      "labeled_at": "2026-07-09T23:08:27.191210",
+      "notes": "测试案例的房间功能需要分类：这个明显是卫生间，就不应该随机分配别的房间功能来测试",
+      "binary_verdict": "fail",
+      "critique": "虽然是测试，也不能随机安排房间类型，这个明显是卫生间"
     },
     {
       "pair_id": "pair_019",
@@ -246,8 +256,10 @@
         "overall": 4.0
       },
       "labeler": "frenkie",
-      "labeled_at": "2026-06-21T18:06:32.744975",
-      "notes": "角度自动矫正再次发生"
+      "labeled_at": "2026-07-09T23:09:22.926606",
+      "notes": "角度自动矫正再次发生",
+      "binary_verdict": "fail",
+      "critique": "未遵循房屋本身结构"
     },
     {
       "pair_id": "pair_020",
@@ -485,9 +497,10 @@
         "instruction": 3.0,
         "overall": 3.0
       },
-      "labeler": "frenkie",
-      "labeled_at": "2026-06-21T18:51:51.259672",
-      "notes": ""
+      "labeler": "",
+      "labeled_at": "2026-07-09T22:59:25.684811",
+      "notes": "结构保持的还是不错的，但是视觉效果太丑",
+      "binary_verdict": "pass"
     },
     {
       "pair_id": "pair_040",
@@ -581,9 +594,10 @@
         "instruction": 4.0,
         "overall": 3.0
       },
-      "labeler": "frenkie",
-      "labeled_at": "2026-06-21T18:54:50.689287",
-      "notes": ""
+      "labeler": "",
+      "labeled_at": "2026-07-09T23:00:06.255611",
+      "notes": "右侧墙壁上出现了本来没有的窗户，未遵循房屋本来的结构",
+      "binary_verdict": "fail"
     },
     {
       "pair_id": "pair_048",
@@ -714,8 +728,10 @@
         "overall": 1.0
       },
       "labeler": "frenkie",
-      "labeled_at": "2026-06-21T19:02:13.835192",
-      "notes": ""
+      "labeled_at": "2026-07-09T23:10:12.817165",
+      "notes": "",
+      "binary_verdict": "fail",
+      "critique": "自动扩图了，盲目猜测剩余空间的样貌，很容易与事实不符"
     },
     {
       "pair_id": "pair_059",
@@ -797,9 +813,10 @@
         "instruction": 3.0,
         "overall": 3.0
       },
-      "labeler": "frenkie",
-      "labeled_at": "2026-06-21T19:04:49.005718",
-      "notes": ""
+      "labeler": "",
+      "labeled_at": "2026-07-09T23:00:50.067096",
+      "notes": "",
+      "binary_verdict": "pass"
     },
     {
       "pair_id": "pair_066",
@@ -881,9 +898,10 @@
         "instruction": 2.0,
         "overall": 3.0
       },
-      "labeler": "frenkie",
-      "labeled_at": "2026-06-21T19:08:55.645089",
-      "notes": ""
+      "labeler": "",
+      "labeled_at": "2026-07-09T23:01:10.710114",
+      "notes": "视觉效果太丑",
+      "binary_verdict": "pass"
     },
     {
       "pair_id": "pair_073",
@@ -1001,9 +1019,10 @@
         "instruction": 3.0,
         "overall": 3.0
       },
-      "labeler": "frenkie",
-      "labeled_at": "2026-06-21T19:13:40.040728",
-      "notes": ""
+      "labeler": "",
+      "labeled_at": "2026-07-09T23:01:53.974827",
+      "notes": "和毛坯房原结构不符",
+      "binary_verdict": "fail"
     },
     {
       "pair_id": "pair_083",

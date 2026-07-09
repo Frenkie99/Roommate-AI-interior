@@ -1,6 +1,6 @@
 # 评测体系 进度 / 复盘日志
 
-> 配套：`ROADMAP.md`（分阶段计划）· `METHODOLOGY.md`（哲学）· `DATASET.md`（数据自检）。
+> 配套：`ROADMAP.md`（分阶段计划）· `METHODOLOGY.md`（哲学）· `DATASET.md`（数据自检）· `PRODUCT_CONTRACT.md`（产品契约：忠实还原vs效果优化，含裁决规则+产品待办）。
 > **重启会话第一眼看本文件顶部「当前状态快照 + 下一步立即行动」即可续接。**
 > 维护规则：每次会话结束前更新顶部快照，并在「会话日志」**最上方**新增一条（倒序）。
 
@@ -37,7 +37,7 @@
 
 > **用户动向**：看完 grader 网课模块回来，对齐框架后拍板动刀，模块三基建四刀已完成。
 
-1. **【用户人工任务·5-10分钟】二元仲裁 + few-shot critique**：看板「金标准标注」→勾「只看待二元仲裁」，把 7 条 overall=3 的模糊 case 裁决 pass/fail（pair_003/006/039/047/065/072/082）；顺手给 few-shot 池 6 条（pair_000/014/016/018/019/058）补一句话 critique（喂 judge few-shot，当前只有 1 条有可用判词）。
+1. ~~【用户人工任务】二元仲裁 + few-shot critique~~ ✅ **2026-07-09 完成**：85/85 二元真值齐（pass 49/fail 36，人工显式裁决 13 条），few-shot 池 6 条 critique 全部写好且按「呈现vs内容」契约线编码（见 `PRODUCT_CONTRACT.md`）。仲裁过程逼出产品契约问题（视角矫正/扩图/拓扑造假三档失真），四点判断+裁决规则+产品待办 P1-P5 已沉淀该文档。
 2. **【刀4·花钱·等用户确认预算】vision_judge 验收**：dev 53 条迭代 → test 26 条一次定版（记台账 `judge_split.record_test_consumption`）。门槛：指令 VQA TPR/TNR ≥85% 且 Wilson 下界 ≥70%；美学成对与人一致率 ≥75%。注意：**指令维在当前评测集上验不公平**（非真实路径，见备忘），建议只先验能验的 + 等 trace 数据补验。
 3. **【待用户拍板】部署 trace 采集**：push 已全部完成，只差服务器 `git pull` + 重启 `roommate-backend.service`。解锁真实评测集 + 视觉 Judge 公平验证 + AI 分析模块的完整 trace 上下文。
 4. **【待办·独立】第4步用户点评埋点**（动前端）：效果图下加「满意/重新生成/下载/不要了」按钮写 feedback + 前端生成 session_id 回传。bad case 金矿。
