@@ -1,15 +1,15 @@
-"""评分器可信度面板 — 自动分与人工金标准的对齐度 + 稳定性
+"""评分器可信度面板 — 对齐度 + 分类校准 + 稳定性
 
 展示 evals/scorer/credibility.py 的分析结果：
-- 对齐度：每个评分器 vs 各人工维度的 Spearman / Pearson / 归一化 MAE
-- 散点：所选评分器 vs 其主对齐维度的成对点
+- 对齐度：每个评分器 vs 各人工维度的 Spearman / Pearson / 归一化 MAE（分数排序对不对）
+- 分类校准：自动分二元化 vs 金标准二元真值的 TPR/TNR + Wilson 区间（pass/fail 判得准不准）
 - 稳定性：按需对 LLM Judge 等随机性评分器重复打分，量化方差
 """
 
 import streamlit as st
 import pandas as pd
 
-from evals.config import METRIC_LABELS
+from evals.config import METRIC_LABELS, METRIC_RANGES
 from evals.scorer import credibility
 
 
@@ -72,6 +72,73 @@ def render_credibility_panel(loader) -> None:
                 df = pd.DataFrame([{"人工分": p["human"], "自动分": p["auto"]} for p in pts])
                 st.scatter_chart(df, x="人工分", y="自动分", height=240)
         st.divider()
+
+    # ---- 分类校准（TPR / TNR） ----
+    st.markdown("#### 分类校准（TPR / TNR）")
+    st.caption(
+        "把 Judge 当分类器验证（课程框架）：自动分按阈值二元化，对齐金标准二元真值。"
+        "真值 = 显式人工裁决优先，否则 overall 阈值派生（≥4 pass / ≤2 fail / =3 模糊须仲裁）。"
+        "**n 小时区间很宽——结论只用于「过/不过门槛」，不用于版本间精细排序。**"
+    )
+    gs = credibility.gold_binary_summary()
+    g1, g2, g3, g4 = st.columns(4)
+    g1.metric("二元真值", f"{gs['n_binary']} / {gs['n_gold']}")
+    g2.metric("人工裁决 / 派生", f"{gs['manual']} / {gs['derived']}")
+    g3.metric("pass / fail", f"{gs['dist']['pass']} / {gs['dist']['fail']}")
+    g4.metric("待仲裁", len(gs["pending_fuzzy"]))
+    if gs["pending_fuzzy"]:
+        st.warning(f"⚠️ {len(gs['pending_fuzzy'])} 条模糊地带（overall=3）未裁决，已从计算中剔除。"
+                   f"请到「金标准标注」→「只看待二元仲裁」逐条裁决：{', '.join(gs['pending_fuzzy'])}")
+
+    metric_opts = list(report["scorers"].keys())
+    cc1, cc2, cc3 = st.columns([2, 1, 1])
+    with cc1:
+        cls_metric = st.selectbox("评分器", metric_opts, key="cls_metric")
+    lo, hi, _hb = METRIC_RANGES.get(cls_metric, (0.0, 1.0, True))
+    with cc2:
+        threshold = st.number_input("pass 阈值", float(lo), float(hi),
+                                    float((lo + hi) / 2), key="cls_threshold")
+    with cc3:
+        split_label = st.selectbox("数据范围", ["全部", "dev", "test", "fewshot"], key="cls_split")
+    if split_label == "test":
+        st.error("🔒 test 集只应在 judge 版本最终验收时使用（一版一次，须记台账）。"
+                 "日常调试请用 dev。")
+
+    try:
+        rep = credibility.classification_analysis(
+            cls_metric, float(threshold),
+            split=None if split_label == "全部" else split_label)
+    except FileNotFoundError:
+        st.info("judge_split 划分文件不存在，请先运行 python -m evals.dataset.judge_split")
+        rep = None
+    if rep and rep["n"] >= 2:
+        c = rep["confusion"]
+        conf_df = pd.DataFrame(
+            [[c["tp"], c["fn"]], [c["fp"], c["tn"]]],
+            index=["金标准=pass", "金标准=fail"], columns=["裁判=pass", "裁判=fail"])
+        mc1, mc2 = st.columns([1, 2])
+        with mc1:
+            st.dataframe(conf_df, width='stretch')
+        with mc2:
+            def _rate_str(r):
+                if r["value"] is None:
+                    return "—"
+                return f"{r['value']*100:.1f}%（95%CI {r['ci'][0]*100:.0f}~{r['ci'][1]*100:.0f}%，{r['k']}/{r['n']}）"
+            st.markdown(
+                f"- **TPR（pass 召回）**: {_rate_str(rep['tpr'])}\n"
+                f"- **TNR（fail 召回）**: {_rate_str(rep['tnr'])}\n"
+                f"- **准确率**: {_rate_str(rep['accuracy'])}"
+            )
+        fp, fn = rep["misclassified"]["fp"], rep["misclassified"]["fn"]
+        if fp or fn:
+            with st.expander(f"误判明细（FP {len(fp)} / FN {len(fn)}）— 错误分析入口"):
+                if fp:
+                    st.markdown(f"**FP（金标准 fail 被判 pass）**: {', '.join(fp)}")
+                if fn:
+                    st.markdown(f"**FN（金标准 pass 被判 fail）**: {', '.join(fn)}")
+    elif rep:
+        st.info("当前范围内可对齐样本 < 2，无法计算。")
+    st.divider()
 
     # ---- 稳定性 ----
     st.markdown("#### 稳定性（Reliability）")

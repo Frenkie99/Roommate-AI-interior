@@ -3,11 +3,15 @@
 设计要点（见 evals/METHODOLOGY.md 第 3 节）：
 - 标注时**刻意不展示自动评分**，避免锚定效应污染人工金标准的独立性。
 - 1-5 分制覆盖 结构保真 / 美学质量 / 指令遵循 / 综合 四个可解释维度。
+- 二元判定 + critique（2026-07-09）：Likert 喂相关性对齐；TPR/TNR 校准需要二元真值。
+  overall≥4/≤2 自动派生 pass/fail；overall=3 为模糊地带，须在此人工二元裁决。
 """
 
 import streamlit as st
 
-from evals.scorer.gold_store import GoldStore, GOLD_AXES, GOLD_SCALE
+from evals.scorer.gold_store import (
+    GoldStore, GOLD_AXES, GOLD_SCALE, derive_binary, effective_binary,
+)
 from evals.ui.components.image_comparison import _resolve
 
 _AXIS_HELP = {
@@ -34,12 +38,16 @@ def render_gold_labeling(loader) -> None:
     store = GoldStore()
     labels = store.load()
 
-    # 进度
+    # 进度（含二元仲裁队列）
+    pending_ids = {pid for pid, e in labels.items() if effective_binary(e)[0] is None}
     done, total = len(labels), len(pairs)
-    c1, c2 = st.columns([1, 3])
+    c1, c2, c3 = st.columns([1, 1, 2])
     with c1:
         st.metric("已标注 / 总数", f"{done} / {total}")
     with c2:
+        st.metric("待二元仲裁", len(pending_ids),
+                  help="overall=3 的模糊地带且无显式 pass/fail 裁决，TPR/TNR 计算会剔除它们")
+    with c3:
         st.progress(done / total if total else 0.0)
 
     # 标注人（会话内记忆）
@@ -47,8 +55,17 @@ def render_gold_labeling(loader) -> None:
                             placeholder="例如 frenkie")
     st.session_state["gold_labeler"] = labeler
 
-    only_unlabeled = st.checkbox("只看未标注", value=True)
-    candidates = [p for p in pairs if not only_unlabeled or p.pair_id not in labels]
+    fc1, fc2 = st.columns(2)
+    with fc1:
+        only_unlabeled = st.checkbox("只看未标注", value=True)
+    with fc2:
+        adjudicate = st.checkbox(
+            f"只看待二元仲裁（{len(pending_ids)} 条）", value=False,
+            help="模糊地带（overall=3）逐条裁决 pass/fail，喂 TPR/TNR 校准")
+    if adjudicate:
+        candidates = [p for p in pairs if p.pair_id in pending_ids]
+    else:
+        candidates = [p for p in pairs if not only_unlabeled or p.pair_id not in labels]
     if not candidates:
         st.success("🎉 在当前筛选下没有待标注样本了。")
         return
@@ -104,13 +121,44 @@ def render_gold_labeling(loader) -> None:
                 key=f"gold_{pair.pair_id}_{axis}",
             )
 
+    # 二元判定（TPR/TNR 校准的真值侧）+ critique
+    derived = derive_binary({"overall": float(scores["overall"])})
+    existing_bv = (existing or {}).get("binary_verdict")
+    bv_options = ["自动派生", "通过 pass", "失败 fail"]
+    bv_index = {"pass": 1, "fail": 2}.get(existing_bv, 0)
+    bc1, bc2 = st.columns([2, 3])
+    with bc1:
+        bv_choice = st.radio(
+            "二元判定", bv_options, index=bv_index, horizontal=True,
+            key=f"gold_bv_{pair.pair_id}",
+            help="喂 TPR/TNR 校准的 pass/fail 真值。「自动派生」= overall≥4 pass / ≤2 fail",
+        )
+    with bc2:
+        if bv_choice == "自动派生":
+            if derived:
+                st.caption(f"当前派生结果：**{derived}**（overall={int(scores['overall'])}）")
+            else:
+                st.warning("overall=3 为模糊地带，自动派生无结果——请手工裁决 pass/fail，"
+                           "否则此条不参与 TPR/TNR 计算。")
+        else:
+            st.caption("显式裁决优先于派生；改回「自动派生」即清除。")
+
+    critique = st.text_input(
+        "Critique（一句话为什么过/不过；喂 few-shot 示例与错误分析）",
+        value=(existing or {}).get("critique", ""),
+        key=f"gold_critique_{pair.pair_id}",
+        placeholder="例如：光影和材质假、床的比例失真；或：风格准确、结构如实保留",
+    )
+
     notes = st.text_input("备注（可选）",
                           value=(existing or {}).get("notes", ""),
                           key=f"gold_notes_{pair.pair_id}")
 
     save_label = "更新标注" if existing else "保存标注"
     if st.button(save_label, type="primary"):
-        store.upsert(pair.pair_id, scores, labeler=labeler, notes=notes)
+        bv_param = {"通过 pass": "pass", "失败 fail": "fail"}.get(bv_choice, "derived")
+        store.upsert(pair.pair_id, scores, labeler=labeler, notes=notes,
+                     binary_verdict=bv_param, critique=critique)
         st.success(f"已保存 {pair.pair_id} 的标注。")
         st.rerun()
 

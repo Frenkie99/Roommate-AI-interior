@@ -1,15 +1,22 @@
 """评分器可信度度量 — 评测平台的"标尺"
 
 核心命题（见 evals/METHODOLOGY.md 第 3 节）：评分器的价值不在"能打分"，而在"分可信"。
-可信度 = 两个可量化维度：
+可信度 = 三个可量化维度：
   - 对齐度 Validity   : 自动分与人工金标准分的相关性（Spearman / Pearson / 归一化 MAE）
+                        —— 回答"分数**排序**对不对"
+  - 分类校准 Calibration（2026-07-09 新增，课程框架"把 Judge 当分类器验证"）：
+                        自动判定二元化后 vs 人工二元真值的 TPR/TNR + Wilson 95% 区间
+                        —— 回答"这个裁判判 **pass/fail** 判得准不准"
   - 稳定性 Reliability: 同一对图重复打分的方差（仅随机性评分器有意义，如 LLM Judge）
 
 本模块的统计计算全部用纯标准库实现，不依赖 numpy/scipy，可在任意环境运行与验证。
 仅 measure_reliability() 会真正调用评分器（懒加载，需要重依赖），其余分析只读 JSON。
 
 命令行用法：
-    python -m evals.scorer.credibility            # 打印可信度报告
+    python -m evals.scorer.credibility                                # 相关性对齐报告
+    python -m evals.scorer.credibility --classify structural_fidelity --threshold 55
+                                                                      # 分类校准报告
+    python -m evals.scorer.credibility --classify structural_fidelity --threshold 55 --split dev
 """
 
 import json
@@ -75,6 +82,137 @@ def normalized_mae(auto: Sequence[float], human: Sequence[float],
 
 def _round(v: Optional[float], n: int = 4) -> Optional[float]:
     return round(v, n) if v is not None else None
+
+
+# ----------------------------- 分类统计（纯标准库） -----------------------------
+
+def wilson_interval(k: int, n: int, z: float = 1.96) -> Optional[tuple]:
+    """Wilson 95% 置信区间。小样本下比正态近似稳健得多——n≈30 时区间宽可达 ±15pp，
+    所以 TPR/TNR 必须带区间报，点估计单独看没有意义。"""
+    if n <= 0:
+        return None
+    p = k / n
+    denom = 1 + z * z / n
+    center = (p + z * z / (2 * n)) / denom
+    half = z * ((p * (1 - p) / n + z * z / (4 * n * n)) ** 0.5) / denom
+    return (max(0.0, center - half), min(1.0, center + half))
+
+
+def classification_metrics(judge: Sequence[str], gold: Sequence[str]) -> dict:
+    """混淆矩阵 + TPR/TNR/准确率（positive = "pass"）。
+
+    judge/gold 为等长序列，元素 ∈ {"pass","fail"}。
+      TPR = 金标准 pass 中被裁判判 pass 的比例（漏杀率的反面）
+      TNR = 金标准 fail 中被裁判判 fail 的比例（误放率的反面）
+    各指标附 Wilson 95% 区间。
+    """
+    tp = fn = tn = fp = 0
+    for j, g in zip(judge, gold):
+        if g == "pass":
+            tp += (j == "pass")
+            fn += (j != "pass")
+        else:
+            tn += (j == "fail")
+            fp += (j != "fail")
+
+    def _rate(k, n):
+        if n == 0:
+            return {"value": None, "ci": None, "k": k, "n": n}
+        ci = wilson_interval(k, n)
+        return {"value": _round(k / n), "ci": (_round(ci[0]), _round(ci[1])), "k": k, "n": n}
+
+    n_all = tp + fn + tn + fp
+    return {
+        "n": n_all,
+        "confusion": {"tp": tp, "fn": fn, "tn": tn, "fp": fp},
+        "tpr": _rate(tp, tp + fn),
+        "tnr": _rate(tn, tn + fp),
+        "accuracy": _rate(tp + tn, n_all),
+    }
+
+
+def gold_binary_summary(gold_path: Optional[str] = None) -> dict:
+    """金标准二元真值盘点：人工裁决 / 阈值派生 / 模糊待裁决。"""
+    from evals.scorer.gold_store import GoldStore, effective_binary
+
+    gold = GoldStore(gold_path).load()
+    manual = derived = 0
+    dist = {"pass": 0, "fail": 0}
+    pending = []
+    for pid, entry in gold.items():
+        verdict, source = effective_binary(entry)
+        if verdict is None:
+            pending.append(pid)
+            continue
+        dist[verdict] += 1
+        if source == "manual":
+            manual += 1
+        else:
+            derived += 1
+    return {
+        "n_gold": len(gold), "n_binary": manual + derived,
+        "manual": manual, "derived": derived,
+        "dist": dist, "pending_fuzzy": sorted(pending),
+    }
+
+
+def classification_analysis(metric: str, threshold: float,
+                            results_path: Optional[str] = None,
+                            gold_path: Optional[str] = None,
+                            split: Optional[str] = None) -> dict:
+    """把连续自动分按阈值二元化，与金标准二元真值对齐，产出 TPR/TNR 校准报告。
+
+    - 金标准二元 = 显式人工裁决优先，否则 overall 阈值派生；模糊未裁决 case 剔除并计数。
+    - threshold：自动分 ≥ threshold 判 pass（higher_is_better=False 的指标则 ≤ 判 pass）。
+    - split：可选 "fewshot"/"dev"/"test"，按 judge_split 划分过滤（test 只应在最终验收时看）。
+    - 返回含 misclassified 明细（FP/FN 的 pair_id），供错误分析下钻。
+    """
+    from evals.config import METRIC_RANGES, EVAL_RESULTS_PATH
+    from evals.scorer.gold_store import GoldStore, effective_binary
+
+    with open(str(results_path or EVAL_RESULTS_PATH), "r", encoding="utf-8") as f:
+        data = json.load(f)
+    auto = {r["pair_id"]: r.get("scores", {}).get(metric)
+            for r in data.get("results", [])}
+    gold = GoldStore(gold_path).load()
+
+    allowed = None
+    if split:
+        from evals.dataset.judge_split import pair_ids as _split_ids
+        allowed = set(_split_ids(split))
+
+    _, _, higher_better = METRIC_RANGES.get(metric, (0.0, 1.0, True))
+
+    judge_v, gold_v, used, fuzzy_skipped = [], [], [], []
+    fp_ids, fn_ids = [], []
+    for pid in sorted(set(auto) & set(gold)):
+        if allowed is not None and pid not in allowed:
+            continue
+        a = auto.get(pid)
+        if a is None:
+            continue
+        gv, _src = effective_binary(gold[pid])
+        if gv is None:
+            fuzzy_skipped.append(pid)
+            continue
+        jv = "pass" if ((a >= threshold) if higher_better else (a <= threshold)) else "fail"
+        judge_v.append(jv)
+        gold_v.append(gv)
+        used.append(pid)
+        if jv == "pass" and gv == "fail":
+            fp_ids.append(pid)
+        elif jv == "fail" and gv == "pass":
+            fn_ids.append(pid)
+
+    report = classification_metrics(judge_v, gold_v)
+    report.update({
+        "metric": metric, "threshold": threshold, "split": split or "all",
+        "higher_is_better": higher_better,
+        "n_fuzzy_skipped": len(fuzzy_skipped), "fuzzy_skipped": fuzzy_skipped,
+        "misclassified": {"fp": fp_ids, "fn": fn_ids},
+        "gold_summary": gold_binary_summary(gold_path),
+    })
+    return report
 
 
 # ----------------------------- 对齐度分析 -----------------------------
@@ -236,5 +374,56 @@ def print_report(report: dict) -> None:
                       f"{_fmt(stats['nmae']):>12}")
 
 
+def _fmt_rate(r: dict) -> str:
+    if r["value"] is None:
+        return "  -  "
+    lo, hi = r["ci"]
+    return f"{r['value']*100:5.1f}%  [{lo*100:.0f}%, {hi*100:.0f}%]  ({r['k']}/{r['n']})"
+
+
+def print_classification(rep: dict) -> None:
+    gs = rep["gold_summary"]
+    print("\n===== 分类校准报告（TPR / TNR） =====")
+    print(f"评分器: {rep['metric']}  阈值: {'≥' if rep['higher_is_better'] else '≤'}{rep['threshold']} 判 pass"
+          f"  范围: {rep['split']}")
+    print(f"金标准二元真值: {gs['n_binary']}/{gs['n_gold']}"
+          f"（人工裁决 {gs['manual']} + 阈值派生 {gs['derived']}；"
+          f"pass {gs['dist']['pass']} / fail {gs['dist']['fail']}）")
+    if gs["pending_fuzzy"]:
+        print(f"⚠️  {len(gs['pending_fuzzy'])} 条模糊地带（overall=3）待人工二元裁决，本次已剔除: "
+              f"{', '.join(gs['pending_fuzzy'])}")
+    c = rep["confusion"]
+    print(f"\n混淆矩阵 (n={rep['n']}):")
+    print(f"                裁判=pass   裁判=fail")
+    print(f"  金标准=pass   TP={c['tp']:<8}  FN={c['fn']}")
+    print(f"  金标准=fail   FP={c['fp']:<8}  TN={c['tn']}")
+    print(f"\n  TPR (pass召回): {_fmt_rate(rep['tpr'])}")
+    print(f"  TNR (fail召回): {_fmt_rate(rep['tnr'])}")
+    print(f"  准确率        : {_fmt_rate(rep['accuracy'])}")
+    if rep["misclassified"]["fp"] or rep["misclassified"]["fn"]:
+        print(f"\n  误判明细（供错误分析）:")
+        if rep["misclassified"]["fp"]:
+            print(f"    FP（金标准fail被判pass）: {', '.join(rep['misclassified']['fp'])}")
+        if rep["misclassified"]["fn"]:
+            print(f"    FN（金标准pass被判fail）: {', '.join(rep['misclassified']['fn'])}")
+    print("\n  读数须知: n 小时区间宽是常态；结论只用于「过/不过门槛」判定，不用于版本间精细排序。")
+
+
 if __name__ == "__main__":
-    print_report(analyze())
+    import argparse
+
+    ap = argparse.ArgumentParser(description="评分器可信度报告")
+    ap.add_argument("--classify", metavar="METRIC",
+                    help="分类校准模式：指定评分器名（如 structural_fidelity）")
+    ap.add_argument("--threshold", type=float, help="二元化阈值（classify 模式必填）")
+    ap.add_argument("--split", choices=["fewshot", "dev", "test"],
+                    help="按 judge_split 划分过滤（test 只应在最终验收时使用）")
+    args = ap.parse_args()
+
+    if args.classify:
+        if args.threshold is None:
+            ap.error("--classify 模式需要 --threshold")
+        print_classification(classification_analysis(
+            args.classify, args.threshold, split=args.split))
+    else:
+        print_report(analyze())

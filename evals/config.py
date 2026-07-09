@@ -15,6 +15,8 @@ METADATA_PATH = DATA_DIR / "real_metadata.json"
 EVAL_RESULTS_PATH = DATA_DIR / "eval_results.json"
 BADCASE_NOTES_PATH = DATA_DIR / "badcase_notes.json"
 GOLD_LABELS_PATH = DATA_DIR / "gold_labels.json"  # 人工金标准标注（评分器可信度的真值来源）
+JUDGE_SPLIT_PATH = DATA_DIR / "judge_split.json"  # Judge 数据划分（fewshot/dev/test + test 消费台账）
+AI_ANALYSIS_DIR = DATA_DIR / "ai_analysis"        # AI 分析模块的归因结果沉淀（每 case 一份 JSON）
 EVAL_REPORT_MD_PATH = DATA_DIR / "eval_report.md"      # Aggregator 产出的分维度聚合报告（人读）
 EVAL_REPORT_JSON_PATH = DATA_DIR / "eval_report.json"  # 同一份报告的结构化版（程序/看板读）
 

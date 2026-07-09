@@ -95,6 +95,10 @@ def render_badcase_panel(store, loader) -> None:
     pair_map = {p.pair_id: p for p in pairs}
     notes = _load_notes()
 
+    # AI 归因分布（已分析 case 的失败模式聚合）
+    from evals.ui.components.ai_analysis import render_cause_distribution
+    render_cause_distribution()
+
     # 计算综合分数并排序
     ranked = []
     for r in results:
@@ -172,3 +176,8 @@ def _render_case(pair, result: dict, notes: dict) -> None:
         notes[pair_id] = new_note
         _save_notes(notes)
         st.success("标注已保存")
+
+    # AI 一键归因（预配置上下文 + 固化框架的 Claude Code 快捷方式）
+    st.divider()
+    from evals.ui.components.ai_analysis import render_ai_analysis
+    render_ai_analysis(pair_id)

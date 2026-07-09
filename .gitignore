@@ -91,3 +91,7 @@ backend/data/traces.jsonl
 
 # 评测平台测试集图像已纳入版本控制（candidates/images/test_input）
 .claude/
+
+# AI 分析模块瞬态文件（结果 JSON 要入库沉淀，运行状态/日志不入）
+evals/data/ai_analysis/*.running
+evals/data/ai_analysis/*.log

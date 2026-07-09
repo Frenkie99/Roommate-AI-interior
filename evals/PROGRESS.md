@@ -9,7 +9,12 @@
 ## 📍 当前状态快照
 
 - **成熟度位置**：L1→L2 推进中。**已有第一个被数据证明可信的评分器**（structural_fidelity +0.418）。
-- **课程进度（用户上网课，按模块推进）**：模块一(数据集) ✅ · **模块二(eval harness) ✅ 收官**(除「部署采集」这一开关，五大要素 ①②③⑤ 全通 + ④记录已白盒) · **用户正在看剩余模块（模块三起，预计=评分器 Grader），看完回来继续**。
+- **课程进度（用户上网课，按模块推进）**：模块一(数据集) ✅ · 模块二(eval harness) ✅ 收官(除部署采集开关) · **模块三(Grader) 🟡 基建四刀已落地（2026-07-09，见会话日志），剩两件事：(a) 用户仲裁 7 条模糊 case + 给 few-shot 池 6 条写 critique；(b) 刀4 花钱验收 vision_judge（待用户确认预算）**。
+- **模块三基建（2026-07-09 四刀，全本地测通）**：
+  1. **分类校准地基**：金标准二元化（overall≥4 pass/≤2 fail 派生 + `binary_verdict` 显式裁决 + `critique` 判词字段）；`credibility.py` 新增混淆矩阵+TPR/TNR+Wilson 95% 区间（课程"把 Judge 当分类器验证"）；标注页加二元裁决/critique/待仲裁队列；可信度面板加「分类校准」区。
+  2. **Judge 数据划分**：85 条 → few-shot 池 6（3pass+3fail，跨分档）/ dev 53 / test 26，分层（二元类别×有无房型）确定性抽样，`data/judge_split.json` 落盘 + **test 消费台账**（一版一次纪律）。structural_fidelity 已定型不受约束、继续全集报相关性。
+  3. **vision_judge v2.1**：prompt 对齐课程模板——reason 前置于 verdict（先分析后结论）、每题写清 pass/fail 判据、verdict 加 na 退出机制（不计分母）、few-shot 池人工判词嵌入（critique 优先，池外永不入 prompt 防泄漏）。
+  4. **AI 分析模块**（课程"Agent 裁判/开天眼"落地）：Badcase 面板每 case 一键「🤖 AI 分析」→ 后台 `claude -p`（只读工具白名单 Read/Glob/Grep）按五问固化框架归因 → 结构化 JSON 沉淀 `data/ai_analysis/` → 聚合成失败模式分布（半自动开放编码）。prompt 内置**已知评测集缺陷备忘**防"重新发现假 bug"。
 - **模块二成果（2026-07-02 四刀，全部本地测通、未 push、ahead 5）**：
   1. CLI Runner：按 split/房型/难度/tags 筛子集跑、失败隔离、--resume 续跑、合并写盘非破坏（保富化维度）、last_run 快照、--dry-run/--report-only；
   2. 看板「用户使用过程」tab：trace 5 步时间线回放（示例数据预览，真实 traces.jsonl 一进自动切换）；
@@ -28,15 +33,15 @@
 - **数据**：85 对真实评测图齐全；`eval_results.json` 含 85 条真实分（clip/structural_fidelity/llm_judge）。
 - **金标准**：`gold_labels.json` 已存在，**85/85 全标完**（标注人 frenkie），四维度均用满 1-5、方差充足，是有效的真值尺。
 
-## ⏭️ 下一步立即行动（2026-07-02 夜 更新）
+## ⏭️ 下一步立即行动（2026-07-09 更新）
 
-> **用户动向**：模块二收官（除部署），**用户去看剩余网课模块（模块三起），看完回来继续**。
-> **攒着不 push**：本地 ahead 5（trace第5步导入器 + 模块二四刀），等 trace 部署时统一 push。
+> **用户动向**：看完 grader 网课模块回来，对齐框架后拍板动刀，模块三基建四刀已完成。
 
-1. **【等用户回来】对齐下一个课程模块**：用户看完课先对齐模块讲了什么再动手（模块二的经验：先对齐框架→逐条映射现状→再拍板动哪刀，很顺）。预计模块三=评分器(Grader)，恰好接上咱们最大瓶颈：**美学/指令两维没有可信尺子**（视觉 Judge v2 半成品在 `vision_judge.py`+`VISION_JUDGE_DESIGN.md`，卡在需要真实 room_type 数据验证）。
-2. **【待用户拍板】部署 trace 采集**（模块二唯一没通电的开关）：统一 push → 服务器 `git pull` + 重启 `roommate-backend.service`。生效后真实用户数据流入 `backend/data/traces.jsonl`，看板「用户使用过程」页自动从示例切真实；再用 `python -m evals.dataset.import_traces` 导入评测集。**这一步同时解锁**：真实评测集（治有效性缺陷）+ 视觉 Judge 验证数据。
-3. **【待办·独立】第4步用户点评埋点**（动前端）：效果图下加「满意/重新生成/下载/不要了」按钮写 feedback + 前端生成 session_id 回传。bad case 金矿。
-4. **【远期】生成式重跑**（花钱）：Runner 真「喂 case 重跑生图」做控制变量对比。等评分器补齐再议。
+1. **【用户人工任务·5-10分钟】二元仲裁 + few-shot critique**：看板「金标准标注」→勾「只看待二元仲裁」，把 7 条 overall=3 的模糊 case 裁决 pass/fail（pair_003/006/039/047/065/072/082）；顺手给 few-shot 池 6 条（pair_000/014/016/018/019/058）补一句话 critique（喂 judge few-shot，当前只有 1 条有可用判词）。
+2. **【刀4·花钱·等用户确认预算】vision_judge 验收**：dev 53 条迭代 → test 26 条一次定版（记台账 `judge_split.record_test_consumption`）。门槛：指令 VQA TPR/TNR ≥85% 且 Wilson 下界 ≥70%；美学成对与人一致率 ≥75%。注意：**指令维在当前评测集上验不公平**（非真实路径，见备忘），建议只先验能验的 + 等 trace 数据补验。
+3. **【待用户拍板】部署 trace 采集**：push 已全部完成，只差服务器 `git pull` + 重启 `roommate-backend.service`。解锁真实评测集 + 视觉 Judge 公平验证 + AI 分析模块的完整 trace 上下文。
+4. **【待办·独立】第4步用户点评埋点**（动前端）：效果图下加「满意/重新生成/下载/不要了」按钮写 feedback + 前端生成 session_id 回传。bad case 金矿。
+5. **【远期】生成式重跑 + pass^k**（花钱）：面向用户的产品 pass^k 是体感指标（课程）；等部署+评分器补齐后，挑 10-20 代表 case 各生成 3 次算 pass^3。
 2. **【待办·后面再做】第4步 = 用户点评埋点（动前端）**：生成的效果图下面加按钮「满意/重新生成/下载/不要了」，用户一点就写进 trace 的 `feedback` 字段 = bad case 金矿；同时前端生成 `session_id` 回传后端（当前埋点 session_id 先留空）。用户已确认：**这是个独立埋点，先记着，后面搞**。
 3. **【等用户操作·攒着一起来】部署 trace 到生产**：CI 已禁用(纯手工)。等本地都好了，统一 push → 服务器 `git pull` + 重启 `roommate-backend.service`。生效后每次真实用户成功生图 → 追加一条到 `backend/data/traces.jsonl`；之后用 `python -m evals.dataset.import_traces <拉回本地的traces.jsonl>` 导入评测集（幂等，只导入成功生图，缺图跳过）。可统计 `vision_analysis_ok` 量化"静默降级到盲DeepSeek"的真实频率。
 3. **视觉 Judge 现状（半成品，待 trace 解锁）**：v2 已重写为 VQA(指令)+成对(美学)；grader 用 **gpt-4o**（GRADER_APIYI_KEY，已配通）。成对美学验证 75%(可用)；**VQA 指令验证卡住**——因评测集是"不传room_type"的非真实路径生成的，无法公平验证指令遵循。**trace 接入后用真实数据重测才有意义。**
@@ -54,7 +59,14 @@
 
 ## 🗓️ 会话日志（倒序，最新在上）
 
-### 2026-07-02（第四刀）· 第一性原理审计模块一/二 + 修缮报告层科学护栏（用户授权免征询）
+### 2026-07-09 · 模块三(Grader)基建四刀：分类校准 + Judge数据划分 + prompt模板化 + AI分析模块
+- **背景**：用户看完 grader 网课（张和老师），先对齐框架→映射现状：骨架已同向（binary化/成对美学/金标准校准/评结果不评路径），真正缺「把 Judge 当分类器验证」的基建——TPR/TNR、数据划分、prompt 模板。按拍板顺序动四刀（刀4 花钱押后待确认）。
+- **刀1 分类校准**：`gold_store.py` 加 `derive_binary`(overall≥4 pass/≤2 fail/=3 模糊)+`effective_binary`(显式裁决优先)+upsert 支持 `binary_verdict`/`critique`(None保留旧值/derived清除/空串清空)；`credibility.py` 加 `wilson_interval`/`classification_metrics`/`classification_analysis`(含FP/FN误判明细+split过滤)+CLI `--classify`；标注页加二元裁决radio/critique/待仲裁队列；可信度面板加分类校准区(混淆矩阵+TPR/TNR+CI+误判下钻)。**派生结果：pass 48/fail 30/模糊 7（待用户仲裁）**。
+- **刀2 划分**：`dataset/judge_split.py`——few-shot 6(3pass+3fail 跨分档优先有判词) / dev 53 / test 26，(二元×有无房型)分层+seed 确定性；`data/judge_split.json` 落盘含 **test_ledger 消费台账**；重划需 --force（防 test 纯度作废）。structural_fidelity 已定型不受约束。
+- **刀3 vision_judge v2.1**：reason 前置 verdict（自回归先分析后结论，课程 {"reasoning","answer"} 顺序）；每题判据写死（房型按家具功能识别/风格四要素/需求提取可核验要点）；verdict 加 na 退出且不计分母（`_norm_verdict` 精确匹配——na 和 no 都以 n 开头，老前缀匹配会把 na 误吞成 no）；few-shot 池判词嵌入（critique 优先，notes 仅"短且非疑问句"兜底——实测 notes 混数据集管理碎碎念）。
+- **刀5 AI分析模块**（老师亮点落地）：`analysis/ai_analyst.py`——预配置上下文（case档案+图路径+自动分+金标准+trace白盒字段）+五问固化框架（哪环先错/证据/波及/修法/置信度）+**已知缺陷备忘**（防 agent 把"房型跑偏=非真实路径缺陷"当新 bug 重复发现，2026-06-30 教训制度化）；引擎=`claude -p` headless（=Agent SDK preset claude_code，零新依赖），工具白名单只读 Read/Glob/Grep，15min/30回合双上限；产出=结构化JSON（root_cause_stage 8枚举+证据+修复建议）沉淀 `data/ai_analysis/`；UI：Badcase 面板每 case 三态按钮（缓存/进行中/触发）+**归因分布聚合**（=半自动开放编码，直接喂模块五）。
+- **验证**：统计函数单测（wilson已知值/混淆矩阵/派生边界）✅；gold_store 新字段读写回归 ✅；分类校准 CLI 端到端（structural_fidelity@55：TPR 67%/TNR 40%——再次印证 overall 由美学/指令驱动，结构尺管不了综合好坏）✅；vision_judge prompt 干跑渲染 ✅；AI 分析 pair_000 真实端到端 ✅；看板冒烟 HTTP 200 ✅。
+- **认知沉淀**：①课程 90% TPR/TNR 门槛不无差别照搬——指令维（可核验客观题）照办，美学维用成对一致率≥75%（人-人上限~0.45）；②test 26 条 Wilson 区间宽±15pp，结论只用于过/不过门槛，禁止版本间精细排序；③AI分析产出定位=归因假设待人工确认，非结论。
 - **审计方式**：不凭印象，跑代码坐实每个判断。三个裂缝全部实测确认：
   - [1] `select_pairs` 按难度筛会**静默丢弃**无 metadata 的新 case（如将来的 production 数据）——实测 prod_999 无告警消失；
   - [2] 报告 6 个 n<5 小样本组（study n=1！）与大样本并排排名，无任何标记；

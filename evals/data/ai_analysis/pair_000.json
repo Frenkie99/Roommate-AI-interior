@@ -1,0 +1,23 @@
+{
+  "pair_id": "pair_000",
+  "status": "ok",
+  "error": null,
+  "analyzed_at": "2026-07-09T20:28:09.039437",
+  "duration_sec": 172.3,
+  "model": "cli-default",
+  "num_turns": 10,
+  "verdict": {
+    "root_cause_stage": "generation_model",
+    "confidence": "high",
+    "summary": "疑似生图模型放弃编辑改整图重绘，风格达标但结构全变",
+    "evidence": [
+      "对比两图：原图正面墙双扇窗消失、左右墙凭空新增两扇窗、右侧砖墙消失、机位改变、全屏Shutterstock水印在输出中消失（旁证整图重绘）",
+      "输出含Wassily椅/原色格架等教科书包豪斯元素，证明视觉理解与prompt环节正常，失败仅在结构保持",
+      "getgoapi_client.py:118-129确认原图以inlineData传入Gemini，排除'模型没看到原图'"
+    ],
+    "affected_scope": "A: split=competitor且源图带水印的case（水印诱发重绘假设）；B: structural_fidelity>50且人工structural≤2的case（评分器盲区）",
+    "suggested_fix": "生成prompt模板加结构锁定约束（保持机位/门窗墙体不变）；数据集标记水印源图并做对照；将本case收为structural_fidelity负样本用于校准",
+    "uncertainty": "水印诱因未做无水印对照；单次采样无法区分稳定行为与随机重绘；prompt仅存前200字符无法核查模板全文"
+  },
+  "full_text": "# 直接执行：pair_000 失败归因\n\n## 五问分析\n\n**1. 失败首先发生在哪一环？——生图模型的结构保持能力（generation_model），另附一个评分器次级发现**\n\n链路逐环排除（均基于亲眼核实）：\n- 输入毛坯图：是一张 Shutterstock **带全屏水印**的素材图（阁楼施工房：绿色石膏板斜顶+天窗、正面墙中央一扇双扇窗、右侧白色加气块砖墙、地面堆着建材袋）。图本身清晰，但水印是显著变量（后述）。\n- 视觉理解：**大体没错**。输出图保留了「阁楼+斜顶+天窗」的核心概念，说明模型看懂了输入是什么房间。\n- Prompt 构建：**没丢需求**。输出是教科书级包豪斯——我在效果图里能认出 Wassily 椅（Breuer）、悬臂钢管椅、玻璃+钢管桌、蒙德里安式红黄蓝格架和几何原色地毯。风格指令传达完整。\n- 生成方式：已核实 `evals/dataset/batch_generate.py:57-74` 是走真实产品端点 `/api/v1/generate` 上传原图，`backend/app/services/getgoapi_client.py:118-129` 确认原图以 inlineData 传给 Gemini 图生图。**原图确实给到了模型**。\n- **失败点**：模型拿到原图后没有「编辑」，而是**整图重绘**——正面墙的窗户消失（换成格架）、左右两侧墙各凭空新增一扇黑框窗（原图两侧墙均无窗）、右侧砖墙消失、房间比例和相机机位都变了。水印在输出中完全消失也旁证这是重绘而非编辑。这与人工备注「视角和原毛坯图完全不一致」及 structural=1.0 完全吻合。\n\n**2. 证据**\n- 原图 vs 效果图对比（亲眼查看）：窗户位置全变（正面墙窗→无；两侧无窗→各一窗）、砖墙消失、机位不同、水印消失。\n- 输出中的包豪斯标志物（Wassily 椅、原色格架）证明 prompt 环节没问题——风格执行得很好，问题只在结构。\n- `getgoapi_client.py:118-129` 证明参考图确实传入，排除「模型根本没看到原图」的假设。\n\n**3. 同类失败可能波及哪些 case**\n- **可检索特征 A**：`split=competitor` 中所有源图为带水印素材图的 case——水印可能系统性诱发「重绘而非编辑」（模型训练上倾向不复现水印内容），这是一个可对照检验的假设。\n- **可检索特征 B（评分器盲区）**：`structural_fidelity > 50 且人工 structural ≤ 2` 的 case。本例 57.22 分对应人工最低分 1.0，说明 64×64 布局 SSIM 会被「整图重绘但光影大块面巧合相似」（亮天窗都在左上、灰地面都在下方）骗到中段分。\n\n**4. 建议修复方向**\n- 数据集：清洗或标记 competitor split 里的水印源图（加 `watermarked` 标签），先做 A/B 对照验证水印是否真是诱因。\n- 生成环节：prompt 模板加显式结构锁定约束（如「保持相机视角、门窗与墙体位置完全不变，仅替换材质与家具」），用本 case 回归验证。\n- 评分器：把本 case 收进 structural_fidelity 的已知负样本，作为「高分辨率化 / 加门窗位置匹配项」的校准依据。\n\n**5. 置信度：high（主因）**\n「生图模型未保持结构」有直接视觉证据+代码链路排除，置信度高。不确定性在于：[1] 水印诱因只是假设，未做无水印对照；[2] 单次采样，重绘可能是该模型对此图的随机行为而非稳定行为；[3] prompt 全文被截断（只见前 200 字符），不能 100% 排除模板后半段有削弱结构约束的措辞。\n\n# 深度交互：两点审慎挑战\n\n**[1] 这个 case 的最大价值可能不是「归因」，而是当评分器的负样本。** structural_fidelity 给一个人工 1.0 分的 case 打 57.22（中段），这是比「模型重绘了房间」更可行动的发现——后者你们大概率已知（hard 难度、small_space 标签），前者则是给唯一可信自动分划定适用边界的实锤：它测的是「64×64 亮度块面相似」，不是「门窗墙体是否搬家」。建议把「structural_fidelity 高分 + 人工低分」做成一个固定检索式，横扫 85 条。\n\n**[2] 人工 instruction=2.0 与我看到的图存在张力，值得复核标注口径。** 效果图的包豪斯还原度极高（Wassily 椅这种标志物都出来了）。如果 instruction 维定义是「风格指令执行度」，2.0 偏低；如果定义包含「transform *this* room 的 this」（即结构也算指令一部分），那 2.0 合理但与 structural 维有重叠计分。这影响后续所有 instruction 维结论的解读，建议在标注指南里写死口径。\n\n```json\n{\n  \"root_cause_stage\": \"generation_model\",\n  \"confidence\": \"high\",\n  \"summary\": \"疑似生图模型放弃编辑改整图重绘，风格达标但结构全变\",\n  \"evidence\": [\n    \"对比两图：原图正面墙双扇窗消失、左右墙凭空新增两扇窗、右侧砖墙消失、机位改变、全屏Shutterstock水印在输出中消失（旁证整图重绘）\",\n    \"输出含Wassily椅/原色格架等教科书包豪斯元素，证明视觉理解与prompt环节正常，失败仅在结构保持\",\n    \"getgoapi_client.py:118-129确认原图以inlineData传入Gemini，排除'模型没看到原图'\"\n  ],\n  \"affected_scope\": \"A: split=competitor且源图带水印的case（水印诱发重绘假设）；B: structural_fidelity>50且人工structural≤2的case（评分器盲区）\",\n  \"suggested_fix\": \"生成prompt模板加结构锁定约束（保持机位/门窗墙体不变）；数据集标记水印源图并做对照；将本case收为structural_fidelity负样本用于校准\",\n  \"uncertainty\": \"水印诱因未做无水印对照；单次采样无法区分稳定行为与随机重绘；prompt仅存前200字符无法核查模板全文\"\n}\n```"
+}
