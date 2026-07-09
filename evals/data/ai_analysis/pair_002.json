@@ -1,0 +1,25 @@
+{
+  "pair_id": "pair_002",
+  "status": "ok",
+  "error": null,
+  "analyzed_at": "2026-07-09T23:54:30.382800",
+  "duration_sec": 116.5,
+  "model": "cli-default",
+  "num_turns": 4,
+  "verdict": {
+    "root_cause_stage": "generation_model",
+    "confidence": "high",
+    "summary": "疑为生图模型无视结构约束，美化性放大小户型空间并删除门与隔墙",
+    "evidence": [
+      "原图左墙的深色入户防盗门在效果图中消失，被替换为电视背景墙（违反prompt中openings固定的约束）",
+      "原图中部隔出带窗小间的凸出隔墙在效果图中被抹为墙垛，空间分隔关系丢失",
+      "效果图房间宽度被显著放大，可容纳U形沙发组+双单人椅，超出原图狭长小户型的物理尺度",
+      "prompt_builder.py的STRUCTURE_TEMPLATE_FULL含完整墙体/门窗/尺寸约束且档案提示词可见其开头，说明约束未丢失",
+      "人工structural=2.0与自动structural_fidelity=59.76方向一致，aesthetic/instruction=3.0说明风格执行尚可，排除评分器误判"
+    ],
+    "affected_scope": "labels含small_space的全部case（尤其split=competitor），以及原图含入户门或室内隔墙的case；检索特征：structural_fidelity偏低且失真模式为空间放大+门/隔墙删除",
+    "suggested_fix": "生图环节加几何条件控制（深度图/线稿/SAM3分割图），并用structural_fidelity做多次生成的拒绝采样兜底；纯prompt加码预计收益有限",
+    "uncertainty": "单次采样无法排除方差极端值；无trace无法确认最终发送的完整prompt与模板一致"
+  },
+  "full_text": "# 直接执行\n\n## 归因分析：pair_002\n\n我已亲眼对比两张图，并核查了 prompt 模板源码（backend/app/utils/prompt_builder.py:34-39）。\n\n### 1. 失败首先发生在哪一环？\n\n**生图模型能力环节（generation_model）**。链路前段均无明显问题：\n\n- 输入毛坯图质量良好：光线充足、透视清晰、结构可辨（客厅+入户门+中部隔墙+阳台大窗）。\n- 视觉理解/房型选择没有跑偏：原图空间用途明显是客厅，效果图也生成了客厅——此 case **不受备忘 1 的房型缺陷影响**。\n- Prompt 构建没有丢需求：case 档案里的提示词可见 \"CRITICAL STRUCTURA…\" 开头，对应源码中的 `STRUCTURE_TEMPLATE_FULL`，其中明确写了\"墙体位置/门窗开口/房间尺寸不得改动\"。约束是完整且强硬的，但模型没有遵守。\n- 不是评分器误判：自动分 59.76（偏低）与人工 structural=2.0 方向一致。\n\n### 2. 证据（均来自我实际查看的内容）\n\n1. **入户门被删除**：原图左墙有一扇深色防盗门；效果图同一面墙变成了带护墙板的电视背景墙+电视柜，门完全消失。这直接违反 prompt 第 2 条（\"all architectural openings are fixed\"）。\n2. **中部隔墙被抹除**：原图画面中央有一堵凸出的隔墙，隔出一个带窗的小间/过道（内有绿色物件）；效果图中该隔墙退化为一个墙垛，里侧被改成一扇普通木框侧窗，原有空间分隔关系消失。\n3. **空间被显著放大**：原图是狭长小户型，效果图宽敞到能容纳三件套 U 形沙发组+两把单人皮椅+圆茶几，房间宽度明显超出原图物理可能——典型的\"小户型美化性脑补\"。\n4. **部分结构确被保留**：天花板上分隔阳台区的横梁、远端大窗的大致位置在效果图中可见——说明模型并非完全无视输入图，而是\"选择性保结构、放弃空间尺度\"。\n5. **分数交叉验证**：人工 aesthetic=3.0、instruction=3.0（美式风格执行到位：护墙板、黄铜吊灯、暖色调），overall=2.0 由 structural=2.0 拖累——与图面观察完全吻合。这是一次**真实的结构保真失败**，不是评分噪声。\n\n### 3. 同类失败可能波及的范围\n\n可检索特征：**labels 含 `small_space` 的全部 case**（尤其 split=competitor 的毛坯图）。检查方式：这类 case 中 structural_fidelity 是否系统性偏低、人工 structural 是否 ≤2，且失真模式是否同为\"空间放大 + 门/隔墙删除\"。次级特征：原图含入户门或室内隔墙的 case（生图模型倾向把它们抹成整墙以利构图）。\n\n### 4. 建议的修复方向\n\n指向**生图环节**，且纯 prompt 加码收益有限（现有约束措辞已足够强硬却被无视）：\n\n- **加几何硬约束**：给生图模型附加条件控制（深度图/线稿/分割图，项目已有 SAM3 可复用做布局条件），而非只靠文字约束。\n- **拒绝采样兜底**：利用已验证可信的 structural_fidelity 分，同一输入生成 N 张取结构分最高者（成本换质量，尤其对 small_space 标签）。\n- 评测侧：对 small_space 子集单独出结构分分布报告，量化本假设的波及面。\n\n### 5. 置信度\n\n**high**（对\"结构失真是主因、失败在生图执行\"）。不确定性来自：(a) 单次采样（备忘 5），无法排除本次是方差极端值——但\"删门+扩空间\"更像系统性美化倾向而非随机噪声；(b) 无 trace，无法 100% 确认最终发给生图 API 的 prompt 与模板完全一致（只能从档案提示词片段推断约束段确实在场）。\n\n```json\n{\n  \"root_cause_stage\": \"generation_model\",\n  \"confidence\": \"high\",\n  \"summary\": \"疑为生图模型无视结构约束，美化性放大小户型空间并删除门与隔墙\",\n  \"evidence\": [\n    \"原图左墙的深色入户防盗门在效果图中消失，被替换为电视背景墙（违反prompt中openings固定的约束）\",\n    \"原图中部隔出带窗小间的凸出隔墙在效果图中被抹为墙垛，空间分隔关系丢失\",\n    \"效果图房间宽度被显著放大，可容纳U形沙发组+双单人椅，超出原图狭长小户型的物理尺度\",\n    \"prompt_builder.py的STRUCTURE_TEMPLATE_FULL含完整墙体/门窗/尺寸约束且档案提示词可见其开头，说明约束未丢失\",\n    \"人工structural=2.0与自动structural_fidelity=59.76方向一致，aesthetic/instruction=3.0说明风格执行尚可，排除评分器误判\"\n  ],\n  \"affected_scope\": \"labels含small_space的全部case（尤其split=competitor），以及原图含入户门或室内隔墙的case；检索特征：structural_fidelity偏低且失真模式为空间放大+门/隔墙删除\",\n  \"suggested_fix\": \"生图环节加几何条件控制（深度图/线稿/SAM3分割图），并用structural_fidelity做多次生成的拒绝采样兜底；纯prompt加码预计收益有限\",\n  \"uncertainty\": \"单次采样无法排除方差极端值；无trace无法确认最终发送的完整prompt与模板一致\"\n}\n```\n\n# 深度交互\n\n审慎挑战一点：这个 case 的价值不在个案本身，而在它可能揭示的**系统性模式**——\"small_space 标签 = 空间放大失真高发区\"。目前这只是从 1 个 case 推出的假设。在人工确认本归因之前，建议先做一件成本极低的横向验证：把 `small_space` 标签子集（应该只有十几条）的 structural_fidelity 分布和人工 structural 分拉出来对比全集，若该子集显著偏低，\"模型美化小空间\"就从个案假设升级为可上报的产品级发现；若不偏低，则本 case 更可能只是单次采样的方差极端值，修复优先级应下调。"
+}

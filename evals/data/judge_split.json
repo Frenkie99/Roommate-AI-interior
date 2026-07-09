@@ -139,5 +139,12 @@
     "pair_053": "dev",
     "pair_066": "dev"
   },
-  "test_ledger": []
+  "test_ledger": [
+    {
+      "judge": "vision_judge.pairwise_aesthetic",
+      "version": "v2.1",
+      "note": "一致率 78.6% [52~92%] (对11/错0/平3)",
+      "consumed_at": "2026-07-09T23:57:13.189518"
+    }
+  ]
 }

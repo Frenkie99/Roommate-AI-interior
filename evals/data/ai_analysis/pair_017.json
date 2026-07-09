@@ -1,0 +1,23 @@
+{
+  "pair_id": "pair_017",
+  "status": "ok",
+  "error": null,
+  "analyzed_at": "2026-07-09T23:58:03.319231",
+  "duration_sec": 140.5,
+  "model": "cli-default",
+  "num_turns": 8,
+  "verdict": {
+    "root_cause_stage": "generation_model",
+    "confidence": "high",
+    "summary": "疑似生图环节完全无视图像结构条件，整图重绘而非改造",
+    "evidence": [
+      "亲眼比对：原图为竖构图凹龛小空间(小窗+立柱+蓝墙侧间)，效果图为横构图宽敞轻奢客厅，窗户/立柱/视角/纵横比零对应，属整图重绘",
+      "prompt_builder.py:34 核实提示词含 STRUCTURE_TEMPLATE_FULL 五条硬约束(窗户/墙体/相机100%一致)，约束已进 prompt 但输出无一遵守，排除 prompt 构建环节",
+      "人工 structural=1.0 与目视一致；aesthetic=4/instruction=4 合理(图本身是合格的现代轻奢)；structural_fidelity=48.68 对全重绘图打中间分，暴露评分器低端区分度不足(次要发现)"
+    ],
+    "affected_scope": "所有输出图纵横比≠输入图纵横比的 case(零成本可批量检测)；人工 structural≤2 但 structural_fidelity 落在40-60 的 case；输入为竖构图/狭小凹龛类毛坯图的 competitor split case",
+    "suggested_fix": "先排查生图调用的输出尺寸与图像条件参数(竖图进横图出，怀疑默认尺寸或图片条件未生效)；纯文字结构约束已证无效，考虑 depth/edge 类结构条件控制；评测侧加纵横比一致性前置硬检查并重标定 structural_fidelity 低分段",
+    "uncertainty": "无 trace，无法排除调用层问题(图片可能根本没附上、实为纯文生图)，与模型无视条件表现相同；且单次采样无法区分必然失败与方差偶发"
+  },
+  "full_text": "两张图都已亲眼比对，生成链路的 prompt 模板也已核实。以下是归因分析。\n\n## 直接执行\n\n### 1. 失败首先发生在哪一环？→ 生图模型（结构条件被完全无视）\n\n这不是评分器误判，也不只是已知的\"房型跑偏\"数据集缺陷——**效果图与原图在结构上零对应，属于整图重绘**。\n\n### 2. 证据（均来自我真实查看的内容）\n\n**图像比对：**\n- 毛坯原图是**竖构图**：一个狭窄的凹龛式小空间，正面墙上一扇小窗，右侧有一根混凝土立柱，柱子右边是另一个下半截刷蓝漆的房间（带第二扇窗）。带 nipic.cn 水印（网络采集图）。\n- AI 效果图是**横构图**：一个宽敞的轻奢客厅——格子吊顶+水晶吊灯、正面通高大窗+双层窗帘、大理石饰面墙、人字拼木地板、切斯特菲尔德沙发组。原图的凹龛、立柱、小窗、蓝墙房间**全部消失**，连纵横比和相机视角都变了。窗户数量/位置/大小无一保留。\n\n**Prompt 侧排除：** case 提示词中被截断的 \"CRIT...\" 我在 `backend/app/utils/prompt_builder.py:34` 核实了，就是 `STRUCTURE_TEMPLATE_FULL`——包含 \"WINDOWS...MUST be preserved\"、\"CAMERA...100% consistent\"、\"Do not perform any structural remodeling\" 等 5 条硬约束。**结构保持指令确实构建进了 prompt，但生成结果一条都没遵守**，所以失败环节在 prompt 之后。\n\n**评分侧交叉验证：** 人工金标准 structural=1.0（最低分）与我看到的\"整图重绘\"完全一致；aesthetic=4、instruction=4 也合理——图本身确实是执行得不错的现代轻奢。人工标注没问题。\n\n**次要发现（评分器区分度问题）：** structural_fidelity 给这张结构彻底重绘的图打了 48.68/100 的中间分。人工 1 分的 case 拿到近半分，说明 64×64 布局 SSIM 在\"完全重绘\"这个低端区间缺乏区分度（两张图整体明暗布局偶合即可得分）——这不是本 case 失败的根因，但是评分器的一个可记录弱点。\n\n### 3. 同类失败的可检索特征\n\n- **最廉价的检索器：输出图与输入图纵横比不一致的所有 case**——纵横比都变了，结构必然没保。这是一个零成本的自动硬失败信号，可以直接批量扫 85 条。\n- 人工 structural ≤ 2 但 structural_fidelity 落在 40–60 中间段的 case（评分器低端失真的横向排查）。\n- 输入为竖构图/狭小凹龛类毛坯图（尤其 competitor split 的网络采集图）的 case——这类\"难以布置家具\"的空间可能诱发模型放弃改造、直接生成通用样板间。\n\n### 4. 建议的修复方向\n\n1. **生成环节（主）**：排查 `backend/app/services/` 生图调用——输出尺寸是否强制与输入图一致（本 case 竖图进、横图出，怀疑走了默认输出尺寸，或图片条件权重过低/未生效）。若 API 支持，优先加结构条件控制（depth/edge 类约束）而非继续加码文字约束——文字约束已经写到 \"CRITICAL...MUST\" 级别仍被无视，说明纯 prompt 路线已到天花板。\n2. **评测环节（次）**：给评测流水线加\"纵横比一致性\"前置检查，作为 structural 硬失败的廉价探测器；同时用这批 case 重新标定 structural_fidelity 的低分段。\n\n### 5. 置信度：high（对\"失败发生在生成环节\"）\n\n不确定性来自两点：(a) 本 case 无 trace，**无法排除是调用层问题**（例如图片根本没随请求附上，模型实际在做纯文生图）——这与\"模型无视图片条件\"外部表现完全相同，需查生图服务代码或补 trace 才能区分；(b) 单次采样（备忘 5），无法判断该输入是必然失败还是方差偶发。\n\n## 深度交互\n\n审慎挑战一点：这个 case 最有价值的产出可能不是归因本身，而是它暴露的**\"纵横比不一致\"这个免费信号**。如果批量扫描发现相当比例的 case 输出纵横比都变了，那\"结构保真\"问题的主战场可能根本不在模型能力，而在生图调用的尺寸参数这一行代码上——建议把这个横向扫描排在任何 prompt 调优之前，成本几乎为零，信息量可能极大。\n\n```json\n{\n  \"root_cause_stage\": \"generation_model\",\n  \"confidence\": \"high\",\n  \"summary\": \"疑似生图环节完全无视图像结构条件，整图重绘而非改造\",\n  \"evidence\": [\n    \"亲眼比对：原图为竖构图凹龛小空间(小窗+立柱+蓝墙侧间)，效果图为横构图宽敞轻奢客厅，窗户/立柱/视角/纵横比零对应，属整图重绘\",\n    \"prompt_builder.py:34 核实提示词含 STRUCTURE_TEMPLATE_FULL 五条硬约束(窗户/墙体/相机100%一致)，约束已进 prompt 但输出无一遵守，排除 prompt 构建环节\",\n    \"人工 structural=1.0 与目视一致；aesthetic=4/instruction=4 合理(图本身是合格的现代轻奢)；structural_fidelity=48.68 对全重绘图打中间分，暴露评分器低端区分度不足(次要发现)\"\n  ],\n  \"affected_scope\": \"所有输出图纵横比≠输入图纵横比的 case(零成本可批量检测)；人工 structural≤2 但 structural_fidelity 落在40-60 的 case；输入为竖构图/狭小凹龛类毛坯图的 competitor split case\",\n  \"suggested_fix\": \"先排查生图调用的输出尺寸与图像条件参数(竖图进横图出，怀疑默认尺寸或图片条件未生效)；纯文字结构约束已证无效，考虑 depth/edge 类结构条件控制；评测侧加纵横比一致性前置硬检查并重标定 structural_fidelity 低分段\",\n  \"uncertainty\": \"无 trace，无法排除调用层问题(图片可能根本没附上、实为纯文生图)，与模型无视条件表现相同；且单次采样无法区分必然失败与方差偶发\"\n}\n```"
+}

@@ -132,14 +132,17 @@ def classification_metrics(judge: Sequence[str], gold: Sequence[str]) -> dict:
 
 
 def gold_binary_summary(gold_path: Optional[str] = None) -> dict:
-    """金标准二元真值盘点：人工裁决 / 阈值派生 / 模糊待裁决。"""
-    from evals.scorer.gold_store import GoldStore, effective_binary
+    """金标准二元真值盘点：人工裁决 / 阈值派生 / 模糊待裁决 / 校准剔除。"""
+    from evals.scorer.gold_store import GoldStore, effective_binary, is_excluded
 
     gold = GoldStore(gold_path).load()
     manual = derived = 0
     dist = {"pass": 0, "fail": 0}
-    pending = []
+    pending, excluded = [], []
     for pid, entry in gold.items():
+        if is_excluded(entry):
+            excluded.append(pid)
+            continue
         verdict, source = effective_binary(entry)
         if verdict is None:
             pending.append(pid)
@@ -153,6 +156,7 @@ def gold_binary_summary(gold_path: Optional[str] = None) -> dict:
         "n_gold": len(gold), "n_binary": manual + derived,
         "manual": manual, "derived": derived,
         "dist": dist, "pending_fuzzy": sorted(pending),
+        "excluded": sorted(excluded),
     }
 
 
@@ -183,10 +187,13 @@ def classification_analysis(metric: str, threshold: float,
 
     _, _, higher_better = METRIC_RANGES.get(metric, (0.0, 1.0, True))
 
+    from evals.scorer.gold_store import is_excluded
     judge_v, gold_v, used, fuzzy_skipped = [], [], [], []
     fp_ids, fn_ids = [], []
     for pid in sorted(set(auto) & set(gold)):
         if allowed is not None and pid not in allowed:
+            continue
+        if is_excluded(gold[pid]):   # 评测集缺陷 case，不参与校准
             continue
         a = auto.get(pid)
         if a is None:

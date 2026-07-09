@@ -89,6 +89,8 @@ def render_credibility_panel(loader) -> None:
     if gs["pending_fuzzy"]:
         st.warning(f"⚠️ {len(gs['pending_fuzzy'])} 条模糊地带（overall=3）未裁决，已从计算中剔除。"
                    f"请到「金标准标注」→「只看待二元仲裁」逐条裁决：{', '.join(gs['pending_fuzzy'])}")
+    if gs.get("excluded"):
+        st.caption(f"🚫 已从校准剔除 {len(gs['excluded'])} 条（评测集缺陷）：{', '.join(gs['excluded'])}")
 
     metric_opts = list(report["scorers"].keys())
     cc1, cc2, cc3 = st.columns([2, 1, 1])

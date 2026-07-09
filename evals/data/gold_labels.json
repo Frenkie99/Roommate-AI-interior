@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "updated_at": "2026-07-09T23:10:12.817171",
+  "updated_at": "2026-07-09T23:50:19.956949",
   "total": 85,
   "axes": {
     "structural": "结构保真",
@@ -242,10 +242,12 @@
         "overall": 5.0
       },
       "labeler": "frenkie",
-      "labeled_at": "2026-07-09T23:08:27.191210",
+      "labeled_at": "2026-07-09T23:50:19.956942",
       "notes": "测试案例的房间功能需要分类：这个明显是卫生间，就不应该随机分配别的房间功能来测试",
       "binary_verdict": "fail",
-      "critique": "虽然是测试，也不能随机安排房间类型，这个明显是卫生间"
+      "critique": "虽然是测试，也不能随机安排房间类型，这个明显是卫生间",
+      "calibration_excluded": true,
+      "exclusion_reason": "评测集缺陷：房型随机分配错误（源图明显是卫生间），题目无效非产品输出问题"
     },
     {
       "pair_id": "pair_019",

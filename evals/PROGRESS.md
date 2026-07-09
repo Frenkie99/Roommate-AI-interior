@@ -9,7 +9,8 @@
 ## 📍 当前状态快照
 
 - **成熟度位置**：L1→L2 推进中。**已有第一个被数据证明可信的评分器**（structural_fidelity +0.418）。
-- **课程进度（用户上网课，按模块推进）**：模块一(数据集) ✅ · 模块二(eval harness) ✅ 收官(除部署采集开关) · **模块三(Grader) 🟡 基建四刀已落地（2026-07-09，见会话日志），剩两件事：(a) 用户仲裁 7 条模糊 case + 给 few-shot 池 6 条写 critique；(b) 刀4 花钱验收 vision_judge（待用户确认预算）**。
+- **课程进度（用户上网课，按模块推进）**：模块一(数据集) ✅ · 模块二(eval harness) ✅ 收官(除部署采集开关) · **模块三(Grader) 🟢 主体收官（2026-07-09）：基建四刀落地 + 85/85 二元真值收齐 + 🎉 美学成对 judge 验收通过（第二把可信尺子，test 78.6%≥75% 门槛、34 对 0 判反、已记台账）。剩指令维 VQA 的 test 定版（押后待 trace 真实数据——当前评测集验不公平）**。
+- **两把可信尺子**：① structural_fidelity（结构维，标量，Spearman +0.418）② vision_judge 成对美学（美学维，A/B 比较器，一致率 78.6%/0判反）——**使用域=成对比较（模块五新旧 A/B），不产标量分不进 registry**，见 `VISION_JUDGE_DESIGN.md` 第5节验收状态表。指令维仍无尺（等 trace）。
 - **模块三基建（2026-07-09 四刀，全本地测通）**：
   1. **分类校准地基**：金标准二元化（overall≥4 pass/≤2 fail 派生 + `binary_verdict` 显式裁决 + `critique` 判词字段）；`credibility.py` 新增混淆矩阵+TPR/TNR+Wilson 95% 区间（课程"把 Judge 当分类器验证"）；标注页加二元裁决/critique/待仲裁队列；可信度面板加「分类校准」区。
   2. **Judge 数据划分**：85 条 → few-shot 池 6（3pass+3fail，跨分档）/ dev 53 / test 26，分层（二元类别×有无房型）确定性抽样，`data/judge_split.json` 落盘 + **test 消费台账**（一版一次纪律）。structural_fidelity 已定型不受约束、继续全集报相关性。
@@ -38,7 +39,7 @@
 > **用户动向**：看完 grader 网课模块回来，对齐框架后拍板动刀，模块三基建四刀已完成。
 
 1. ~~【用户人工任务】二元仲裁 + few-shot critique~~ ✅ **2026-07-09 完成**：85/85 二元真值齐（pass 49/fail 36，人工显式裁决 13 条），few-shot 池 6 条 critique 全部写好且按「呈现vs内容」契约线编码（见 `PRODUCT_CONTRACT.md`）。仲裁过程逼出产品契约问题（视角矫正/扩图/拓扑造假三档失真），四点判断+裁决规则+产品待办 P1-P5 已沉淀该文档。
-2. **【刀4·花钱·等用户确认预算】vision_judge 验收**：dev 53 条迭代 → test 26 条一次定版（记台账 `judge_split.record_test_consumption`）。门槛：指令 VQA TPR/TNR ≥85% 且 Wilson 下界 ≥70%；美学成对与人一致率 ≥75%。注意：**指令维在当前评测集上验不公平**（非真实路径，见备忘），建议只先验能验的 + 等 trace 数据补验。
+2. ~~【刀4】vision_judge 验收~~ ✅ **美学侧 2026-07-09 完成**（dev 95% → test 78.6% 过门槛，台账已记，总花费 ≈11万 token ≈ 3-4 元）。**指令 VQA 的 test 定版押后待 trace 真实数据**（门槛不变：TPR/TNR ≥85% 且 Wilson 下界 ≥70%）。pair_018 已从校准剔除（评测集缺陷：房型随机分配错误；机制已通用化——标注页有「从校准剔除」开关）。
 3. **【待用户拍板】部署 trace 采集**：push 已全部完成，只差服务器 `git pull` + 重启 `roommate-backend.service`。解锁真实评测集 + 视觉 Judge 公平验证 + AI 分析模块的完整 trace 上下文。
 4. **【待办·独立】第4步用户点评埋点**（动前端）：效果图下加「满意/重新生成/下载/不要了」按钮写 feedback + 前端生成 session_id 回传。bad case 金矿。
 5. **【远期】生成式重跑 + pass^k**（花钱）：面向用户的产品 pass^k 是体感指标（课程）；等部署+评分器补齐后，挑 10-20 代表 case 各生成 3 次算 pass^3。
@@ -58,6 +59,15 @@
 ---
 
 ## 🗓️ 会话日志（倒序，最新在上）
+
+### 2026-07-09（下半场）· 刀4 执行：美学成对 judge 验收通过 = 第二把可信尺子诞生
+- **前置**：用户完成 7 条模糊仲裁 + few-shot 池 critique（判词恰好把「呈现vs内容」契约线编码进 few-shot：016 矫正ok vs 058 盲目扩图）；仲裁中还显式改判数条（019 overall=4 但未遵循结构→fail），二元真值 85/85 收齐（pass 49/fail 36，剔除后 84 条参与校准）。
+- **pair_018 校准剔除 + 机制通用化**：其 fail 判的是评测集缺陷（房型随机分配错误，源图明显是卫生间）非产品输出——混层会冤枉 judge（看图判 pass 被记 FP）。gold_store 加 `calibration_excluded`/`exclusion_reason` 字段（upsert None保留/True设置/False恢复），三处生效：二元盘点、classification_analysis、few-shot 池渲染（判词描述题目缺陷不配当示例）；标注页加剔除开关+原因框，面板显示剔除清单。
+- **compare_pairwise 支持纯美学对比**：input_path=None 不发毛坯参考图（跨 case 对比时展示某一方毛坯既误导又费 token），prompt 注明"可能来自不同房间，忽略户型差异"。
+- **验收协议**（`scorer/pairwise_validation.py`）：低分组(aes≤2)×高分组(aes≥4)构造清晰差距对（Δ≥2），每 case 至多出现2次、A/B位置交替消系统偏差+正反双序消位置偏见；一致率=选对/总数（tie 计不一致）+Wilson 区间；test 必须 --record-ledger --judge-version（无台账拒跑）。结果追加式落盘 `data/pairwise_validation.json`。
+- **结果**：dev 20 对 **95%**（19✓/0✗/1平）零迭代过线 → test 14 对 **78.6%**（11✓/0✗/3平）≥75% 门槛，📒 台账已记（vision_judge.pairwise_aesthetic v2.1）。**合并 34 对 0 次判反**——所有失分都是保守 tie，judge 从不把丑的判成美的。总花费 ≈11.2万 in + 2.2k out token ≈ 3-4 元（预算 20 元，用了不到 1/5）。
+- **使用域钉死**（验收范围即使用范围）：仅成对比较（模块五新旧 A/B / badcase 相对排序）；只验证过清晰差距（Δ≥2），Δ=1 模糊区未验证；不产标量分、不进 registry。见 VISION_JUDGE_DESIGN.md 第5节验收状态表。
+- **并行进行中**：34 条 fail case 的 AI 批量归因后台跑（3 并发，走订阅额度），完成后聚合失败模式分布。
 
 ### 2026-07-09 · 模块三(Grader)基建四刀：分类校准 + Judge数据划分 + prompt模板化 + AI分析模块
 - **背景**：用户看完 grader 网课（张和老师），先对齐框架→映射现状：骨架已同向（binary化/成对美学/金标准校准/评结果不评路径），真正缺「把 Judge 当分类器验证」的基建——TPR/TNR、数据划分、prompt 模板。按拍板顺序动四刀（刀4 花钱押后待确认）。

@@ -49,6 +49,15 @@ def derive_binary(scores: Optional[Dict[str, float]]) -> Optional[str]:
     return None
 
 
+def is_excluded(entry: Optional[dict]) -> bool:
+    """是否被从校准中剔除（评测集缺陷 case，如房型随机分配错误）。
+
+    剔除范围 = 二元校准（TPR/TNR）+ few-shot 池渲染。
+    不影响分维度相关性对齐（structural/aesthetic 等人工分对那些轴仍是有效真值）。
+    """
+    return bool(entry and entry.get("calibration_excluded"))
+
+
 def effective_binary(entry: Optional[dict]) -> tuple:
     """取一条金标准的二元真值：显式人工裁决（binary_verdict）优先，否则阈值派生。
 
@@ -88,11 +97,14 @@ class GoldStore:
     def upsert(self, pair_id: str, scores: Dict[str, float],
                labeler: str = "", notes: str = "",
                binary_verdict: Optional[str] = None,
-               critique: Optional[str] = None) -> None:
+               critique: Optional[str] = None,
+               calibration_excluded: Optional[bool] = None,
+               exclusion_reason: Optional[str] = None) -> None:
         """新增或更新一条标注。scores 仅保留 GOLD_AXES 中的合法维度。
 
         binary_verdict：显式二元裁决。"pass"/"fail" 写入；"derived" 清除显式裁决
         （回退到阈值派生）；None 保留旧值不动。critique 同理（None 保留旧值）。
+        calibration_excluded：True 从校准剔除（附 exclusion_reason）；False 恢复；None 保留旧值。
         """
         labels = self.load()
         old = labels.get(pair_id, {})
@@ -117,6 +129,16 @@ class GoldStore:
                 entry["critique"] = critique.strip()
         elif old.get("critique"):
             entry["critique"] = old["critique"]
+        # 校准剔除：True 设置（附原因）/ False 恢复（不写字段）/ None 保留旧值
+        if calibration_excluded is True:
+            entry["calibration_excluded"] = True
+            reason = (exclusion_reason or old.get("exclusion_reason") or "").strip()
+            if reason:
+                entry["exclusion_reason"] = reason
+        elif calibration_excluded is None and old.get("calibration_excluded"):
+            entry["calibration_excluded"] = True
+            if old.get("exclusion_reason"):
+                entry["exclusion_reason"] = old["exclusion_reason"]
         labels[pair_id] = entry
         self._save(labels)
 

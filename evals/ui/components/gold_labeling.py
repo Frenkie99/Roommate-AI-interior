@@ -154,11 +154,25 @@ def render_gold_labeling(loader) -> None:
                           value=(existing or {}).get("notes", ""),
                           key=f"gold_notes_{pair.pair_id}")
 
+    # 校准剔除（评测集缺陷 case：题目本身无效，如房型随机分配错误）
+    excluded_now = bool((existing or {}).get("calibration_excluded"))
+    exclude = st.checkbox(
+        "🚫 从校准剔除（评测集缺陷：题目无效，非产品输出问题）",
+        value=excluded_now, key=f"gold_excl_{pair.pair_id}",
+        help="剔除范围=二元校准(TPR/TNR)+few-shot池；分维度相关性对齐不受影响")
+    excl_reason = ""
+    if exclude:
+        excl_reason = st.text_input(
+            "剔除原因", value=(existing or {}).get("exclusion_reason", ""),
+            key=f"gold_excl_reason_{pair.pair_id}",
+            placeholder="例如：房型随机分配错误，源图明显是卫生间")
+
     save_label = "更新标注" if existing else "保存标注"
     if st.button(save_label, type="primary"):
         bv_param = {"通过 pass": "pass", "失败 fail": "fail"}.get(bv_choice, "derived")
         store.upsert(pair.pair_id, scores, labeler=labeler, notes=notes,
-                     binary_verdict=bv_param, critique=critique)
+                     binary_verdict=bv_param, critique=critique,
+                     calibration_excluded=exclude, exclusion_reason=excl_reason)
         st.success(f"已保存 {pair.pair_id} 的标注。")
         st.rerun()
 

@@ -1,0 +1,24 @@
+{
+  "pair_id": "pair_013",
+  "status": "ok",
+  "error": null,
+  "analyzed_at": "2026-07-09T23:58:18.571758",
+  "duration_sec": 228.1,
+  "model": "cli-default",
+  "num_turns": 11,
+  "verdict": {
+    "root_cause_stage": "dataset_defect",
+    "confidence": "medium",
+    "summary": "疑似金标准误标：美学1分与图面专业质量矛盾",
+    "evidence": [
+      "亲眼比对两图：效果图为专业级现代简约卧室，窗/暖气片/管路均忠实保留，图面无可支撑美学1分的严重缺陷",
+      "gold_labels.json:173-183 四维内部矛盾（structural=4、instruction=4 vs aesthetic=1、overall=1）且notes为空；同标注人在pair_014把几何失真扣在structural并附critique，惯例不符",
+      "该批标注为2026-06-21连续快标（相邻间隔15-30秒），误点风险真实",
+      "pairwise_validation.json:94-107中judge理由自相矛盾（称极简灰调图'古典奢华'），不能佐证aes=1"
+    ],
+    "affected_scope": "gold_labels.json中 aesthetic=1或overall=1 且 notes为空 且 structural/instruction>=4 的维度矛盾条目（全集14条aesthetic=1），尤其2026-06-21批次；pair_013在judge dev集，误标会污染judge校准",
+    "suggested_fix": "对维度矛盾+无备注的金标准条目人工复标（复用binary_verdict+critique仲裁流程）；标注UI强制极端分必填critique；若复核确认1分，把依据（横版扩图=面积虚构）写入PRODUCT_CONTRACT裁决线",
+    "uncertainty": "我看到的是降采样图，无法排除全分辨率下存在严重瑕疵；也无法排除标注人有未记录的评分依据（如把CG渲染感/画幅变宽记入美学维），需本人复核确认"
+  },
+  "full_text": "分析完成。核心发现是：**这条 case 的\"失败\"很可能不在生成链路，而在金标准标注本身**。\n\n## 直接执行：五问归因\n\n**1. 失败首先发生在哪一环？**\n假设：**评测集自身缺陷（金标准疑似误标）**，生成链路各环节均未见与 1 分匹配的失败。\n\n**2. 证据（均为亲眼核对）**\n\n- **图面质量与 aesthetic=1.0 严重矛盾**。效果图是一张专业级现代简约卧室：灰白配色统一、留白克制、光线均匀，完全命中提示词里 \"Clean, airy, architecturally pure with intentional negative space\"。窗户位置、窗下暖气片、甚至暖气片右侧那圈外露管路都从毛坯图忠实保留了下来。图面唯一可挑的瑕疵是天花板嵌入式灯带线条略不连贯、落地灯造型怪异——顶多扣到 3-4 分，撑不起 1 分。\n- **四维分内部矛盾且无备注**：structural=4.0、instruction=4.0，却 aesthetic=1.0、overall=1.0，notes 为空（gold_labels.json:173-183）。对照同一标注人的惯例——pair_014 因\"阳台进深不符现实\"把分扣在 structural=2 并写了 critique——pair_013 这个 1 分的落点不符合其自身标注惯例。\n- **标注节奏快**：该批标注时间戳显示 6 月 21 日连续批标，相邻 case 间隔约 15-30 秒，误点/串行疲劳的风险真实存在。\n- **旁证不可用**：pairwise_validation.json:94-107 里 pair_082 vs pair_013 虽判 \"correct\"，但 judge 给出的理由自相矛盾（reason2 称这张极简灰调图\"更具古典美感和奢华感\"），属于噪声，不能当 aes=1 的独立佐证。\n\n**次要真实发现（不构成 1 分依据，但值得记录）**：效果图把竖版毛坯图改成了横版、房间视觉上明显变宽——按 7 月 9 日新立的\"呈现 vs 内容\"裁决线，这可能触及\"面积虚构\"档。但该标注发生在裁决线确立**之前**，且若标注人是为此扣分，按其惯例应落在 structural（pair_014 先例），而 structural=4 恰恰说明不是。另外 structural_fidelity=57.9 偏低正是画幅/视角变化对 64×64 布局 SSIM 的已知敏感性，与人工 structural=4 的分歧属备忘 4 范围内的已知局限。\n\n**3. 同类失败波及范围**\ngold_labels.json 中 **\"aesthetic=1 或 overall=1、notes 为空、且与 structural/instruction≥4 构成维度矛盾\"** 的条目。全集共 14 条 aesthetic=1.0，可程序化筛出矛盾子集重点复核；尤其 2026-06-21 那批快速连标的 case。\n\n**4. 建议修复方向**\n- 对上述矛盾子集做人工复标/仲裁，复用 7 月 9 日已跑通的 binary_verdict + critique 回填流程；规定**极端分（1 分/5 分）必须附 critique** 才能入库。\n- pair_013 若复核后确认 1 分成立，把依据（如\"横版扩图=面积虚构\"）显式写入 PRODUCT_CONTRACT 裁决规则，否则修正标注。\n\n**5. 置信度：medium**。不确定性见 JSON。\n\n## 深度交互：审慎挑战\n\n这条 case 暴露的比\"一条标错\"更重要：**pair_013 被分在 judge_split 的 dev 集**（judge_split.json:66）。你们正在用 dev 集校准 vision_judge v2.1——如果这条金标准确系误标，它会以\"真值\"身份直接污染 judge 的对齐度量和 prompt 迭代方向。所以我建议把\"极端分必填 critique + 维度矛盾自动预警\"做成标注 UI（gold_labeling.py）的硬约束，而不是只修这一条数据——你们 7 月 9 日刚立的\"模糊 case 是产品决策探针\"方法论，反过来同样适用于标注质检本身。\n\n```json\n{\n  \"root_cause_stage\": \"dataset_defect\",\n  \"confidence\": \"medium\",\n  \"summary\": \"疑似金标准误标：美学1分与图面专业质量矛盾\",\n  \"evidence\": [\n    \"亲眼比对两图：效果图为专业级现代简约卧室，窗/暖气片/管路均忠实保留，图面无可支撑美学1分的严重缺陷\",\n    \"gold_labels.json:173-183 四维内部矛盾（structural=4、instruction=4 vs aesthetic=1、overall=1）且notes为空；同标注人在pair_014把几何失真扣在structural并附critique，惯例不符\",\n    \"该批标注为2026-06-21连续快标（相邻间隔15-30秒），误点风险真实\",\n    \"pairwise_validation.json:94-107中judge理由自相矛盾（称极简灰调图'古典奢华'），不能佐证aes=1\"\n  ],\n  \"affected_scope\": \"gold_labels.json中 aesthetic=1或overall=1 且 notes为空 且 structural/instruction>=4 的维度矛盾条目（全集14条aesthetic=1），尤其2026-06-21批次；pair_013在judge dev集，误标会污染judge校准\",\n  \"suggested_fix\": \"对维度矛盾+无备注的金标准条目人工复标（复用binary_verdict+critique仲裁流程）；标注UI强制极端分必填critique；若复核确认1分，把依据（横版扩图=面积虚构）写入PRODUCT_CONTRACT裁决线\",\n  \"uncertainty\": \"我看到的是降采样图，无法排除全分辨率下存在严重瑕疵；也无法排除标注人有未记录的评分依据（如把CG渲染感/画幅变宽记入美学维），需本人复核确认\"\n}\n```"
+}

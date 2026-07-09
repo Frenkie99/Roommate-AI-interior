@@ -1,0 +1,526 @@
+{
+  "runs": [
+    {
+      "run_at": "2026-07-09T23:55:16.847937",
+      "split": "dev",
+      "seed": 20260709,
+      "model": "gpt-4o",
+      "n_pairs": 20,
+      "n_errors": 0,
+      "correct": 19,
+      "wrong": 0,
+      "ties": 1,
+      "agreement": 0.95,
+      "agreement_ci": [
+        0.7639,
+        0.9911
+      ],
+      "order_consistency": 0.95,
+      "tokens": {
+        "in": 65920,
+        "out": 1311
+      },
+      "rows": [
+        {
+          "a": "pair_072",
+          "b": "pair_052",
+          "a_aes": 2.0,
+          "b_aes": 4.0,
+          "expect": "b",
+          "got": "b",
+          "verdict": "correct",
+          "consistent": true,
+          "reasons": [
+            "方案B的配色更为温暖，材质搭配和光影效果更具吸引力。",
+            "方案A的配色和材质更具温暖感，整体美观度更高。"
+          ]
+        },
+        {
+          "a": "pair_004",
+          "b": "pair_081",
+          "a_aes": 5.0,
+          "b_aes": 1.0,
+          "expect": "a",
+          "got": "a",
+          "verdict": "correct",
+          "consistent": true,
+          "reasons": [
+            "温暖的色调和丰富的材质搭配营造出更具吸引力的氛围。",
+            "方案B的配色温暖且材质丰富，整体美观度更高。"
+          ]
+        },
+        {
+          "a": "pair_039",
+          "b": "pair_053",
+          "a_aes": 2.0,
+          "b_aes": 5.0,
+          "expect": "b",
+          "got": "b",
+          "verdict": "correct",
+          "consistent": true,
+          "reasons": [
+            "自然色调与柔和光影营造出温馨舒适的氛围。",
+            "自然色调和谐，光影柔和，整体美观舒适。"
+          ]
+        },
+        {
+          "a": "pair_079",
+          "b": "pair_030",
+          "a_aes": 4.0,
+          "b_aes": 1.0,
+          "expect": "a",
+          "got": "a",
+          "verdict": "correct",
+          "consistent": true,
+          "reasons": [
+            "方案A的设计感和配色更为现代和谐，整体美观度较高。",
+            "整体设计感和光影效果更为现代和谐。"
+          ]
+        },
+        {
+          "a": "pair_072",
+          "b": "pair_028",
+          "a_aes": 2.0,
+          "b_aes": 4.0,
+          "expect": "b",
+          "got": "b",
+          "verdict": "correct",
+          "consistent": true,
+          "reasons": [
+            "方案B的现代奢华风格和精致的配色更具美学吸引力。",
+            "方案A的设计感和配色更显高雅和现代。"
+          ]
+        },
+        {
+          "a": "pair_082",
+          "b": "pair_013",
+          "a_aes": 4.0,
+          "b_aes": 1.0,
+          "expect": "a",
+          "got": "a",
+          "verdict": "correct",
+          "consistent": true,
+          "reasons": [
+            "方案A的古典设计和丰富的细节更具美学吸引力。",
+            "方案B的设计更具古典美感和奢华感，细节丰富。"
+          ]
+        },
+        {
+          "a": "pair_032",
+          "b": "pair_054",
+          "a_aes": 1.0,
+          "b_aes": 4.0,
+          "expect": "b",
+          "got": "b",
+          "verdict": "correct",
+          "consistent": true,
+          "reasons": [
+            "方案B的日式风格和谐统一，光影柔和，材质自然，整体美观。",
+            "方案A的日式风格和谐统一，配色自然，光影柔和，整体美观。"
+          ]
+        },
+        {
+          "a": "pair_059",
+          "b": "pair_044",
+          "a_aes": 4.0,
+          "b_aes": 1.0,
+          "expect": "a",
+          "got": "a",
+          "verdict": "correct",
+          "consistent": true,
+          "reasons": [
+            "方案A的古典风格和精致细节更具美学吸引力。",
+            "方案B的设计更具奢华感和细节丰富，整体美观度更高。"
+          ]
+        },
+        {
+          "a": "pair_033",
+          "b": "pair_031",
+          "a_aes": 2.0,
+          "b_aes": 4.0,
+          "expect": "b",
+          "got": "b",
+          "verdict": "correct",
+          "consistent": true,
+          "reasons": [
+            "方案B的中式风格和谐统一，光影效果柔和，整体美观。",
+            "方案A的中式风格设计感强，配色和材质统一，光影效果柔和。"
+          ]
+        },
+        {
+          "a": "pair_047",
+          "b": "pair_084",
+          "a_aes": 4.0,
+          "b_aes": 2.0,
+          "expect": "a",
+          "got": "a",
+          "verdict": "correct",
+          "consistent": true,
+          "reasons": [
+            "方案A的日式风格和谐统一，配色柔和，材质自然，光影效果温馨。",
+            "方案B的和风设计与柔和的配色和材质营造出温馨舒适的氛围。"
+          ]
+        },
+        {
+          "a": "pair_064",
+          "b": "pair_031",
+          "a_aes": 2.0,
+          "b_aes": 4.0,
+          "expect": "b",
+          "got": "b",
+          "verdict": "correct",
+          "consistent": true,
+          "reasons": [
+            "方案B的中式风格和谐统一，光影效果柔和，整体美观大方。",
+            "方案A的中式设计感和温暖的配色更具美学吸引力。"
+          ]
+        },
+        {
+          "a": "pair_026",
+          "b": "pair_069",
+          "a_aes": 5.0,
+          "b_aes": 1.0,
+          "expect": "a",
+          "got": "a",
+          "verdict": "correct",
+          "consistent": true,
+          "reasons": [
+            "方案A的设计感和配色更为丰富，整体美观且温馨。",
+            "方案B的配色丰富且充满生气，材质多样，整体美观度更高。"
+          ]
+        },
+        {
+          "a": "pair_013",
+          "b": "pair_057",
+          "a_aes": 1.0,
+          "b_aes": 5.0,
+          "expect": "b",
+          "got": "b",
+          "verdict": "correct",
+          "consistent": true,
+          "reasons": [
+            "方案B的配色温暖，材质丰富，整体氛围更具吸引力。",
+            "方案A的配色温暖且材质丰富，整体设计感更强。"
+          ]
+        },
+        {
+          "a": "pair_071",
+          "b": "pair_073",
+          "a_aes": 4.0,
+          "b_aes": 1.0,
+          "expect": "a",
+          "got": "a",
+          "verdict": "correct",
+          "consistent": true,
+          "reasons": [
+            "方案A的自然材质和柔和配色营造出温馨舒适的氛围。",
+            "方案B的日式风格设计感强，配色和材质自然和谐，光影效果柔和，整体美观。"
+          ]
+        },
+        {
+          "a": "pair_032",
+          "b": "pair_034",
+          "a_aes": 1.0,
+          "b_aes": 4.0,
+          "expect": "b",
+          "got": "b",
+          "verdict": "correct",
+          "consistent": true,
+          "reasons": [
+            "方案B的自然材质和柔和光影营造出温馨舒适的氛围。",
+            "方案A的自然材质和柔和光影营造出温馨的氛围。"
+          ]
+        },
+        {
+          "a": "pair_021",
+          "b": "pair_033",
+          "a_aes": 5.0,
+          "b_aes": 2.0,
+          "expect": "a",
+          "got": "a",
+          "verdict": "correct",
+          "consistent": true,
+          "reasons": [
+            "方案A的自然色调和材质搭配更具和谐美感。",
+            "方案B的自然色调和柔和光影营造出更温馨舒适的氛围。"
+          ]
+        },
+        {
+          "a": "pair_073",
+          "b": "pair_082",
+          "a_aes": 1.0,
+          "b_aes": 4.0,
+          "expect": "b",
+          "got": "b",
+          "verdict": "correct",
+          "consistent": true,
+          "reasons": [
+            "方案B的设计感和整体美观性更强，配色和材质更为丰富。",
+            "方案A的古典设计感和丰富的细节更具美学吸引力。"
+          ]
+        },
+        {
+          "a": "pair_076",
+          "b": "pair_069",
+          "a_aes": 5.0,
+          "b_aes": 1.0,
+          "expect": "a",
+          "got": "a",
+          "verdict": "correct",
+          "consistent": true,
+          "reasons": [
+            "方案A的设计感和配色更为丰富，整体氛围温馨且具有层次感。",
+            "方案B的配色丰富且材质多样，整体氛围温馨而有设计感。"
+          ]
+        },
+        {
+          "a": "pair_039",
+          "b": "pair_042",
+          "a_aes": 2.0,
+          "b_aes": 5.0,
+          "expect": "b",
+          "got": "tie",
+          "verdict": "tie",
+          "consistent": false,
+          "reasons": [
+            "方案B的配色和材质更显温馨和谐，整体美观度更高。",
+            "方案B的现代配色和简约设计更具视觉冲击力。"
+          ]
+        },
+        {
+          "a": "pair_024",
+          "b": "pair_077",
+          "a_aes": 5.0,
+          "b_aes": 1.0,
+          "expect": "a",
+          "got": "a",
+          "verdict": "correct",
+          "consistent": true,
+          "reasons": [
+            "方案A的设计感和配色更为奢华典雅，整体美观度较高。",
+            "方案B的设计更具奢华感，配色和材质搭配更为精致。"
+          ]
+        }
+      ]
+    },
+    {
+      "run_at": "2026-07-09T23:57:13.186929",
+      "split": "test",
+      "seed": 20260709,
+      "model": "gpt-4o",
+      "n_pairs": 14,
+      "n_errors": 0,
+      "correct": 11,
+      "wrong": 0,
+      "ties": 3,
+      "agreement": 0.7857,
+      "agreement_ci": [
+        0.5241,
+        0.9243
+      ],
+      "order_consistency": 0.7857,
+      "tokens": {
+        "in": 46144,
+        "out": 892
+      },
+      "rows": [
+        {
+          "a": "pair_067",
+          "b": "pair_060",
+          "a_aes": 1.0,
+          "b_aes": 4.0,
+          "expect": "b",
+          "got": "b",
+          "verdict": "correct",
+          "consistent": true,
+          "reasons": [
+            "方案B的设计感和配色更具东方美学，整体更为和谐美观。",
+            "方案A的设计感和配色更具东方美学，整体更为和谐美观。"
+          ]
+        },
+        {
+          "a": "pair_049",
+          "b": "pair_075",
+          "a_aes": 4.0,
+          "b_aes": 2.0,
+          "expect": "a",
+          "got": "a",
+          "verdict": "correct",
+          "consistent": true,
+          "reasons": [
+            "方案A的配色和材质搭配更具现代感和层次感。",
+            "方案B的配色更为丰富且光影效果更佳。"
+          ]
+        },
+        {
+          "a": "pair_075",
+          "b": "pair_015",
+          "a_aes": 2.0,
+          "b_aes": 5.0,
+          "expect": "b",
+          "got": "b",
+          "verdict": "correct",
+          "consistent": true,
+          "reasons": [
+            "方案B的自然木质感和柔和的光影营造出更温馨舒适的氛围。",
+            "方案A的自然木质感和柔和的色调营造出温馨舒适的氛围。"
+          ]
+        },
+        {
+          "a": "pair_055",
+          "b": "pair_022",
+          "a_aes": 4.0,
+          "b_aes": 2.0,
+          "expect": "a",
+          "got": "a",
+          "verdict": "correct",
+          "consistent": true,
+          "reasons": [
+            "方案A的设计感和光影效果更具奢华感，整体美观度更高。",
+            "方案B的设计感更强，配色和材质更显奢华，光影效果更为丰富。"
+          ]
+        },
+        {
+          "a": "pair_048",
+          "b": "pair_056",
+          "a_aes": 1.0,
+          "b_aes": 4.0,
+          "expect": "b",
+          "got": "b",
+          "verdict": "correct",
+          "consistent": true,
+          "reasons": [
+            "方案B在设计感和整体美观上更具现代感和层次感。",
+            "方案A在设计感和配色上更具活力和现代感。"
+          ]
+        },
+        {
+          "a": "pair_045",
+          "b": "pair_006",
+          "a_aes": 5.0,
+          "b_aes": 2.0,
+          "expect": "a",
+          "got": "tie",
+          "verdict": "tie",
+          "consistent": false,
+          "reasons": [
+            "方案B的自然色调和简约设计更具现代美感。",
+            "方案B的设计更具奢华感和细节丰富。"
+          ]
+        },
+        {
+          "a": "pair_078",
+          "b": "pair_051",
+          "a_aes": 1.0,
+          "b_aes": 5.0,
+          "expect": "b",
+          "got": "b",
+          "verdict": "correct",
+          "consistent": true,
+          "reasons": [
+            "方案B在配色和现代设计感上更具吸引力。",
+            "方案A在配色和设计感上更具现代艺术风格，整体美观度较高。"
+          ]
+        },
+        {
+          "a": "pair_027",
+          "b": "pair_048",
+          "a_aes": 4.0,
+          "b_aes": 1.0,
+          "expect": "a",
+          "got": "a",
+          "verdict": "correct",
+          "consistent": true,
+          "reasons": [
+            "方案A的中式风格设计感强，配色和材质统一，整体美观大气。",
+            "方案B的设计感和配色更为和谐，材质和光影处理更显高级感。"
+          ]
+        },
+        {
+          "a": "pair_022",
+          "b": "pair_027",
+          "a_aes": 2.0,
+          "b_aes": 4.0,
+          "expect": "b",
+          "got": "b",
+          "verdict": "correct",
+          "consistent": true,
+          "reasons": [
+            "方案B的中式设计和暖色调光影更具美学吸引力。",
+            "方案A的中式设计感和温暖的色调搭配更具美学吸引力。"
+          ]
+        },
+        {
+          "a": "pair_010",
+          "b": "pair_083",
+          "a_aes": 5.0,
+          "b_aes": 2.0,
+          "expect": "a",
+          "got": "tie",
+          "verdict": "tie",
+          "consistent": false,
+          "reasons": [
+            "色彩丰富且具有波西米亚风格的独特设计感。",
+            "方案B的简约风格和柔和配色更具现代美感。"
+          ]
+        },
+        {
+          "a": "pair_083",
+          "b": "pair_043",
+          "a_aes": 2.0,
+          "b_aes": 4.0,
+          "expect": "b",
+          "got": "tie",
+          "verdict": "tie",
+          "consistent": false,
+          "reasons": [
+            "方案B在材质和光影的运用上更具现代感和层次感。",
+            "配色温暖且光影效果更佳，整体氛围更为和谐美观。"
+          ]
+        },
+        {
+          "a": "pair_037",
+          "b": "pair_020",
+          "a_aes": 4.0,
+          "b_aes": 1.0,
+          "expect": "a",
+          "got": "a",
+          "verdict": "correct",
+          "consistent": true,
+          "reasons": [
+            "方案A的日式风格和谐统一，配色自然，材质质感突出，光影柔和。",
+            "方案B的自然材质和柔和光影营造出温馨舒适的氛围。"
+          ]
+        },
+        {
+          "a": "pair_067",
+          "b": "pair_007",
+          "a_aes": 1.0,
+          "b_aes": 5.0,
+          "expect": "b",
+          "got": "b",
+          "verdict": "correct",
+          "consistent": true,
+          "reasons": [
+            "方案B的设计感和配色更为和谐，整体美观度较高。",
+            "方案A的设计感和配色更为和谐，整体美观度更高。"
+          ]
+        },
+        {
+          "a": "pair_070",
+          "b": "pair_078",
+          "a_aes": 4.0,
+          "b_aes": 1.0,
+          "expect": "a",
+          "got": "a",
+          "verdict": "correct",
+          "consistent": true,
+          "reasons": [
+            "方案A的自然色调和简约设计更具美感。",
+            "方案B的配色柔和统一，整体设计简约且光影效果自然。"
+          ]
+        }
+      ]
+    }
+  ]
+}

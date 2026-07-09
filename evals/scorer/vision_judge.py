@@ -197,6 +197,8 @@ def _fewshot_block(max_per_class: int = 2) -> str:
         from evals.dataset.judge_split import pair_ids
         from evals.scorer.gold_store import GoldStore, effective_binary
 
+        from evals.scorer.gold_store import is_excluded
+
         pool = pair_ids("fewshot")
         if not pool:
             return ""
@@ -206,6 +208,8 @@ def _fewshot_block(max_per_class: int = 2) -> str:
         by_class = {"pass": [], "fail": []}
         for pid in pool:
             e = gold.get(pid) or {}
+            if is_excluded(e):   # 评测集缺陷 case 不当示例（其判词描述的是题目缺陷而非输出质量）
+                continue
             v, _src = effective_binary(e)
             if v not in by_class:
                 continue
@@ -301,17 +305,25 @@ def score_instruction_vqa(input_path, output_path, style="", room_type="", promp
 # ============================ v2-B：美学成对 A/B ============================
 # 两个效果图比哪个更美；正反各跑一次消位置偏见。
 
-_PAIRWISE_PROMPT = """你是资深室内设计评审。【图1】是装修前的毛坯原图，仅供了解原始空间。
-【方案A】和【方案B】是两个 AI 效果图。目标风格：{style}；房间类型：{room_type}。
-请**只就美学质量**（设计感 / 配色 / 材质 / 光影 / 整体美观）判断哪个方案更好，与谁更像毛坯无关。
+_PAIRWISE_PROMPT = """你是资深室内设计评审。{intro}
+请**只就美学质量**（设计感 / 配色 / 材质 / 光影 / 整体美观）判断哪个方案更好{no_ref}。
 只输出 JSON：{{"winner":"A"或"B"或"tie","reason":"一句话理由"}}，不要多余文字。"""
 
 
 def _pairwise_once(in_uri, a_uri, b_uri, style, room_type, model, key, timeout):
-    content = [_text(_PAIRWISE_PROMPT.format(style=style or "未指定", room_type=room_type or "未指定")),
-               _text("【图1：毛坯原图】"), _image(in_uri),
-               _text("【方案A】"), _image(a_uri),
-               _text("【方案B】"), _image(b_uri)]
+    if in_uri:
+        intro = (f"【图1】是装修前的毛坯原图，仅供了解原始空间。"
+                 f"【方案A】和【方案B】是两个 AI 效果图。"
+                 f"目标风格：{style or '未指定'}；房间类型：{room_type or '未指定'}。")
+        no_ref = "，与谁更像毛坯无关"
+    else:
+        intro = "【方案A】和【方案B】是两张 AI 室内设计效果图（可能来自不同房间，忽略户型差异）。"
+        no_ref = ""
+    content = [_text(_PAIRWISE_PROMPT.format(intro=intro, no_ref=no_ref))]
+    if in_uri:
+        content += [_text("【图1：毛坯原图】"), _image(in_uri)]
+    content += [_text("【方案A】"), _image(a_uri),
+                _text("【方案B】"), _image(b_uri)]
     text, usage, latency = _call_api(content, model, key, max_tokens=200, timeout=timeout)
     data = _extract_json(text) or {}
     w = str(data.get("winner", "")).strip().upper()
@@ -322,13 +334,14 @@ def compare_pairwise(input_path, output_a, output_b, style="", room_type="",
                      model=_DEFAULT_MODEL, key=None, timeout=120):
     """美学成对比较。正反各跑一次（A/B 与 B/A）消位置偏见。
 
+    input_path=None 时做纯美学对比（跨 case 对比用：不展示毛坯参考图，省 token 且不误导）。
     返回 {winner:'A'/'B'/'tie', order1, order2, consistent, reasons, _usage,_latency}。
     winner='A' 仅当两序都判 A 更美（或一序 A 一序 tie 偏 A）；两序矛盾→tie（位置偏见，存疑）。
     """
     key = key or _load_key()
     if not key:
         raise RuntimeError("APIYI_KEY 未配置")
-    in_uri, _ = _img_data_uri(_resolve(input_path))
+    in_uri = _img_data_uri(_resolve(input_path))[0] if input_path else None
     a_uri, _ = _img_data_uri(_resolve(output_a))
     b_uri, _ = _img_data_uri(_resolve(output_b))
 
