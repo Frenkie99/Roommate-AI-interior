@@ -1,0 +1,23 @@
+{
+  "pair_id": "pair_033",
+  "status": "ok",
+  "error": null,
+  "analyzed_at": "2026-07-10T00:05:02.296939",
+  "duration_sec": 211.8,
+  "model": "cli-default",
+  "num_turns": 11,
+  "verdict": {
+    "root_cause_stage": "generation_model",
+    "confidence": "medium",
+    "summary": "疑似生图模型将包豪斯做成符号拼贴：蒙德里安地毯喧宾夺主、吊灯悬空失功能",
+    "evidence": [
+      "效果图亲验：三原色以整块蒙德里安直译地毯呈现（prompt 要求仅为 accents），壁炉前两盏吊灯下方无任何家具，与 'Functional' 冲突，右半屋大面积空置",
+      "结构亲验完好（壁炉/门洞/斜顶/卫生间/法式门全保留），人工 structural=5.0 佐证；自动分 68.93 系 SSIM 被新增家具压低，属评分器已知局限非本案主因",
+      "pairwise_validation.json L137-148/L235-246：成对美学 judge 两次看图均判 pair_033 劣于对照（aes 4.0/5.0），与人工 2.0 方向一致"
+    ],
+    "affected_scope": "强符号风格（bauhaus/memphis/art_deco 等）且人工 aesthetic≤2、structural≥4 的 case；另附评分器低估子集：structural_fidelity 60-75 但人工 structural=5 的家具增量 case",
+    "suggested_fix": "prompt 模板 ATMOSPHERE 段追加约束（风格色彩作点缀、禁直译标志性艺术图案、灯具家具须有功能锚点），用已验收的成对美学 judge 做修复前后 A/B；同时为本 case 补金标准 critique（尤其 instruction=2 的理由）",
+    "uncertainty": "instruction=2.0 在图中找不到充分实据（风格指令可见地被执行），无法排除标注光环效应或未成文的严格口径；且单次采样无法区分模型稳定倾向与抽样方差"
+  },
+  "full_text": "证据链齐了。成对 judge（看图盲评）两次都把 pair_033 的美学排在对照 case 之下，与人工 2.0 方向一致——说明美学低分不是标注手滑。下面给出归因。\n\n## 直接执行：五问归因\n\n**1. 失败首先发生在哪一环？**\n\n假设归因在**生图模型的美学呈现环节**（generation_model），且是\"风格符号化拼贴\"这一特定失败模式——不是结构、不是视觉理解、也不是评分器误判主维度。同时附带一个次要发现：structural_fidelity 自动分在本 case 上明显低估（68.93 vs 人工 5.0）。\n\n**2. 证据是什么？（均来自我亲眼比对两张图 + 数据文件）**\n\n- **结构维不是问题**：效果图完整保留了原图的壁炉及大理石砖面、左侧斜顶、两个门洞、卫生间（马桶可见）、法式门位置、吊顶梁和筒灯、灰木纹地板。人工 structural=5.0 与我所见一致。反倒是自动分只有 68.93——这是 64×64 布局 SSIM 被大量新增家具压低所致，属评分器在\"家具增量大\"case 上的系统性低估（次要发现，非本 case 失败主因）。\n- **美学 2.0 有图内实据**：(a) 三原色以一整块**蒙德里安直译印花地毯**呈现，喧宾夺主——prompt 要求的是 \"primary color **accents**\"（点缀），且蒙德里安属荷兰风格派（De Stijl），整屋读起来像\"现代主义符号剪贴画\"（Wassily 椅 + LC2 沙发 + 蒙德里安地毯 + 几何挂画全堆在一起）而非有机的包豪斯室内设计；(b) 壁炉前**两盏玻璃球吊灯悬在空地板上方**，下面什么都没有，与 prompt 强调的 \"Functional\" 直接冲突；(c) 画面右半侧大面积空置，布局失衡、样板间感强。\n- **交叉验证**：evals/data/pairwise_validation.json 第 137-148、235-246 行，成对美学 judge 两次独立看图均判 pair_033 劣于 aes=4.0/5.0 的对照 case，与人工方向一致（0 判反）。\n- **视觉理解/prompt 构建环节无出错迹象**：prompt 里风格与氛围词都在且被执行了（几何、原色、现代主义都出现在图里）——问题不是\"需求丢了\"，是\"执行得俗了\"。\n\n**3. 同类失败可能波及哪些 case？**\n\n两条可检索特征：\n- **强符号风格 case**：style ∈ {bauhaus, memphis, art_deco 等有标志性视觉符号的风格}，且人工 aesthetic ≤ 2 但 structural ≥ 4 的 case——排查模型是否普遍用\"堆砌风格符号\"代替\"风格化设计\"。\n- **评分器低估子集**：structural_fidelity 落在 60-75 区间但人工 structural = 5 的 case——量化 SSIM 被家具增量污染的比例。\n\n**4. 建议的修复方向？**\n\n- **改 prompt 模板**（backend 的 prompt 构建环节）：在 ATMOSPHERE 段后追加约束，如\"将风格色彩作为点缀而非主体图案；避免直接复制标志性艺术品图案（如蒙德里安格）；所有灯具/家具须有功能锚点\"。修完用现成的成对美学 judge（已验收 test 78.6%）做 A/B 验证。\n- **补金标准 critique**：本 case instruction=2.0 无 notes、我在图中找不到充分实据（风格指令明明大体执行了）——正好落进 METHODOLOGY 第 161-163 行已立项的\"失败样本补二元判定+两句 critique\"待办，建议 frenkie 优先补这条。\n\n**5. 置信度：medium**\n\n美学维归因于生图模型有图证 + judge 交叉验证，这部分接近 high；拉低置信度的是 **instruction=2.0 无法完全解释**——风格指令可见地被执行了，该 2 分可能是 (a) 标注者对\"符号直译≠风格遵循\"的严格口径，也可能是 (b) overall 不满意导致的光环效应（Likert 常见噪声），无 critique 无法区分。另外单次采样（备忘5），无法判断这是模型稳定倾向还是一次抽样运气。\n\n## 深度交互：审慎挑战\n\n这条 case 暴露的更深问题可能不在模型而在**评测标尺本身**：structural(5.0) 与 aesthetic/instruction(2.0) 的巨大劈叉 + 零 notes，说明\"美学 2 分\"和\"指令 2 分\"的判定标准目前只存在于标注者脑中。如果\"符号化拼贴要重罚\"是产品口径，它应该像 7 月 9 日的\"呈现 vs 内容裁决线\"一样写进 PRODUCT_CONTRACT——否则 few-shot judge 学到的是分数、学不到理由，将来同类 case 的 judge 泛化会失稳。建议把\"强风格的忠实度：符号引用 vs 设计语言\"作为下一个待仲裁的产品契约条目，比单修这一条 prompt 更值。\n\n```json\n{\n  \"root_cause_stage\": \"generation_model\",\n  \"confidence\": \"medium\",\n  \"summary\": \"疑似生图模型将包豪斯做成符号拼贴：蒙德里安地毯喧宾夺主、吊灯悬空失功能\",\n  \"evidence\": [\n    \"效果图亲验：三原色以整块蒙德里安直译地毯呈现（prompt 要求仅为 accents），壁炉前两盏吊灯下方无任何家具，与 'Functional' 冲突，右半屋大面积空置\",\n    \"结构亲验完好（壁炉/门洞/斜顶/卫生间/法式门全保留），人工 structural=5.0 佐证；自动分 68.93 系 SSIM 被新增家具压低，属评分器已知局限非本案主因\",\n    \"pairwise_validation.json L137-148/L235-246：成对美学 judge 两次看图均判 pair_033 劣于对照（aes 4.0/5.0），与人工 2.0 方向一致\"\n  ],\n  \"affected_scope\": \"强符号风格（bauhaus/memphis/art_deco 等）且人工 aesthetic≤2、structural≥4 的 case；另附评分器低估子集：structural_fidelity 60-75 但人工 structural=5 的家具增量 case\",\n  \"suggested_fix\": \"prompt 模板 ATMOSPHERE 段追加约束（风格色彩作点缀、禁直译标志性艺术图案、灯具家具须有功能锚点），用已验收的成对美学 judge 做修复前后 A/B；同时为本 case 补金标准 critique（尤其 instruction=2 的理由）\",\n  \"uncertainty\": \"instruction=2.0 在图中找不到充分实据（风格指令可见地被执行），无法排除标注光环效应或未成文的严格口径；且单次采样无法区分模型稳定倾向与抽样方差\"\n}\n```"
+}

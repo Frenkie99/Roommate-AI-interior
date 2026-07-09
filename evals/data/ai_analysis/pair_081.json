@@ -1,0 +1,24 @@
+{
+  "pair_id": "pair_081",
+  "status": "ok",
+  "error": null,
+  "analyzed_at": "2026-07-10T00:24:43.960491",
+  "duration_sec": 181.4,
+  "model": "cli-default",
+  "num_turns": 10,
+  "verdict": {
+    "root_cause_stage": "prompt_construction",
+    "confidence": "medium",
+    "summary": "疑似auto比例硬编码4:3强翻竖版原图，迫使模型弃构图重构场景",
+    "evidence": [
+      "原图768×1024竖版含方柱/裸梁/红棕开门/无窗后墙；效果图1200×885横版，柱梁门全消失并凭空出现两面落地窗+电视墙+沙发，空间零对应（两图均已亲眼比对）",
+      "backend/app/routes/image.py:131 硬编码 \"auto\":\"4:3\"，不读原图比例；batch_generate.py:65 传auto；frontend/src 全文无aspect_ratio传参→真实用户路径同样强制4:3",
+      "inpaint_service.py:17 已有按原图算比例的_aspect_ratio_for_size()但生成路径未复用",
+      "structural_fidelity=55.12 vs 人工structural=2.0：低分辨率SSIM对双低对比灰调图区分度不足，对完全重构图打分虚高"
+    ],
+    "affected_scope": "所有竖版原图case：遍历85对读取原图与输出的像素尺寸，筛出原图h>w但输出w>h（画幅方向翻转）的case",
+    "suggested_fix": "image.py的auto分支复用_aspect_ratio_for_size()按上传图尺寸自适应比例；用本case原图以3:4对照重跑验证因果；scorer侧将画幅翻转设为structural_fidelity前置硬扣分",
+    "uncertainty": "比例冲突→结构全丢的因果贡献度未经受控实验验证：即使比例一致该模型也可能自行重构场景（单次采样方差未度量），需同图3:4对照重跑确认"
+  },
+  "full_text": "# 直接执行\n\n## pair_081 归因分析\n\n### 五问回答\n\n**1. 失败首先发生在哪一环？——生成请求构建环节（比例参数扭曲），且这是真实产品链路的缺陷,不只是评测集问题**\n\n我对比两张图后发现的核心事实：毛坯原图是 **768×1024 竖版（3:4）**，AI 效果图是 **1200×885 横版（约 4:3）**——画幅方向被翻转了。沿代码链路追下去坐实了原因：\n\n- `backend/app/routes/image.py:130-138`：`aspect_ratio=\"auto\"` 被**硬编码映射为 `\"4:3\"`**，完全不读取上传图的实际比例；\n- `evals/dataset/batch_generate.py:65`：批量生成传的就是 `\"auto\"`；\n- 前端 `frontend/src` 全文 grep 不到 `aspect_ratio` 传参 → **真实用户路径同样落到 `Form(\"auto\")` 默认值 → 强制 4:3**。也就是说真实用户上传竖版毛坯图会遇到一模一样的问题——这一条**不在备忘 1 的\"非真实路径\"豁免范围内**；\n- 讽刺的是 `backend/app/services/inpaint_service.py:17` 已经写好了按原图尺寸计算最近比例的 `_aspect_ratio_for_size()`，但生成路径没有复用它。\n\n生图模型拿到一张竖版参考图、却被要求输出横版 4:3，只能放弃原构图重构整个场景——下游的\"结构全丢\"是这个参数扭曲的连锁结果。\n\n**2. 证据（均为亲眼查看/亲手检索）**\n\n- 原图（竖版毛坯）：左侧独立方柱、右侧大柱、天花裸露横梁、中景左侧一扇开着的红棕色门、后墙无窗仅有插座孔；\n- 效果图（横版）：上述**柱、梁、门全部消失**，凭空出现两面原图不存在的大落地窗、电视墙+悬浮电视柜、灰色组合沙发；空间形态、视角与原图零对应，观感接近一张与输入无关的\"素材图\"。人工 structural=2.0、overall=1.0 与此吻合；\n- 次要发现：structural_fidelity=55.12 对一张结构**完全重构**的图偏宽松——64×64 低分辨率 SSIM 面对\"原图灰水泥、效果图灰白极简\"这种双低对比场景区分度不足（人工 2/5 vs 自动 55/100 的量级错位）；\n- 指令维 2.0 可解释：modern_minimalist 风格其实达成了，但 dining_room 只以角落一张黑色圆餐桌出现、主体是客厅——房型跑偏部分属备忘 1 已知的评测集缺陷（batch_generate 不传 room_type）。\n\n**3. 同类失败波及范围**\n\n所有**竖版原图**的 case。可脚本化检索：遍历 85 对，读取 candidates 原图与 output 效果图的像素尺寸，筛出\"原图 h>w 但输出 w>h\"（方向翻转）的 case——这批 case 的结构分预期系统性偏低。\n\n**4. 建议修复方向**\n\n产品级修一处即可：`image.py` 的 `\"auto\"` 分支改为复用 `inpaint_service._aspect_ratio_for_size()` 按上传图实际尺寸取最近比例。修完后用本 case 原图以 3:4 重跑一次做对照，验证结构保真是否显著回升（这同时能检验因果假设）。评分器侧可把\"画幅方向翻转\"作为 structural_fidelity 的前置硬扣分项，避免 SSIM 对双低对比图打出虚高中等分。\n\n**5. 置信度：medium**\n\n参数缺陷本身（auto→强制 4:3、前端不传参、输入确为竖版）是代码和图像双重坐实的，这部分是 high。但\"比例冲突 → 结构全丢\"的**因果贡献度**未经受控验证：即使比例一致，该生图模型也可能自行重构场景（备忘 5：单次采样、方差未度量）。一次同图 3:4 对照重跑即可消除这个不确定性。\n\n# 深度交互\n\n审慎挑战两点：\n\n1. **这个 case 的价值可能被\"已知缺陷备忘\"误杀。** 备忘 1 会诱导分析者把一切归为\"评测集生成方式问题\"从而不上报——但本 case 恰恰相反：aspect_ratio 缺陷走的是真实前端路径，竖版照片又是手机用户拍毛坯房的**最常见姿势**（竖持手机拍房间）。这可能是目前评测体系里挖出的第一个可直接上报的产品级 P1 bug，建议单独立项而不是留在归因台账里。\n\n2. **人工美学 1.0 分值得回看标注契约。** 这张效果图孤立看美学并不差（干净的现代极简），给 1 分大概率是标注者按\"忠实还原\"契约对\"完全不是这个房子\"做了整体性惩罚——如果是这样，美学维和结构维在金标准里存在耦合，未来训练/校准美学自动分时要注意这批\"结构崩塌连带美学打底分\"的样本会污染纯美学信号。\n\n```json\n{\n  \"root_cause_stage\": \"prompt_construction\",\n  \"confidence\": \"medium\",\n  \"summary\": \"疑似auto比例硬编码4:3强翻竖版原图，迫使模型弃构图重构场景\",\n  \"evidence\": [\n    \"原图768×1024竖版含方柱/裸梁/红棕开门/无窗后墙；效果图1200×885横版，柱梁门全消失并凭空出现两面落地窗+电视墙+沙发，空间零对应（两图均已亲眼比对）\",\n    \"backend/app/routes/image.py:131 硬编码 \\\"auto\\\":\\\"4:3\\\"，不读原图比例；batch_generate.py:65 传auto；frontend/src 全文无aspect_ratio传参→真实用户路径同样强制4:3\",\n    \"inpaint_service.py:17 已有按原图算比例的_aspect_ratio_for_size()但生成路径未复用\",\n    \"structural_fidelity=55.12 vs 人工structural=2.0：低分辨率SSIM对双低对比灰调图区分度不足，对完全重构图打分虚高\"\n  ],\n  \"affected_scope\": \"所有竖版原图case：遍历85对读取原图与输出的像素尺寸，筛出原图h>w但输出w>h（画幅方向翻转）的case\",\n  \"suggested_fix\": \"image.py的auto分支复用_aspect_ratio_for_size()按上传图尺寸自适应比例；用本case原图以3:4对照重跑验证因果；scorer侧将画幅翻转设为structural_fidelity前置硬扣分\",\n  \"uncertainty\": \"比例冲突→结构全丢的因果贡献度未经受控实验验证：即使比例一致该模型也可能自行重构场景（单次采样方差未度量），需同图3:4对照重跑确认\"\n}\n```"
+}

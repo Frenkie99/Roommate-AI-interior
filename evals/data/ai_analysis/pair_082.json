@@ -1,0 +1,24 @@
+{
+  "pair_id": "pair_082",
+  "status": "ok",
+  "error": null,
+  "analyzed_at": "2026-07-10T00:24:38.933057",
+  "duration_sec": 150.4,
+  "model": "cli-default",
+  "num_turns": 8,
+  "verdict": {
+    "root_cause_stage": "generation_model",
+    "confidence": "medium",
+    "summary": "疑似生图模型无视输入图整体重建房间，prompt结构约束未生效",
+    "evidence": [
+      "亲眼对比两图：原图右后整面带护栏落地窗墙+左上梁+无壁炉；效果图变为壁炉墙+两扇独立高窗+藻井吊顶，无任何结构元素对应",
+      "prompt_builder.py:34 的 STRUCTURE_TEMPLATE_FULL（即档案中截断的'CRITIC'块）证明结构约束在prompt内，约束是被模型忽略而非缺失",
+      "batch_generate.py:61-68 确认原图确实随请求上传，排除'没传图'",
+      "人工 structural=1.0/裁决fail 与图面一致；但 structural_fidelity=54.42 对完全重建仍给中段分，暴露评分器对整体重建型失败钝感（次要发现）"
+    ],
+    "affected_scope": "人工structural≤2且aesthetic≥4的'美但重建'case；structural_fidelity落在40-60中段的case；同批次20260507_*输出；原图窗墙占比极大的毛坯输入",
+    "suggested_fix": "主修：核查/提高生图API的图像条件强度（img2img strength或换结构条件更强的编辑通道），而非继续加prompt文本约束；次修：用此类样本重校structural_fidelity阈值并增加完全重建的硬fail带",
+    "uncertainty": "无trace无法确认实际API参数与调用通道；不能完全排除输出文件配对错误；单次采样无法区分稳定行为与生成方差"
+  },
+  "full_text": "# 直接执行：pair_082 失败归因\n\n## 1. 失败首先发生在哪一环？\n\n**生图模型环节（generation_model）**。模型收到了原图、prompt 里也带了完整的结构约束，但它完全无视输入图的空间结构，\"凭空重建\"了一个新房间。这是真实失败（人工裁决 fail 成立），不是评分器误判，也不是评测集缺陷造成的结构崩坏。\n\n## 2. 证据\n\n**图像对比（两张图均已亲眼查看）**：\n- 毛坯原图：右后方是一整面带护栏的落地窗墙（占满整面墙），左墙空白仅有可视对讲面板，左上有一根梁，无壁炉，地面是裸水泥。\n- AI 效果图：右侧墙中央是一座大理石壁炉，窗户变成了两扇独立的高窗（壁炉两侧各一），带帘幔；天花变成带金色线脚的跌级藻井+水晶吊灯；透视、房间比例、开窗位置**没有任何一项**与原图对应。原图最显著的特征——整面落地窗墙——彻底消失。\n\n**链路证据**：\n- `backend/app/utils/prompt_builder.py:34` 的 `STRUCTURE_TEMPLATE_FULL` 明确要求\"窗户尺寸位置不得改动、不得结构改造、相机视角100%一致\"——case 档案里提示词末尾截断的 \"CRITIC\" 正是这个约束块的开头，说明约束**在 prompt 里**，是模型没执行。\n- `evals/dataset/batch_generate.py:61-68` 确认原图文件确实随请求上传了（`files = {\"image\": ...}`），排除\"图根本没传\"的可能。\n\n**分数矛盾（次要发现，指向评分器）**：\n- 人工 structural=1.0（最低分，备注\"和毛坯房原结构不符\"），但 structural_fidelity 给了 **54.42**——一个结构完全对不上的房间拿到中段分。这提示 64×64 低分辨率 SSIM 的动态范围被压缩（任意两个\"都是房间\"的图基线相似度就不低），对\"整体重建型\"失败区分度不足。\n- aesthetic=4.0 与图面一致：效果图本身非常精美，是典型的\"**美但重建**\"失败模式。\n- 房型跑偏（指令要 dining_room，出图是客厅：沙发+茶几+壁炉，无餐桌）符合备忘1的已知缺陷（batch_generate 不传 room_type，prompt 里只有\"欧式风格 interior\"），instruction=3.0 与此对应，**不作为新发现上报**。\n\n## 3. 同类失败可能波及哪些 case\n\n可检索特征：**人工 structural ≤ 2 且 aesthetic ≥ 4 的 case**（\"美但重建\"模式），尤其是 structural_fidelity 落在 40–60 中段的——这批是评分器最可能漏报的区域。另外可横向排查同批次（output 文件名 `20260507_*`）的生成结果，看整体重建是否在该批次集中出现。原图窗墙占比极大的毛坯图（整面落地窗）可能是高危输入：窗墙一旦被模型\"重新规划\"，结构分崩得最彻底。\n\n## 4. 建议的修复方向\n\n- **主修生成环节**：核查生图 API 调用的图像条件强度（img2img strength / edit 模式 vs 重绘模式）。prompt 文本约束已经写到头了（\"MUST FOLLOW STRICTLY\"都在），继续堆 prompt 边际收益低；应在 API 参数层面提高对输入图的条件约束，或换用结构保持更强的编辑型接口（如带 ControlNet/深度图条件的通道）。\n- **次修评分器**：用本 case 这类\"人工 structural=1 但自动分 50+\"的样本重新校准 structural_fidelity 的判定阈值，或增加一个硬性 fail 带（例如窗墙区域 IoU 类的粗检测），压缩\"完全重建仍得中段分\"的空间。\n\n## 5. 置信度\n\n**medium（偏高）**。\"结构完全未保持、失败发生在生成环节\"的视觉证据是压倒性的；但因为无 trace（备忘：批量生成无真实请求记录），无法确认这次调用实际生效的 API 参数（条件强度、是否走了预期通道），也无法完全排除极小概率的输出文件配对错误；另受单次采样限制（备忘5），无法判断这是该输入的稳定行为还是一次方差。\n\n---\n\n# 深度交互：审慎挑战\n\n1. **这个 case 最有价值的产出可能不是\"又一个生成失败\"，而是评分器的漏报证据。** 人工已经能判 fail，生成失败本身信息量有限；但 structural_fidelity 给完全重建的房间打 54.42，直接挑战了它 +0.418 Spearman 的可用边界——它可能只在\"局部改动\"区间有区分度，对\"整体重建\"反而钝感。建议把这类 case 单独归入评分器校准集，这比修单个生成 bug 对评测体系的杠杆更大。\n\n2. **\"内在难度=easy\"的标注值得复核。** 整面落地窗墙+全裸毛坯，对结构保持来说其实是高危输入（模型最容易把大片玻璃\"重新规划\"），这个 case 被标 easy 可能说明难度标注只看了图面复杂度，没考虑结构保持的难点维度。\n\n```json\n{\n  \"root_cause_stage\": \"generation_model\",\n  \"confidence\": \"medium\",\n  \"summary\": \"疑似生图模型无视输入图整体重建房间，prompt结构约束未生效\",\n  \"evidence\": [\n    \"亲眼对比两图：原图右后整面带护栏落地窗墙+左上梁+无壁炉；效果图变为壁炉墙+两扇独立高窗+藻井吊顶，无任何结构元素对应\",\n    \"prompt_builder.py:34 的 STRUCTURE_TEMPLATE_FULL（即档案中截断的'CRITIC'块）证明结构约束在prompt内，约束是被模型忽略而非缺失\",\n    \"batch_generate.py:61-68 确认原图确实随请求上传，排除'没传图'\",\n    \"人工 structural=1.0/裁决fail 与图面一致；但 structural_fidelity=54.42 对完全重建仍给中段分，暴露评分器对整体重建型失败钝感（次要发现）\"\n  ],\n  \"affected_scope\": \"人工structural≤2且aesthetic≥4的'美但重建'case；structural_fidelity落在40-60中段的case；同批次20260507_*输出；原图窗墙占比极大的毛坯输入\",\n  \"suggested_fix\": \"主修：核查/提高生图API的图像条件强度（img2img strength或换结构条件更强的编辑通道），而非继续加prompt文本约束；次修：用此类样本重校structural_fidelity阈值并增加完全重建的硬fail带\",\n  \"uncertainty\": \"无trace无法确认实际API参数与调用通道；不能完全排除输出文件配对错误；单次采样无法区分稳定行为与生成方差\"\n}\n```"
+}

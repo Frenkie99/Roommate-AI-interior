@@ -1,0 +1,24 @@
+{
+  "pair_id": "pair_060",
+  "status": "ok",
+  "error": null,
+  "analyzed_at": "2026-07-10T00:14:27.705809",
+  "duration_sec": 162.6,
+  "model": "cli-default",
+  "num_turns": 8,
+  "verdict": {
+    "root_cause_stage": "prompt_construction",
+    "confidence": "high",
+    "summary": "疑似auto画幅硬编码4:3强制竖图变横，结构保真从请求层被破坏",
+    "evidence": [
+      "原图768×1024竖幅 vs 效果图1200×896横幅，视点由门洞外重构到走廊内（两图均已Read核实）",
+      "backend/app/routes/image.py:131 ratio_map中\"auto\":\"4:3\"为硬编码；evals/dataset/batch_generate.py:65传aspect_ratio=\"auto\"",
+      "人工分形状吻合：aesthetic 4.0（新中式风格执行到位）、structural 2.0（画幅+几何全变）、overall 2.0被结构拖垮",
+      "无床导致instruction 3.0属已知备忘1（batch_generate不传room_type），非新发现"
+    ],
+    "affected_scope": "所有输入图为竖幅（高>宽）的case（可批量读candidates图片尺寸筛出）；以及真实用户路径中未显式选比例（默认auto）的全部请求",
+    "suggested_fix": "image.py的auto分支改为按输入图宽高比就近映射（复用inpaint_service.py:17的_aspect_ratio_for_size），修复后对竖幅子集重生成重标结构维",
+    "uncertainty": "反事实幅度不可知：即使画幅正确，此hard输入（门洞取景+碎砖）结构维也未必及格；单次采样方差未度量；structural_fidelity=58.67对人工2.0偏宽但相关性本就只有0.418"
+  },
+  "full_text": "分析完成。两张图我都仔细看过，并沿代码链路验证了一个此前备忘里**没有**记录的机制性缺陷。\n\n## 直接执行：归因分析\n\n**1. 失败首先发生在哪一环？—— Prompt/请求构建环节（画幅参数被扭曲），而非生图模型能力**\n\n失败链条是这样的：\n\n- 原图是**竖幅 3:4**（768×1024），透过门洞拍摄的狭长卧室，尽头一扇窄高窗，地面碎砖、黄色管线，属于真·hard 输入。\n- 效果图是**横幅 4:3**（1200×896）。画幅被硬翻转后，模型只能整体重构图：门洞取景框消失、视点前移进走廊内部、窗户由窄高变宽矮加日式格栅。结构维人工 2.0 分由此而来。\n- 代码坐实了机制：`backend/app/routes/image.py:130-138` 的 `ratio_map` 里 **`\"auto\": \"4:3\"` 是硬编码**——名为 auto 实则永远输出横幅；`evals/dataset/batch_generate.py:65` 传的恰是 `\"aspect_ratio\": \"auto\"`。也就是说竖幅输入被系统性地强制成横幅画布，结构保真从请求参数层面就被判了死刑。\n- 注意这**不只是评测集缺陷**：路由的 Form 默认值就是 `\"auto\"`（image.py:37），真实用户走前端如果不显式选比例，同样会踩中。这是一个此前备忘未记录的真实产品链路缺陷。\n\n**2. 证据**（均为亲眼核实）：\n- 原图 768×1024 竖幅 vs 效果图 1200×896 横幅（Read 两图直接可见画幅翻转、视点重构）。\n- image.py:131 `\"auto\": \"4:3\"`；batch_generate.py:65 传 `\"auto\"`。\n- 人工分的形状完全吻合此归因：aesthetic 4.0（新中式氛围确实做得好——挂轴、圈椅、茶台、灯笼吊灯、原木格栅，风格指令执行到位），structural 2.0（画幅+几何全变），overall 2.0 被结构拖垮。\n- 没有床 → instruction 3.0：这是已知缺陷备忘 1（batch_generate 不传 room_type），不作为新发现上报。\n\n**3. 同类失败波及范围**：所有**输入为竖幅（高>宽）**的 case——可直接批量读 `evals/data/candidates/` 图片尺寸筛出；这些 case 的 structural 分都应带\"画幅强制翻转\"的系统性折扣。同时波及真实用户路径中未显式选比例的所有请求。\n\n**4. 修复方向**：改 `image.py` 的 `\"auto\"` 分支，按输入图宽高比就近映射到支持的比例枚举——现成轮子就在 `inpaint_service.py:17` 的 `_aspect_ratio_for_size()`，直接复用即可。修完后对竖幅子集重生成、重标结构维，才能把\"画幅缺陷\"与\"模型结构能力\"解耦。\n\n**5. 置信度：high（对\"第一错误环节是画幅硬编码\"）**。不确定性在反事实幅度：即使画幅正确，这个门洞取景+碎砖堆的 hard 输入结构维也未必能及格（单次采样，方差未度量，备忘 5）；另外 structural_fidelity 自动分 58.67 对一个人工 2.0 的 case 偏宽——64×64 缩放本身就抹掉了画幅信息，这是评分器覆盖盲区的旁证，但非本 case 主因。\n\n## 深度交互：审慎挑战\n\n这个 case 最有价值的产出不是归因本身，而是它暴露了**归因框架里缺一个候选项**：失败发生在\"请求参数构建\"而非\"文本 prompt 构建\"。你们的五环框架把 aspect_ratio、image_size 这类生成配置默认归入 prompt 环节，但它们的失败模式完全不同（机制性、可代码审计、可批量修复）。建议在归因模板里把 stage 拆细，或至少在备忘里补一条\"缺陷 6：auto 画幅硬编码 4:3，竖幅输入结构分系统性失真\"——否则后续分析师会在每个竖幅 case 上重复发现一遍。另外，修这个 bug 之前，竖幅子集的 structural 金标准其实测的是\"模型在错误画布上的重构能力\"，横向对比时应打标隔离。\n\n```json\n{\n  \"root_cause_stage\": \"prompt_construction\",\n  \"confidence\": \"high\",\n  \"summary\": \"疑似auto画幅硬编码4:3强制竖图变横，结构保真从请求层被破坏\",\n  \"evidence\": [\n    \"原图768×1024竖幅 vs 效果图1200×896横幅，视点由门洞外重构到走廊内（两图均已Read核实）\",\n    \"backend/app/routes/image.py:131 ratio_map中\\\"auto\\\":\\\"4:3\\\"为硬编码；evals/dataset/batch_generate.py:65传aspect_ratio=\\\"auto\\\"\",\n    \"人工分形状吻合：aesthetic 4.0（新中式风格执行到位）、structural 2.0（画幅+几何全变）、overall 2.0被结构拖垮\",\n    \"无床导致instruction 3.0属已知备忘1（batch_generate不传room_type），非新发现\"\n  ],\n  \"affected_scope\": \"所有输入图为竖幅（高>宽）的case（可批量读candidates图片尺寸筛出）；以及真实用户路径中未显式选比例（默认auto）的全部请求\",\n  \"suggested_fix\": \"image.py的auto分支改为按输入图宽高比就近映射（复用inpaint_service.py:17的_aspect_ratio_for_size），修复后对竖幅子集重生成重标结构维\",\n  \"uncertainty\": \"反事实幅度不可知：即使画幅正确，此hard输入（门洞取景+碎砖）结构维也未必及格；单次采样方差未度量；structural_fidelity=58.67对人工2.0偏宽但相关性本就只有0.418\"\n}\n```"
+}

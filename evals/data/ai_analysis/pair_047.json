@@ -1,0 +1,24 @@
+{
+  "pair_id": "pair_047",
+  "status": "ok",
+  "error": null,
+  "analyzed_at": "2026-07-10T00:09:12.758908",
+  "duration_sec": 173.7,
+  "model": "cli-default",
+  "num_turns": 4,
+  "verdict": {
+    "root_cause_stage": "generation_model",
+    "confidence": "high",
+    "summary": "疑似日式风格先验压倒结构约束，模型在实墙上新增障子窗",
+    "evidence": [
+      "亲眼比对两图：原图右墙前景为整面实墙（仅窄窗框+壁炉），效果图同位置出现整面障子格栅窗，后墙右角另多一扇，与人工备注吻合",
+      "原图后墙中央的推拉玻璃门在效果图中被改为不落地障子窗，出入口消失（备注之外的第二处结构改动）",
+      "prompt_builder.py:34-39 的 STRUCTURE_TEMPLATE_FULL 明确禁止新增/改动窗户，约束在 prompt 中存在但被违反，排除 prompt 构建丢需求",
+      "新增元素全部是障子窗+榻榻米等日式标志物，指向风格语义先验压倒文字约束的机理"
+    ],
+    "affected_scope": "风格自带强建筑元素先验的 case（japanese_traditional/industrial/french_country 等），尤其原图有大面积实墙者；可筛 structural_fidelity 50-70 区间目检是否新增门窗开口",
+    "suggested_fix": "视觉分析步骤输出逐面墙开口清单注入 prompt 取代泛化条款；日式等风格模板加负面约束（禁止在实墙新增障子窗）；extreme 难度 case 多次采样+structural_fidelity 择优",
+    "uncertainty": "无 trace 无法确认运行时完整 prompt（可能用了 COMPACT 版模板）；单次采样无法区分必然失败与坏样本；风格先验机理系反推假设待多 case 验证"
+  },
+  "full_text": "两张图、prompt 模板均已核实完毕，归因分析如下。\n\n## 直接执行\n\n### 1. 失败首先发生在哪一环？\n\n**生图模型环节（generation_model）**。这是一次真实失败（人工裁决 fail 成立），且失败点可以排除到生图模型的风格先验压倒结构约束：\n\n- 排除输入质量：毛坯原图清晰、光照充足、结构可辨（楼梯、后墙推拉门、右墙壁炉+窄窗）。\n- 排除 prompt 构建：我核实了 `backend/app/utils/prompt_builder.py:34-39` 的 `STRUCTURE_TEMPLATE_FULL`，第 1 条明确写死 \"The exact size, position, and proportions of ALL windows... Do NOT enlarge, shrink, move\"，第 2 条禁止改动墙体开口。本 case 提示词开头的 \"CRITICAL STRUC...\" 与该模板吻合——约束确实进了 prompt，但模型没有遵守。\n- 排除评分器误判：structural_fidelity 61.38 处于中低区间，方向上与人工\"结构违规→fail\"一致，没有打反。\n\n### 2. 证据是什么？（均为亲眼比对两图所得）\n\n- **右墙巨型障子窗凭空出现**：原图右墙前景段是整面白墙，仅有一个窄窗框和壁炉炉膛；效果图中该处变成了一整面顶天立地的障子（shoji）格栅窗，另在后墙右角又多出一扇。与人工备注「右侧墙壁上出现了本来没有的窗户」完全吻合。\n- **后墙推拉玻璃门被改成障子窗**：原图后墙中央是通向室外的 sliding patio door（可见室外栏杆和景观），效果图中变成了不落地的障子窗，出入口消失——这是备注之外的第二处结构改动。\n- **左侧楼梯下多出嵌入式格架**：原图楼梯下方是实墙，效果图凿出了置物格。属于轻微越界（介于家具与结构之间）。\n- 楼梯、左侧白门、天花板筒灯位置均保留得不错——这解释了人工结构维仍给 4.0、但 overall 3.0 判 fail 的组合：局部保真好，但\"无中生有开窗\"触碰了结构红线。\n- **失败机理指向风格先验**：多出来的全部是障子窗+榻榻米——正是 japanese_traditional 风格的标志性元素。模型是在\"为了像日式\"而主动给房间开窗，即风格语义先验压倒了文字结构约束。\n\n### 3. 同类失败可能波及哪些 case？\n\n可检索特征：**风格自带强建筑元素先验的 case**——`japanese_traditional`（障子窗/榻榻米/木格栅）、以及 industrial（大厂房窗/裸砖）、french_country（拱窗）等风格的所有 case；尤其是**原图存在大面积实墙**的房间。横向排查建议：筛出这些风格中 structural_fidelity 落在 50-70 区间的 case，逐一目检\"是否新增门窗类开口\"；同时检索人工备注含\"窗/门/开口\"关键词的 fail case。\n\n### 4. 建议的修复方向？\n\n指向 prompt 构建与生成策略两环：\n- **把泛化约束换成逐面墙清单**：现在的 `STRUCTURE_TEMPLATE_FULL` 是通用条款，模型容易当背景噪声。让视觉分析步骤输出每面墙的开口清单（如\"右墙：实墙+1 窄窗+壁炉，禁止新增窗\"）注入 prompt，把约束具体化、可对账。\n- **加风格级负面约束**：在日式等强先验风格的模板里显式写 \"Do NOT add shoji screens/windows on walls that are solid in the input; apply shoji treatment ONLY to existing window apertures\"。\n- **利用唯一可信自动分做采样过滤**：单次采样方差未度量（备忘 5），可对 extreme 难度 case 生成 N 张、用 structural_fidelity 择优，低成本压掉这类结构幻觉的长尾。\n\n### 5. 置信度：high\n\n两图差异肉眼可证、与人工备注互相印证、prompt 模板已核实含窗户约束。剩余不确定性：(a) 本 case 无 trace，无法确认运行时实际发出的完整 prompt 与模板一致（batch_generate 可能用了 COMPACT 版）；(b) 单次采样，无法区分\"该模型在此 case 上必然加窗\"还是\"抽中了坏样本\"；(c) \"风格先验压倒约束\"的机理是从可见元素（全是日式标志物）反推的假设，需多 case 验证。\n\n## 深度交互\n\n两点值得审视的地方：\n\n1. **本 case 暴露的可能不止是生成问题，还有金标准的口径张力**：三个分维全 4.0、overall 却 3.0 判 fail，说明\"新增开口\"在标注员心里是分维刻度之外的一票否决项。如果这类红线没有写进标注指南，不同标注员对\"加窗算几分\"的处理会不一致——建议把\"新增/删除建筑开口 = 结构维封顶 3 分（或直接 fail）\"这类硬规则显式化，否则 judge 校准时这类 case 会成为噪声源。\n2. **structural_fidelity 61.38 vs 人工结构维 4.0 的错位值得记一笔**：64×64 布局 SSIM 对\"整面墙变窗\"这种大面积材质/亮度改变敏感（分被压低），而人工看的是\"几何骨架还在\"。这个 case 恰好落在两种口径的分歧带上，适合收进评分器校准的边界样本集。\n\n```json\n{\n  \"root_cause_stage\": \"generation_model\",\n  \"confidence\": \"high\",\n  \"summary\": \"疑似日式风格先验压倒结构约束，模型在实墙上新增障子窗\",\n  \"evidence\": [\n    \"亲眼比对两图：原图右墙前景为整面实墙（仅窄窗框+壁炉），效果图同位置出现整面障子格栅窗，后墙右角另多一扇，与人工备注吻合\",\n    \"原图后墙中央的推拉玻璃门在效果图中被改为不落地障子窗，出入口消失（备注之外的第二处结构改动）\",\n    \"prompt_builder.py:34-39 的 STRUCTURE_TEMPLATE_FULL 明确禁止新增/改动窗户，约束在 prompt 中存在但被违反，排除 prompt 构建丢需求\",\n    \"新增元素全部是障子窗+榻榻米等日式标志物，指向风格语义先验压倒文字约束的机理\"\n  ],\n  \"affected_scope\": \"风格自带强建筑元素先验的 case（japanese_traditional/industrial/french_country 等），尤其原图有大面积实墙者；可筛 structural_fidelity 50-70 区间目检是否新增门窗开口\",\n  \"suggested_fix\": \"视觉分析步骤输出逐面墙开口清单注入 prompt 取代泛化条款；日式等风格模板加负面约束（禁止在实墙新增障子窗）；extreme 难度 case 多次采样+structural_fidelity 择优\",\n  \"uncertainty\": \"无 trace 无法确认运行时完整 prompt（可能用了 COMPACT 版模板）；单次采样无法区分必然失败与坏样本；风格先验机理系反推假设待多 case 验证\"\n}\n```"
+}

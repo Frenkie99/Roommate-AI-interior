@@ -1,0 +1,24 @@
+{
+  "pair_id": "pair_077",
+  "status": "ok",
+  "error": null,
+  "analyzed_at": "2026-07-10T00:21:42.528593",
+  "duration_sec": 149.4,
+  "model": "cli-default",
+  "num_turns": 8,
+  "verdict": {
+    "root_cause_stage": "prompt_construction",
+    "confidence": "medium",
+    "summary": "疑似工业风模板'Raw/exposed concrete'致墙面比毛坯更破败,美学被判1分",
+    "evidence": [
+      "亲眼对比:效果图右墙大面积剥落蜂窝孔洞,破败程度超过毛坯原图的均匀抹灰墙;但窗户/格局保留好,与人工structural 4.0一致",
+      "prompt_builder.py:100-103:中文logic写'减少脏旧感',英文materials却是'exposed concrete walls'+'distressed leather',vibe='Raw, edgy'——模型只见英文,执行了破败感",
+      "instruction 2.0系房型balcony未体现(效果图为客厅陈设),属备忘1已知的room_type未传缺陷,非新发现",
+      "gold_labels.json中pair_077 notes为空,美学1分的具体理由不可考"
+    ],
+    "affected_scope": "所有style=industrial_loft的case(核查墙面破败度与美学分相关性);次要:原图为客厅+内阳台但room_type标balcony的标注歧义case",
+    "suggested_fix": "改prompt_builder.py工业风模板:materials改polished micro-cement/clean concrete并加'newly finished, no decay/peeling'负向约束,vibe去掉Raw;改后对工业风子集重生成验证",
+    "uncertainty": "标注notes为空,无法排除美学1分是标注者整体不接受工业风审美(产品风格定位问题)而非墙面破败这一具体缺陷"
+  },
+  "full_text": "## 归因分析:pair_077(工业风 × 阳台,overall 2.0)\n\n### 直接执行\n\n**1. 失败首先发生在哪一环?**\n\n这是一个**双重失败**的 case,两条线索要分开归因:\n\n- **美学 1.0(主要拉垮项)→ Prompt 构建环节**。效果图渲染质量本身不低(轨道灯、Chesterfield 皮沙发、金属置物架、构图光影都很成熟),但**墙面被处理成大面积剥落、污渍斑驳的裸混凝土,视觉破败程度甚至超过毛坯原图**——原图的水泥抹灰墙是均匀的灰,效果图右侧墙反而布满蜂窝状孔洞和剥落痕迹。对\"我想看装修后效果\"的用户来说,这像烂尾楼翻新失败,美学 1 分合理。关键证据在 `backend/app/utils/prompt_builder.py:98-108`:工业风模板的中文 `logic` 写着\"引入微水泥等现代材质,**减少脏旧感**\",但真正进 prompt 的英文字段却是 `\"Raw, edgy\"` + `\"exposed concrete walls\"` + `\"distressed leather\"`——生图模型只看英文,忠实执行了\"raw/distressed\",与模板设计意图(减少脏旧)背道而驰。**这是模板意图与模板文本的脱节**。\n- **指令 2.0 → 评测集已知缺陷(备忘1)**。房型要求 balcony,效果图却是标准客厅陈设(沙发+电视柜+咖啡桌),阳台只作为背景保留。这是 batch_generate 不传 room_type 的已知问题,不算新发现。另外原图本身主体就是客厅(阳台在画面深处),room_type 标 balcony 与图片主体本就有出入,属于标注歧义。\n\n**2. 证据**(均为亲眼查看所得)\n- 原图:毛坯客厅+内阳台(带栏杆窗),墙面为均匀水泥抹灰,无剥落。\n- 效果图:客厅陈设而非阳台设计;右墙大面积蜂窝孔洞与剥落污渍,比原图更\"废墟感\";但窗户/阳台开口位置、房间格局保留良好——与人工 structural 4.0 一致。\n- `prompt_builder.py:100-103`:`logic` 说\"减少脏旧感\",`materials` 却写 `exposed concrete walls`、`distressed leather`,`vibe` 是 `Raw, edgy`。\n- gold_labels.json 中该 case notes 为空,标注者(frenkie)未留理由。\n- 自动分 54.41 vs 人工 structural 4.0:自动分明显偏低,疑因原图竖构图→效果图横构图的纵横比变化+光影剧变干扰低分辨率 SSIM,属评分器已知局限,非本 case 主因。\n\n**3. 同类失败可能波及的 case**\n- 所有 `style=industrial_loft` 的 case:检索条件 `metadata 中 style==industrial_loft`,逐一核对\"墙面是否比毛坯更破败、美学分是否被墙面拖低\"。若该风格美学分系统性偏低,即坐实模板问题。\n- 次要线索:所有\"原图为客厅+内阳台组合、room_type 标 balcony\"的 case,存在标注主体歧义。\n\n**4. 建议修复方向**\n- **改 prompt 模板**(`prompt_builder.py:98-108`):把 `logic` 中\"减少脏旧感\"的意图翻译进英文——如 `materials` 改为 `polished micro-cement walls, clean concrete texture (newly finished, no decay or peeling)`,`vibe` 去掉 `Raw`,并加负向约束 `avoid dilapidated/unfinished appearance`。改后对工业风子集重新单独生成对比。\n- 顺带:structural_fidelity 对纵横比变化的鲁棒性可在评分器侧记一笔,但优先级低于模板修复。\n\n**5. 置信度:medium**。structural/instruction 两维的归因证据充分;但美学 1.0 的归因是推断——notes 为空,无法排除标注者是**整体不接受工业风审美本身**(而非墙面破败这个具体缺陷)打的 1 分。若是前者,那属于产品风格定义与目标用户审美的错配,而非 prompt bug。\n\n### 深度交互(审慎挑战)\n\n这个 case 暴露了一个比单点归因更值得记录的问题:**你们的风格模板存在\"中文设计意图 vs 英文执行文本\"的双语脱节**,而 code review 和评测都只看得到其中一侧。`logic` 字段目前只是给人看的注释,不参与生成——建议要么让它参与 prompt,要么建一个\"意图-文本一致性\"检查清单过一遍全部 9 个风格模板,这比逐 case 归因更省成本。另外,美学维度金标准 notes 大量为空,会让此类归因永远停在\"medium 置信度\"——后续标注低分(≤2)时强制填一句理由,归因效率会高很多。\n\n```json\n{\n  \"root_cause_stage\": \"prompt_construction\",\n  \"confidence\": \"medium\",\n  \"summary\": \"疑似工业风模板'Raw/exposed concrete'致墙面比毛坯更破败,美学被判1分\",\n  \"evidence\": [\n    \"亲眼对比:效果图右墙大面积剥落蜂窝孔洞,破败程度超过毛坯原图的均匀抹灰墙;但窗户/格局保留好,与人工structural 4.0一致\",\n    \"prompt_builder.py:100-103:中文logic写'减少脏旧感',英文materials却是'exposed concrete walls'+'distressed leather',vibe='Raw, edgy'——模型只见英文,执行了破败感\",\n    \"instruction 2.0系房型balcony未体现(效果图为客厅陈设),属备忘1已知的room_type未传缺陷,非新发现\",\n    \"gold_labels.json中pair_077 notes为空,美学1分的具体理由不可考\"\n  ],\n  \"affected_scope\": \"所有style=industrial_loft的case(核查墙面破败度与美学分相关性);次要:原图为客厅+内阳台但room_type标balcony的标注歧义case\",\n  \"suggested_fix\": \"改prompt_builder.py工业风模板:materials改polished micro-cement/clean concrete并加'newly finished, no decay/peeling'负向约束,vibe去掉Raw;改后对工业风子集重生成验证\",\n  \"uncertainty\": \"标注notes为空,无法排除美学1分是标注者整体不接受工业风审美(产品风格定位问题)而非墙面破败这一具体缺陷\"\n}\n```"
+}

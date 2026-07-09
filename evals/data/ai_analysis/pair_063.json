@@ -1,0 +1,24 @@
+{
+  "pair_id": "pair_063",
+  "status": "ok",
+  "error": null,
+  "analyzed_at": "2026-07-10T00:16:56.214280",
+  "duration_sec": 171.0,
+  "model": "cli-default",
+  "num_turns": 8,
+  "verdict": {
+    "root_cause_stage": "generation_model",
+    "confidence": "medium",
+    "summary": "疑似auto比例被写死4:3致竖图转横，模型补画堆砌陈设拖垮美学",
+    "evidence": [
+      "亲眼对比：原图竖版3:4毛坯阳台，效果图横版4:3，近景多出堵路的裁切床具、尽头到顶柜体、走道正中低垂水晶吊灯，空间逻辑不成立",
+      "image.py:131 将 aspect_ratio='auto' 硬编码为 '4:3'，batch_generate.py:65 恰传 'auto'；而 inpaint_service.py:17 有按输入图算比例的正确实现未被复用",
+      "人工 structural 4.0 / instruction 4.0 / aesthetic 2.0：房型风格均正确，失败集中在美学维",
+      "structural_fidelity 54.7 与人工 4.0 背离，可由竖转横导致 64×64 SSIM 错位解释——本case同时暴露评分器对画幅变化过敏"
+    ],
+    "affected_scope": "所有输入图为竖版(宽<高)的pair：均被强制转横版，structural_fidelity系统性偏低且有横向补画内容风险；另一独立子集为狭长房型(阳台/走廊)+轻奢类风格组合",
+    "suggested_fix": "image.py的'auto'分支复用_aspect_ratio_for_size按输入图比例选档（真实用户路径同样中招）；structural_fidelity对画幅不一致case标记降权；balcony类prompt模板加'通道畅通/陈设精简'约束",
+    "uncertainty": "人工美学2.0的具体扣分点是推断（也可能是反射不一致等其他细节）；单次采样无法排除生成方差；aesthetic维无可信自动分交叉验证"
+  },
+  "full_text": "# 直接执行：pair_063 失败归因\n\n## 五问分析\n\n**1. 失败首先发生在哪一环？**\n\n链路前段是通的：输入图质量好（尽管文件名误标为\"卧室\"，图像内容实为毛坯封闭阳台，与 room_type=balcony 标注一致）；视觉理解正确（效果图保住了阳台属性，没有房型跑偏——这在本评测集 71% 跑偏率背景下反而是少数派）；风格指令也到位（金色线条、大理石、水晶灯是标准现代轻奢语汇），人工 structural 4.0 / instruction 4.0 印证了这两环。\n\n失败集中在**美学维（人工 2.0，直接拖垮 overall 2.0）**，我定位到两个叠加环节：\n\n- **参数构建缺陷（链路上第一个出错点）**：`backend/app/routes/image.py:131` 把 `aspect_ratio=\"auto\"` 硬编码映射为 `\"4:3\"`，而 `evals/dataset/batch_generate.py:65` 传的正是 `\"auto\"`。原图是竖版 3:4，输出被强制成横版 4:3——模型被迫横向\"编造\"画面内容。\n- **生成模型美学失控（失败主体）**：为填满被拉宽的狭长阳台，模型塞进了空间逻辑不成立的陈设——近景一张被画幅裁切的床/软包坐卧家具直接堵在过道上、尽头出现带金色长拉手的到顶衣柜式柜体、狭窄走道正中悬一盏低垂水晶吊灯。单看质感很\"精修\"，但作为阳台方案不可信，这与人工\"美学 2 分、指令 4 分\"的打分形态吻合：风格对了，但空间合理性崩了。\n\n**2. 证据**\n\n- 亲眼对比两图：原图竖版狭长毛坯阳台（左侧整面窗+护栏，右侧玻璃门）；效果图变横版，布局骨架仍可辨认（左窗右门保留），但多出上述三处不合理陈设，右侧玻璃反射中吊灯倒影与室内景深也不一致。\n- 代码证据：`image.py:131`（\"auto\"→\"4:3\" 写死）+ `batch_generate.py:65`（传 \"auto\"），且 `inpaint_service.py:17` 里存在按输入图计算比例的正确实现 `_aspect_ratio_for_size`，说明主生成链路是漏接了这个逻辑。\n- 分数矛盾：structural_fidelity 54.7 与人工 structural 4.0 明显背离——竖图与横图在 64×64 SSIM 下必然错位，评分器把\"重构图\"重罚了，而人工只看布局语义没重罚。此 case 同时是**评分器对画幅变化过敏**的一个实证。\n\n**3. 同类失败可能波及哪些 case？**\n\n可检索特征：**所有输入图为竖版（宽<高）的 pair**——它们全部被强制转横版，会同时出现 [1] structural_fidelity 系统性偏低（评分器错位）和 [2] 模型横向补画内容的美学风险。写个脚本对 candidates 目录批量读宽高即可圈出这个子集。另一个独立子集：**狭长小空间（阳台/走廊）+ 轻奢/奢华类风格**的组合，模型倾向过度堆砌陈设。\n\n**4. 建议的修复方向**\n\n- **修产品代码**（这是真 bug，不是评测集缺陷）：`image.py` 的 \"auto\" 分支改为复用 `inpaint_service._aspect_ratio_for_size` 按输入图实际比例选档，而非写死 4:3。注意 `image.py:37` 默认值就是 \"auto\"，真实用户路径同样中招。\n- **修评分器认知**：在 structural_fidelity 结果上标记\"输入/输出画幅不一致\"的 case，这类分数应降权或单列，否则会污染结构维统计。\n- **prompt 模板**：对 balcony 等狭长房型加陈设约束（如\"保持通道畅通、家具精简贴边\"），抑制轻奢风格下的过度堆砌。\n\n**5. 置信度：medium**\n\n\"auto→4:3 导致竖转横\"是代码+图像双重坐实的（这部分 high）；但**人工美学 2.0 具体扣在哪**是我的推断——标注者也可能是因反射不一致、吊灯突兀等其他细节扣分，且单次采样无法排除模型方差。\n\n```json\n{\n  \"root_cause_stage\": \"generation_model\",\n  \"confidence\": \"medium\",\n  \"summary\": \"疑似auto比例被写死4:3致竖图转横，模型补画堆砌陈设拖垮美学\",\n  \"evidence\": [\n    \"亲眼对比：原图竖版3:4毛坯阳台，效果图横版4:3，近景多出堵路的裁切床具、尽头到顶柜体、走道正中低垂水晶吊灯，空间逻辑不成立\",\n    \"image.py:131 将 aspect_ratio='auto' 硬编码为 '4:3'，batch_generate.py:65 恰传 'auto'；而 inpaint_service.py:17 有按输入图算比例的正确实现未被复用\",\n    \"人工 structural 4.0 / instruction 4.0 / aesthetic 2.0：房型风格均正确，失败集中在美学维\",\n    \"structural_fidelity 54.7 与人工 4.0 背离，可由竖转横导致 64×64 SSIM 错位解释——本case同时暴露评分器对画幅变化过敏\"\n  ],\n  \"affected_scope\": \"所有输入图为竖版(宽<高)的pair：均被强制转横版，structural_fidelity系统性偏低且有横向补画内容风险；另一独立子集为狭长房型(阳台/走廊)+轻奢类风格组合\",\n  \"suggested_fix\": \"image.py的'auto'分支复用_aspect_ratio_for_size按输入图比例选档（真实用户路径同样中招）；structural_fidelity对画幅不一致case标记降权；balcony类prompt模板加'通道畅通/陈设精简'约束\",\n  \"uncertainty\": \"人工美学2.0的具体扣分点是推断（也可能是反射不一致等其他细节）；单次采样无法排除生成方差；aesthetic维无可信自动分交叉验证\"\n}\n```\n\n# 深度交互：审慎挑战\n\n这个 case 最有价值的产出可能不是归因本身，而是**顺藤摸出的产品级 bug**：`aspect_ratio=\"auto\"` 在真实用户路径上也是写死 4:3 的（`image.py:37` 默认值就是 \"auto\"），所有竖拍毛坯照的用户都在被强制转横版——这不属于备忘 1 说的\"评测集生成方式缺陷\"，是可以直接上报的产品问题，建议单独立项验证而不是埋在这条 case 分析里。另外两点：[1] 竖版输入子集的 structural_fidelity 系统性偏低会污染你们 Spearman +0.418 的对齐度结论，值得把画幅一致性做成评分前置检查；[2] 该 case 文件名\"毛坯房卧室\"与实际阳台内容不符，提示 candidates 命名可能有其他误标，好在 room_type 标注正确，但依赖文件名做筛选的脚本要留意。"
+}

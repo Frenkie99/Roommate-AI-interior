@@ -1,0 +1,23 @@
+{
+  "pair_id": "pair_032",
+  "status": "ok",
+  "error": null,
+  "analyzed_at": "2026-07-10T00:06:18.963453",
+  "duration_sec": 314.5,
+  "model": "cli-default",
+  "num_turns": 18,
+  "verdict": {
+    "root_cause_stage": "prompt_construction",
+    "confidence": "medium",
+    "summary": "疑似'auto'比例硬编码4:3，竖图被迫横渲导致空间虚构",
+    "evidence": [
+      "亲眼比对：原图1536×2048竖构图狭长地下室(小气窗/木搁栅顶)，输出为4:3横构图宽敞空间(大采光窗/钢构顶)，但TV左/沙发右/地毯居中/窗在远墙等布局锚点保留——与structural=3.0、structural_fidelity=60.28互证，排除评分器误判",
+      "代码：image.py:131 ratio_map将'auto'硬映射为'4:3'；batch_generate.py:65传'auto'；对照inpaint_service.py:17已有按输入图算比例的_aspect_ratio_for_size()但生成主链路未用",
+      "旁支疑点：aesthetic=1.0与图面精致观感矛盾，pairwise_validation.json中judge对该图评语为正面('自然材质和柔和光影营造温馨氛围')，疑似忠实度不满渗透美学维"
+    ],
+    "affected_scope": "所有输入图宽高比≠4:3的pair(比对85对输入/输出像素尺寸即可检索)，竖拍输入的corner_case最重；且波及真实用户路径——前端默认auto同样被硬编码成4:3，不只是评测集缺陷",
+    "suggested_fix": "修image.py的'auto'语义：复用inpaint_service的_aspect_ratio_for_size按输入图比例映射；P3打标增加aspect_forced标签与模型自发扩图分开；复核pair_032的aesthetic=1.0金标准(其在judge dev集中)",
+    "uncertainty": "单次采样无3:4画幅对照组，无法排除模型在正确画幅下仍自发扩图(pair_000有整图重绘先例)；aesthetic=1.0标注无notes，维度纠缠只是推测待标注者确认"
+  },
+  "full_text": "# 直接执行：pair_032 失败归因\n\n## 1. 失败首先发生在哪一环？\n\n**生成请求构建环节（prompt_construction 广义：请求参数构建），具体是宽高比处理**。这不是已知备忘里的任何一条，是一个新发现的链路缺陷：\n\n- `backend/app/routes/image.py:131` 里 `ratio_map = {\"auto\": \"4:3\", ...}` —— **\"auto\" 被硬编码映射为 4:3 横图**，根本不看输入图的实际比例；\n- `evals/dataset/batch_generate.py:65` 传的正是 `\"aspect_ratio\": \"auto\"`；\n- 本 case 毛坯原图是 **1536×2048 竖构图（3:4）**，输出被强制渲染进 **4:3 横画幅**。生图模型被迫把一个狭长低矮的地下室\"重新想象\"成一个宽敞横向空间来填满画布——比例/面积虚构在请求发出前就注定了。\n\n在此之下叠加已知的 P1 问题（prompt 无结构锁定），模型进一步把地下室小气窗（hopper window）换成了大采光窗、木搁栅顶换成了类办公楼的白色钢构格栅顶。\n\n**重要排除项**：这不是评分器误判——structural_fidelity 60.28（中档）与人工 structural 3.0（中档）互相印证；人工 overall=1.0 按 7-09 产品契约裁决线（\"明显面积/比例虚构→fail\"，pair_006/pair_058 先例）也是合理判罚。\n\n## 2. 证据\n\n- **亲眼比对两图**：原图为竖构图狭长地下室，小气窗位于远墙偏右上、木质裸露搁栅顶、混凝土地面；效果图为横构图宽敞房间，远墙变成大尺寸采光窗（地下室物理上不可能有）、顶面变成白色钢构+线性灯带的商业空间样式。但布局锚点保留了：TV 在左墙、沙发在右墙、地毯+茶几居中、窗在远墙——与 structural=3.0 的\"半对半错\"完全吻合。\n- **代码证据**：`image.py:131`（auto→4:3 硬编码）、`batch_generate.py:65`（传 auto）、`getgoapi_client.py:96`（默认 4:3）。对照组：`inpaint_service.py:17` 的 `_aspect_ratio_for_size()` 证明\"按输入图算比例\"的能力在别的链路已经实现，唯独生成主链路没用。\n- **一个待人工复核的旁支疑点**：aesthetic=1.0（2026-06-21 标注，无 notes）与图面观感矛盾——该图孤立看是相当精致的现代简约渲染，成对验证里 judge 给它的评语甚至是正面的（\"方案A的自然材质和柔和光影营造出温馨的氛围\"，pairwise_validation.json）。疑似\"忠实度愤怒\"渗透进了美学维（维度纠缠），而非独立的视觉质量判断。\n\n## 3. 同类失败可能波及哪些 case？\n\n**可检索特征：输入图宽高比与输出图宽高比不一致的所有 pair**——用脚本比对 85 对图片的像素尺寸即可拉出清单，竖拍输入（手机用户拍摄习惯，corner_case split 尤其多）全部中招。且注意：**这不只是评测集缺陷——前端真实用户路径若默认 aspect_ratio=auto，同样被硬编码成 4:3**，波及生产。\n\n## 4. 建议的修复方向\n\n1. **修 `image.py` 的 \"auto\" 语义**（最具体、成本最低）：复用 `inpaint_service.py` 的 `_aspect_ratio_for_size()`，按输入图实际比例映射到最近的支持档位（3:4 竖图→\"3:4\"），让 auto 名副其实。\n2. **P1 结构锁定实验照做**（PRODUCT_CONTRACT.md 已排期）——比例修对后模型仍可能自发扩图，两者独立。\n3. **评测集侧**：P3 打标清单里增加 `aspect_forced` 标签，把\"比例被管线强扭\"与\"模型自发虚构\"分开归因，否则 P1 实验的结论会被这个混杂因子污染。\n4. **金标准侧**：复核 pair_032 的 aesthetic=1.0（它在 judge dev 集里，曾作为成对验证真值使用）；若确认是维度纠缠，按 pair_018 先例走校准剔除机制。\n\n## 5. 置信度\n\n**medium**。\"auto→4:3 硬编码导致竖图横渲\"是代码+图像双证据的实锤；但\"比例虚构主要由此引起\"存在不确定性：单次采样（备忘 5），没有 3:4 输出的对照组，无法排除模型在正确画幅下依然自发扩图（pair_000 先例显示模型本就有整图重绘倾向）。aesthetic=1.0 的归因（维度纠缠 vs 标注者另有考量）因 notes 为空只能是猜测。\n\n---\n\n# 深度交互：审慎挑战\n\n1. **这个 case 的最大价值可能不是\"归因某一环\"，而是它推翻了备忘 1 的边界**。备忘说\"评测集生成方式缺陷不能当产品 bug 上报\"——但 `auto→4:3` 硬编码走的是真实生产端点 `/api/v1/generate`，真实用户竖拍上传同样中招。建议把它从\"评测集缺陷\"账本挪到产品 bug 账本，优先级可能高于 P1（P1 是让模型听话，这个是我们自己把话说错了）。\n2. **P1 实验设计需要先修这个，否则白做**：如果带着 auto→4:3 去跑\"结构锁定 prompt\"实验，prompt 要求\"保持空间比例与原图一致\"而画幅物理上不允许，实验只会得出\"锁不住\"的假阴性结论。P1 的依赖表里应加上这一项。\n3. **金标准的美学维可能系统性含\"忠实度税\"**：pair_032 不一定是孤例——建议横向扫一遍\"美学≤2 但成对 judge 评语正面\"的 case，若成批出现，美学 judge 的 78.6% test 通过率的真值本身就有噪声。\n\n```json\n{\n  \"root_cause_stage\": \"prompt_construction\",\n  \"confidence\": \"medium\",\n  \"summary\": \"疑似'auto'比例硬编码4:3，竖图被迫横渲导致空间虚构\",\n  \"evidence\": [\n    \"亲眼比对：原图1536×2048竖构图狭长地下室(小气窗/木搁栅顶)，输出为4:3横构图宽敞空间(大采光窗/钢构顶)，但TV左/沙发右/地毯居中/窗在远墙等布局锚点保留——与structural=3.0、structural_fidelity=60.28互证，排除评分器误判\",\n    \"代码：image.py:131 ratio_map将'auto'硬映射为'4:3'；batch_generate.py:65传'auto'；对照inpaint_service.py:17已有按输入图算比例的_aspect_ratio_for_size()但生成主链路未用\",\n    \"旁支疑点：aesthetic=1.0与图面精致观感矛盾，pairwise_validation.json中judge对该图评语为正面('自然材质和柔和光影营造温馨氛围')，疑似忠实度不满渗透美学维\"\n  ],\n  \"affected_scope\": \"所有输入图宽高比≠4:3的pair(比对85对输入/输出像素尺寸即可检索)，竖拍输入的corner_case最重；且波及真实用户路径——前端默认auto同样被硬编码成4:3，不只是评测集缺陷\",\n  \"suggested_fix\": \"修image.py的'auto'语义：复用inpaint_service的_aspect_ratio_for_size按输入图比例映射；P3打标增加aspect_forced标签与模型自发扩图分开；复核pair_032的aesthetic=1.0金标准(其在judge dev集中)\",\n  \"uncertainty\": \"单次采样无3:4画幅对照组，无法排除模型在正确画幅下仍自发扩图(pair_000有整图重绘先例)；aesthetic=1.0标注无notes，维度纠缠只是推测待标注者确认\"\n}\n```"
+}

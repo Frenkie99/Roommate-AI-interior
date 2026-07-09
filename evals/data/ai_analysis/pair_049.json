@@ -1,0 +1,24 @@
+{
+  "pair_id": "pair_049",
+  "status": "ok",
+  "error": null,
+  "analyzed_at": "2026-07-10T00:11:45.054360",
+  "duration_sec": 152.3,
+  "model": "cli-default",
+  "num_turns": 8,
+  "verdict": {
+    "root_cause_stage": "generation_model",
+    "confidence": "high",
+    "summary": "疑似auto比例被强制4:3，全景毛坯图被迫整体重画致结构全失",
+    "evidence": [
+      "亲见两图：原图约2.4:1全景（左侧整面落地玻璃+中后宽窗），效果图约4:3且左墙变实体电视墙、后墙变两扇独立窗，非同一房间改造，与人工structural=1.0吻合",
+      "代码核实：batch_generate.py:65传aspect_ratio='auto'，image.py:131硬编码映射为'4:3'，与输入2.4:1幅面冲突",
+      "风格指令未丢（效果图确为高完成度轻奢，人工aesthetic=4.0），可排除视觉理解/prompt构建环节",
+      "次要：structural_fidelity=51.93对'整间换房'明显偏高（人工1.0），系64×64 SSIM已知钝感的实例"
+    ],
+    "affected_scope": "所有输入图宽高比显著偏离4:3的case（可对candidates批量算宽高比检索）；以及人工structural≤2但自动分落在40-60中档的scorer钝感子集",
+    "suggested_fix": "image.py:131将'auto'改为按输入图宽高比就近映射（复用inpaint_service.py:17的_aspect_ratio_for_size）；metadata补记输入宽高比字段；此case重标难度/打aspect_mismatch标签。注意这是真实路径产品bug，非评测集缺陷",
+    "uncertainty": "单次采样无法分离'比例强制'与'模型编辑能力弱'的相对贡献；需同图16:9 vs 4:3对照实验验证"
+  },
+  "full_text": "图证与代码链路都已核实，可以给出归因了。\n\n# 直接执行\n\n## 五问归因：pair_049\n\n**1. 失败首先发生在哪一环？——生图环节（generation_model），且背后有一个真实产品代码缺陷：输出比例被强制 4:3，导致模型放弃改造、整体重画。**\n\n**2. 证据（均为亲眼查看/亲自核实）：**\n\n图像对比（两张图都已用 Read 查看）：\n- 毛坯原图是约 626×260 的**超宽全景幅面（约 2.4:1）**：左侧整面落地玻璃门窗、中后方一扇带竖框的宽窗、左侧一把人字梯、地面中央堆着石膏板。\n- 效果图是 1200×890 的**约 4:3 幅面**：左墙变成了实体硬包电视背景墙（原有的整面落地玻璃彻底消失），后墙变成两扇独立窗户加绿丝绒窗帘，透视纵深也完全不同。这不是\"同一房间的装修改造\"，而是一间凭空新画的客厅——与人工 structural=1.0（最低分）完全吻合。\n- 同时效果图本身确实是高完成度的现代轻奢（大理石地面、金色线条吊顶、水晶吊灯、丝绒软装），与人工 aesthetic=4.0、instruction=3.0 吻合。**风格指令没丢，丢的只是结构忠实度**——可排除视觉理解和 prompt 构建环节把需求弄丢。\n\n代码链路（已逐行确认）：\n- `evals/dataset/batch_generate.py:65` 传 `aspect_ratio: \"auto\"`；\n- `backend/app/routes/image.py:131` 的 ratio_map 把 `\"auto\"` 硬编码映射为 `\"4:3\"`；\n- `backend/app/services/getgoapi_client.py:96` 默认也是 `RATIO_4_3`。\n- 也就是说：一张 2.4:1 的全景参考图被强制要求输出 4:3，生成模型在幅面对不上的情况下**只能重新构图**，结构保真从物理上就不可能。\n\n次要发现：自动分 structural_fidelity=51.93（中档）对这种\"整间房换掉\"的 case 明显偏高（人工 1.0），是 64×64 低分辨率 SSIM 对全景图 resize 后不敏感的表现——属于备忘 4 已知局限的一个具体实例，可记录但不是本 case 根因。\n\n**3. 同类失败波及范围：** 所有**输入图宽高比显著偏离 4:3**（如 >1.6:1 或 <1:1.2）的 case。可检索方式：对 `evals/data/candidates/` 全量跑一遍 PIL 读宽高比，与人工 structural 分交叉——预期\"宽高比越偏离 4:3，structural 人工分越低\"。另一个交叉检索面：人工 structural ≤2 但 structural_fidelity 落在 40-60 中档的 case（scorer 钝感子集）。\n\n**4. 建议修复方向：**\n- 产品侧（真 bug，可上报）：`backend/app/routes/image.py:131` 把 `\"auto\"` 从硬编码 4:3 改为按输入图实际宽高比就近映射到支持的枚举值——`backend/app/services/inpaint_service.py:17` 已有现成的 `_aspect_ratio_for_size()` 可直接复用，改动成本很低。\n- 评测侧：给 metadata 补记每条输入图的宽高比字段，作为分层维度；本 case 内在难度标为 easy 不合理（全景幅面对当前链路是 hard），建议重标或打上 `aspect_mismatch` 标签。\n\n**5. 置信度：high（对\"失败发生在生图环节\"）。** 不确定性在于机制归因的权重：由于单次采样（备忘 5），无法排除即便比例一致、模型的编辑能力也可能换房——\"比例强制是主因还是放大器\"需要一个小实验（同图分别用 16:9 和 4:3 各生成几次）才能定量分离。\n\n# 深度交互\n\n有一点值得你注意：**这个 case 挖出的不是评测集缺陷，而是真实路径的产品 bug**——与备忘 1 的 room_type 问题性质不同。`auto→4:3` 的硬编码写在 `image.py` 路由里，真实前端用户上传全景照片会踩到一模一样的坑。备忘 1 提醒我们别把评测集缺陷误报为产品 bug，但这个 case 是反方向：别因为\"来自批量生成\"就把真 bug 归档成数据集问题。建议单独立一条 P 级待办，且修复只需复用现成函数、成本极低。\n\n另外，51.93 vs 人工 1.0 这个矛盾点提示 structural_fidelity 在\"整体重画但构图元素分布相似\"的 case 上有系统性钝感，值得在下一轮 scorer 校准时把这类 case 单独拉出来看 TPR。\n\n```json\n{\n  \"root_cause_stage\": \"generation_model\",\n  \"confidence\": \"high\",\n  \"summary\": \"疑似auto比例被强制4:3，全景毛坯图被迫整体重画致结构全失\",\n  \"evidence\": [\n    \"亲见两图：原图约2.4:1全景（左侧整面落地玻璃+中后宽窗），效果图约4:3且左墙变实体电视墙、后墙变两扇独立窗，非同一房间改造，与人工structural=1.0吻合\",\n    \"代码核实：batch_generate.py:65传aspect_ratio='auto'，image.py:131硬编码映射为'4:3'，与输入2.4:1幅面冲突\",\n    \"风格指令未丢（效果图确为高完成度轻奢，人工aesthetic=4.0），可排除视觉理解/prompt构建环节\",\n    \"次要：structural_fidelity=51.93对'整间换房'明显偏高（人工1.0），系64×64 SSIM已知钝感的实例\"\n  ],\n  \"affected_scope\": \"所有输入图宽高比显著偏离4:3的case（可对candidates批量算宽高比检索）；以及人工structural≤2但自动分落在40-60中档的scorer钝感子集\",\n  \"suggested_fix\": \"image.py:131将'auto'改为按输入图宽高比就近映射（复用inpaint_service.py:17的_aspect_ratio_for_size）；metadata补记输入宽高比字段；此case重标难度/打aspect_mismatch标签。注意这是真实路径产品bug，非评测集缺陷\",\n  \"uncertainty\": \"单次采样无法分离'比例强制'与'模型编辑能力弱'的相对贡献；需同图16:9 vs 4:3对照实验验证\"\n}\n```"
+}

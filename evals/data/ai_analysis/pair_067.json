@@ -1,0 +1,24 @@
+{
+  "pair_id": "pair_067",
+  "status": "ok",
+  "error": null,
+  "analyzed_at": "2026-07-10T00:16:35.003190",
+  "duration_sec": 108.2,
+  "model": "cli-default",
+  "num_turns": 3,
+  "verdict": {
+    "root_cause_stage": "generation_model",
+    "confidence": "medium",
+    "summary": "疑似生图模型违背结构约束（凭空开窗改门）叠加工业风脏旧化",
+    "evidence": [
+      "亲眼比对：原图右侧为无窗实体混凝土墙，效果图同侧凭空出现两扇带城市景观的大窗；原图尽头小窗消失，左侧多出门洞和红砖墙，凹间/柱体分隔关系全部丢失，与prompt中CRITICAL STRUCTURAL约束直接矛盾，解释人工structural=2.0",
+      "效果图墙面布满重度水渍霉斑样污迹、整体昏暗，工业风被执行为'破旧仓库'观感，可解释人工aesthetic=1.0；渲染技术本身不差，故非生图质量问题而是风格执行劣化",
+      "房型跑偏（bathroom→洗衣房）符合备忘1已知缺陷（batch_generate不传room_type），不计入产品bug；structural_fidelity=54.35与人工structural=2.0方向一致，排除scorer_misjudge",
+      "附带发现：候选文件名标'厨房'而room_type字段为bathroom，该pair房型标注自相矛盾"
+    ],
+    "affected_scope": "A)源图为狭窄凹间/单窗/有柱体分隔的case（筛structural_fidelity 40-60且人工structural≤2，复核窗门增删）；B)全部industrial_loft风格case（脏旧化劣化可能是风格模板系统性问题）；C)文件名房型与room_type字段冲突的pair",
+    "suggested_fix": "prompt构建环节把视觉分析出的结构要素显式枚举进CRITICAL STRUCTURAL CONSTRAINTS（窗/门/柱的数量位置），必要时引入depth/edge结构条件控制；industrial_loft模板加'clean, livable'反向约束；batch_generate补传room_type并全集核查文件名与room_type一致性",
+    "uncertainty": "无trace，无法区分是视觉分析未识别出'右墙无窗'还是生图模型忽略了正确约束，只能归到最下游的generation_model；美学1.0的评分动机（脏旧观感）是推测未经标注者确认"
+  },
+  "full_text": "两张图都看过了，链路源码不需要深挖（无 trace，且备忘 1 已说明 prompt 构建方式），下面直接归因。\n\n## 直接执行：五问归因\n\n**1. 失败首先发生在哪一环？**\n\n这是一个**双重失败**的 case，需要拆开：\n\n- **第一层（已知评测集缺陷，不计入产品问题）**：指令房型 bathroom 完全未体现——效果图生成的是**洗衣房**（双滚筒洗衣机+洗涤剂），既非浴室也非原图的厨房。但 batch_generate 不传 room_type（备忘 1），模型根本不知道目标是 bathroom，这属于 dataset_defect，不能上报。\n- **第二层（真实的模型失败，是本 case 低分主因）**：**生图模型对结构约束的严重违背**。剔除房型因素后，结构维 2.0 和美学维 1.0 依然成立，这两个失败发生在**生图模型环节**。\n\n**2. 证据是什么？（均来自我亲眼比对两图）**\n\n- **原图**：狭长毛坯凹间，**尽头墙仅一扇小窗**，右侧是一整面无窗的混凝土柱/墙体，左侧墙角有两根白色排水立管，地面和墙裙涂青绿色防水层，镜头从凹间外向内拍。\n- **效果图结构大改**：右侧原本无窗的实体混凝土墙上**凭空出现两扇大窗**（还带城市天际线视野）；原图尽头的小窗消失；左侧多出一个门洞和红砖墙；原图的凹间/柱体分隔关系不复存在，空间比例和视角都变了。Prompt 里明确写了 \"CRITICAL STRUCTURAL CON(STRAINTS)\"，模型未遵守——这解释人工 structural=2.0。\n- **美学 1.0 的可解释性**：效果图渲染技术上不差，但墙面布满重度水渍/霉斑样污迹、整体昏暗，作为\"家装效果图\"呈现出的是\"破旧仓库\"而非宜居空间——工业风被推向了\"脏旧\"极端。这与人工美学最低分吻合（属产品契约中\"效果劣化\"一侧）。\n- **自动分与人工不算矛盾**：structural_fidelity=54.35 处于中低段，与人工 structural=2.0 方向一致（Spearman +0.418 的粗糙度内），**不是评分器误判**。\n- **附带发现一个标注 quirk**：候选文件名标\"厨房\"，指令 room_type 却是 bathroom，源图的青绿防水涂层两者皆可解释——该 pair 的房型标注本身可能就自相矛盾。\n\n**3. 同类失败可能波及哪些 case？**\n\n- 可检索特征 A：**源图为狭窄凹间/有柱体分隔/单窗**的 case——生图模型倾向\"开窗造景\"，凭空增窗改门是系统性倾向，可筛 `structural_fidelity ∈ [40,60] 且人工 structural ≤ 2` 的子集人工复核\"窗/门增删\"。\n- 可检索特征 B：**industrial_loft 风格的全部 case**——\"脏旧化\"美学劣化可能是该风格 prompt 模板的系统性问题（ATMOSPHERE 里的 \"Raw, edgy\" 可能被模型过度执行）。\n- 可检索特征 C：候选文件名房型与 room_type 字段冲突的 pair（如本例厨房 vs bathroom），需要在 38 条有标注的子集里排查标注质量。\n\n**4. 建议的修复方向？**\n\n- **生成链路（主）**：在 backend 的 prompt 构建环节，把视觉分析提取的**结构要素显式枚举**进 CRITICAL STRUCTURAL CONSTRAINTS（\"尽头墙 1 扇窗、右侧墙无窗、保留柱体\"），而不是只给抽象的\"保持结构\"指令；若模型仍不遵守，考虑引入结构条件控制（depth/edge 类约束）。\n- **风格模板（次）**：industrial_loft 模板的 ATMOSPHERE 描述加入\"clean, livable, well-maintained surfaces\"类反向约束，防止\"工业风=脏旧\"。\n- **评测集**：修 batch_generate 补传 room_type（已知待办）；顺手核查文件名与 room_type 字段冲突的 pair。\n\n**5. 置信度：medium**\n\n结构违背和美学劣化是我亲眼比对可见的硬证据（这部分 high）；但无 trace，无法区分\"视觉分析环节就没识别出右墙无窗\"还是\"prompt 写对了但生图模型忽略\"，只能把锅先放在 generation_model 这个最下游；美学 1.0 的评分动机也是我的推测。\n\n## 深度交互：审慎挑战\n\n这份分析框架默认\"一个 case 一个 root_cause\"，但本 case 说明标准集里存在**已知缺陷与真实失败叠加**的 case——如果归因流水线只允许单选 root_cause_stage，这类 case 会被\"dataset_defect\"标签吞掉真实的模型结构问题（那才是可修复、可提升产品的部分）。建议归因 schema 考虑增加 `secondary_causes` 字段，或至少在横向汇总时把\"剔除房型因素后仍低分\"的 case 单独拉一个清单。另外本 case 暴露的\"文件名房型 vs room_type 字段冲突\"值得在全集跑一次一致性检查，成本极低（一个脚本），但直接影响备忘 2 中\"有标注子集\"的可信度。\n\n```json\n{\n  \"root_cause_stage\": \"generation_model\",\n  \"confidence\": \"medium\",\n  \"summary\": \"疑似生图模型违背结构约束（凭空开窗改门）叠加工业风脏旧化\",\n  \"evidence\": [\n    \"亲眼比对：原图右侧为无窗实体混凝土墙，效果图同侧凭空出现两扇带城市景观的大窗；原图尽头小窗消失，左侧多出门洞和红砖墙，凹间/柱体分隔关系全部丢失，与prompt中CRITICAL STRUCTURAL约束直接矛盾，解释人工structural=2.0\",\n    \"效果图墙面布满重度水渍霉斑样污迹、整体昏暗，工业风被执行为'破旧仓库'观感，可解释人工aesthetic=1.0；渲染技术本身不差，故非生图质量问题而是风格执行劣化\",\n    \"房型跑偏（bathroom→洗衣房）符合备忘1已知缺陷（batch_generate不传room_type），不计入产品bug；structural_fidelity=54.35与人工structural=2.0方向一致，排除scorer_misjudge\",\n    \"附带发现：候选文件名标'厨房'而room_type字段为bathroom，该pair房型标注自相矛盾\"\n  ],\n  \"affected_scope\": \"A)源图为狭窄凹间/单窗/有柱体分隔的case（筛structural_fidelity 40-60且人工structural≤2，复核窗门增删）；B)全部industrial_loft风格case（脏旧化劣化可能是风格模板系统性问题）；C)文件名房型与room_type字段冲突的pair\",\n  \"suggested_fix\": \"prompt构建环节把视觉分析出的结构要素显式枚举进CRITICAL STRUCTURAL CONSTRAINTS（窗/门/柱的数量位置），必要时引入depth/edge结构条件控制；industrial_loft模板加'clean, livable'反向约束；batch_generate补传room_type并全集核查文件名与room_type一致性\",\n  \"uncertainty\": \"无trace，无法区分是视觉分析未识别出'右墙无窗'还是生图模型忽略了正确约束，只能归到最下游的generation_model；美学1.0的评分动机（脏旧观感）是推测未经标注者确认\"\n}\n```"
+}

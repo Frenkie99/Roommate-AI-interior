@@ -1,0 +1,23 @@
+{
+  "pair_id": "pair_080",
+  "status": "ok",
+  "error": null,
+  "analyzed_at": "2026-07-10T00:23:17.887749",
+  "duration_sec": 210.2,
+  "model": "cli-default",
+  "num_turns": 12,
+  "verdict": {
+    "root_cause_stage": "generation_model",
+    "confidence": "high",
+    "summary": "疑似auto→4:3硬编码强转竖图为横图，迫使模型虚构右侧窗墙触发内容造假否决",
+    "evidence": [
+      "图像对比：原图竖构图窄阳台右侧为实墙边缘，效果图4:3横构图右侧凭空出现整面室内窗墙，宽深比例被根本改变",
+      "backend/app/routes/image.py:131 ratio_map将'auto'硬编码为'4:3'，不检测原图比例；batch_generate.py:65确实传'auto'",
+      "METHODOLOGY.md:182裁决线'拓扑改变/面积虚构=内容造假fail'与人工overall=1一票否决自洽；structural_fidelity=54与人工structural=3方向一致，评分器未误判"
+    ],
+    "affected_scope": "所有原图为竖构图(h>w)且aspect_ratio=auto的case（可脚本比对原图与输出宽高比检索），窄小空间（阳台/走廊/卫生间）最易被'拓宽虚构'；生产路径同样受影响",
+    "suggested_fix": "image.py的'auto'分支改为读取上传图实际宽高就近映射比例(本例3:4)；getgoapi_client默认4:3同步审视；评测侧批量统计'竖转横'命中名单并打标签",
+    "uncertainty": "aesthetic=2无critique备注，无法确认美学低分成因；单次采样无法排除比例正确时hard case仍改结构，但强制4:3保证虚构必然发生"
+  },
+  "full_text": "归因分析完成。以下是完整结论。\n\n## 直接执行\n\n### 五问分析\n\n**[1] 失败首先发生在哪一环：生图调用配置环节（属 generation 环，但不是模型能力问题，是参数硬编码）**\n\n链路逐环排除：\n- 输入毛坯图质量：正常。原图清晰可辨——竖构图窄阳台，左侧玻璃窗+内侧黑色栏杆+混凝土矮墙，正面整面实心水泥砌块墙（仅有昵图网水印，未见干扰生成）。\n- 视觉理解：没看错。效果图确实是阳台（无房型跑偏），新中式风格准确（圈椅、条案、山水画、灯笼吊灯、茶具）。\n- Prompt 构建：风格需求无丢失。\n- **生图调用配置：第一个出错环节。** 原图是竖构图（约 3:4），效果图被强制生成为 4:3 横构图。代码证据：`backend/app/routes/image.py:131` 中 `ratio_map = {\"auto\": \"4:3\", ...}`——\"auto\" 并不检测原图比例，硬编码映射为 4:3 横图；`batch_generate.py:65` 传的正是 `\"auto\"`。竖图被强转横图后，模型**必须凭空虚构约 75% 的横向内容**才能填满画幅——于是右侧凭空长出一整面原图不存在的看向室内的黑框窗墙，窄进深阳台被拓宽成浅宽阳台。\n\n**[2] 证据**\n- 图像对比（亲眼查看）：原图右侧是紧贴画面边缘的实墙/柱角，效果图右侧变成整面室内窗墙（含窗内反射的另一幅山水画）——纯属虚构开口；阳台的宽深比例被根本性改变。\n- 代码：`image.py:131`（auto→4:3 硬编码）、`getgoapi_client.py:96`（默认值也是 4:3）、`batch_generate.py:65`（传 auto）。\n- 打分逻辑自洽：METHODOLOGY.md:182 已定调的裁决线——\"拓扑改变/面积虚构=内容造假，fail\"。这解释了为什么画面观感尚可但 overall=1（一票否决）：structural=3 与 structural_fidelity=54 方向一致（中低）；instruction=2 与 prompt 中 \"CRITICAL STRUCTURAL…\"（结构保持指令）被违反一致。评分器没有误判。\n- 注意：gold_labels.json 中该条 notes 为空（标注于 6-21，早于 7-09 产品契约），aesthetic=2 的具体扣分理由不可考。\n\n**[3] 波及范围**\n所有**原图为竖构图且 aspect_ratio=auto** 的 case，尤其窄小空间（阳台/走廊/卫生间）会被系统性\"拓宽虚构\"。可检索特征：脚本遍历 pairs，比对 candidates 原图与 output 效果图的宽高比，凡\"原图 h>w、输出 w>h\"者即命中。这**不属于已知备忘中的评测集缺陷**（备忘 1 是 room_type 不传；本 case 房型没跑偏）——且 auto→4:3 在生产路由里，真实用户传竖图+auto 同样触发，**疑似真产品 bug**。\n\n**[4] 建议修复**\n- 产品侧：`image.py` 的 ratio_map 中 \"auto\" 改为读取上传图实际宽高、就近映射到支持的比例（本例应为 3:4）；`getgoapi_client.py` 的默认值 4:3 同步审视。\n- 评测侧：对 85 条批量统计\"竖转横\"命中名单，给这批 case 打上标签，把\"比例强转导致的面积虚构\"从\"生图模型结构保持能力差\"中剥离——否则会高估模型能力问题。\n\n**[5] 置信度：high（机制层面）**\n不确定性来自两处：一是 aesthetic=2 无 critique，无法确认美学低分是内容造假连带扣分还是另有原因（如木地板+踢脚灯带用于阳台的真实性问题）；二是单次采样（备忘 5），无法排除即使比例正确、hard 难度下模型仍会改结构——但强制 4:3 保证了虚构必然发生，作为\"第一个出错环节\"的判定不受此影响。\n\n```json\n{\n  \"root_cause_stage\": \"generation_model\",\n  \"confidence\": \"high\",\n  \"summary\": \"疑似auto→4:3硬编码强转竖图为横图，迫使模型虚构右侧窗墙触发内容造假否决\",\n  \"evidence\": [\n    \"图像对比：原图竖构图窄阳台右侧为实墙边缘，效果图4:3横构图右侧凭空出现整面室内窗墙，宽深比例被根本改变\",\n    \"backend/app/routes/image.py:131 ratio_map将'auto'硬编码为'4:3'，不检测原图比例；batch_generate.py:65确实传'auto'\",\n    \"METHODOLOGY.md:182裁决线'拓扑改变/面积虚构=内容造假fail'与人工overall=1一票否决自洽；structural_fidelity=54与人工structural=3方向一致，评分器未误判\"\n  ],\n  \"affected_scope\": \"所有原图为竖构图(h>w)且aspect_ratio=auto的case（可脚本比对原图与输出宽高比检索），窄小空间（阳台/走廊/卫生间）最易被'拓宽虚构'；生产路径同样受影响\",\n  \"suggested_fix\": \"image.py的'auto'分支改为读取上传图实际宽高就近映射比例(本例3:4)；getgoapi_client默认4:3同步审视；评测侧批量统计'竖转横'命中名单并打标签\",\n  \"uncertainty\": \"aesthetic=2无critique备注，无法确认美学低分成因；单次采样无法排除比例正确时hard case仍改结构，但强制4:3保证虚构必然发生\"\n}\n```\n\n## 深度交互\n\n两点审慎挑战：\n\n[1] **这个 case 的价值可能超出单条归因**：它揭示的 auto→4:3 是生产代码里的真 bug，与备忘 1 的\"评测集非真实路径\"缺陷正交。建议在横向排查（统计 85 条里竖图占比）后单独立项修复，而不是只记入本条归因台账——如果竖图占比高，71% 的\"结构失真\"里可能有相当一部分该记在这个 bug 头上，会改变\"生图模型结构保持能力差\"这个大结论的权重。\n\n[2] **root_cause_stage 枚举值不够用了**：本 case 严格说是\"生成调用参数配置\"出错，既不是模型能力（generation_model 的字面含义）也不是 prompt 构建。我按就近原则填了 generation_model 并在正文注明，但如果后续归因批量跑，建议给枚举加一档 `generation_config` 之类，否则这类可直接修复的工程 bug 会被淹没在\"模型能力不行\"的归因里，误导修复优先级。"
+}
