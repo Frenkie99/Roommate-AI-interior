@@ -60,7 +60,7 @@ prompt 模板加结构锁定约束（保持相机机位/墙体门窗位置/空�
 
 | # | 待办 | 层 | 成本 | 依赖 |
 |---|---|---|---|---|
-| **P0** | **修 auto 画幅硬编码 bug（已核实源码）**：`image.py:131` `ratio_map={"auto":"4:3",...}` 把竖图强转横图，机械性迫使模型横向虚构空间——"盲目扩图"的第一成因。修法：auto 分支复用 `inpaint_service.py:17` 的 `_aspect_ratio_for_size(processed_image.size)` 就近映射。**依据：2026-07-10 批量归因，9 条 Prompt构建 fail 中 8 条独立收敛到此**（pair_006/020/032/058/060/062/078/081），含用户仲裁时亲手标"盲目扩图"的 006/058 | backend | 极小（改一处映射）+ 竖图子集对照重生成验证 | 无，**最高优先** |
+| **P0** | ~~修 auto 画幅硬编码 bug~~ ✅ **2026-07-10 已修复（待部署生效）**：`image.py` auto 分支改为按预处理图实际尺寸就近映射（复用 `inpaint_service._aspect_ratio_for_size`），显式比例不受影响；trace 新增 `metadata.aspect_ratio_mapped` 留痕。**API 级验证 6/6 通过**（mock 外部 API 打真实 /generate 路由：竖图→3:4、长竖→9:16、横→4:3、方→1:1、显式16:9透传、trace留痕）。原始依据：批量归因 8 条独立收敛（pair_006/020/032/058/060/062/078/081）。**生效条件=服务器部署（与 trace 采集同一次 git pull+重启）**；部署后跑竖图子集对照重生成验证效果 | backend | 已完成 | 部署 |
 | P1 | prompt 结构锁定实验：生成模板加"保持机位/墙体门窗/空间比例不变"，小批量对照验证服从度（**P0 修完再做**——先消机械诱因，再治模型行为，否则归因混杂） | backend prompt | 小（十几次生图费） | P0 |
 | P2 | 上传页拍摄引导 3 条提示 | frontend | 极小 | 无 |
 | P3 | 评测集打标：`perspective_corrected` / `outpainted` / `topology_changed` tags，失败地图新增切片轴 | evals | 小（可 AI 批量预标+人工复核） | 无 |

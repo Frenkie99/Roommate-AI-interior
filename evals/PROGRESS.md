@@ -71,6 +71,11 @@
 - **🎯 批量归因头号战果（已核实源码，非假设）**：9 条 Prompt构建 中 8 条独立收敛到同一根因——`backend/app/routes/image.py:131` **auto 画幅硬编码 "4:3"**，竖图（手机拍毛坯的常态）被强转横图 → 模型被迫横向虚构空间 = **"盲目扩图"的机械成因**（用户仲裁时亲手标"盲目扩图"的 pair_006/058 都在这批里）。修法一行：auto 复用 `inpaint_service.py:17 _aspect_ratio_for_size()`。已写入 PRODUCT_CONTRACT **P0（最高优先）**，P1 结构锁定实验改为依赖 P0（先消机械诱因再治模型行为）。**模块五（迭代优化）从此有了第一个具体靶子。**
 - **待用户复核的归因假设**：①评测集缺陷 4 条（pair_013/069/073/083，剔除候选）；②金标准疑似误标 3 条（pair_013/030/048——agent 认为图面质量与美学 1 分矛盾，标注人复核后要么改标要么驳回假设）。
 
+### 2026-07-10 · P0 修复：auto 画幅自适应（用户拍板"开始修吧"）
+- **改动（backend/app/routes/image.py，范围最小化）**：auto 分支改为 `Image.open(processed_image)` 取实际尺寸 → 复用 `inpaint_service._aspect_ratio_for_size()` 就近映射（1:1/4:3/3:4/16:9/9:16）；读图失败回退旧行为 4:3；显式比例路径原样不动；trace 新增 `metadata.aspect_ratio_mapped` 留痕（白名单/schema 都有 metadata 字段，零 schema 改动）。
+- **验证（不花钱）**：本地无 FastAPI 环境 → scratchpad 建最小 venv（fastapi/httpx0.27/PIL/numpy 对齐 requirements），mock 生图客户端后用 TestClient 打**真实 /generate 路由**：竖图768x1024→3:4 ✓ 长竖1080x2340→9:16 ✓ 横图→4:3 ✓ 方图→1:1 ✓ 显式16:9透传 ✓ trace留痕 ✓（6/6）。测试产生的 10 个假图已清理，测试 trace 写临时文件未污染真实数据。
+- **生效条件**：**服务器部署（git pull + 重启 roommate-backend.service）——与 trace 采集埋点是同一次部署，一次上线解锁两件事**。部署后跑竖图子集对照重生成，验证"盲目扩图"是否消退（这同时是 P1 结构锁定实验的前置）。
+
 ### 2026-07-09 · 模块三(Grader)基建四刀：分类校准 + Judge数据划分 + prompt模板化 + AI分析模块
 - **背景**：用户看完 grader 网课（张和老师），先对齐框架→映射现状：骨架已同向（binary化/成对美学/金标准校准/评结果不评路径），真正缺「把 Judge 当分类器验证」的基建——TPR/TNR、数据划分、prompt 模板。按拍板顺序动四刀（刀4 花钱押后待确认）。
 - **刀1 分类校准**：`gold_store.py` 加 `derive_binary`(overall≥4 pass/≤2 fail/=3 模糊)+`effective_binary`(显式裁决优先)+upsert 支持 `binary_verdict`/`critique`(None保留旧值/derived清除/空串清空)；`credibility.py` 加 `wilson_interval`/`classification_metrics`/`classification_analysis`(含FP/FN误判明细+split过滤)+CLI `--classify`；标注页加二元裁决radio/critique/待仲裁队列；可信度面板加分类校准区(混淆矩阵+TPR/TNR+CI+误判下钻)。**派生结果：pass 48/fail 30/模糊 7（待用户仲裁）**。

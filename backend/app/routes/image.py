@@ -3,6 +3,7 @@
 处理图片上传、效果图生成等请求
 """
 
+import io
 import os
 import time
 import uuid
@@ -10,8 +11,10 @@ import aiofiles
 from datetime import datetime
 from fastapi import APIRouter, File, UploadFile, Form, HTTPException
 from fastapi.responses import JSONResponse
+from PIL import Image
 
 from app.services.getgoapi_client import getgoapi_client, GetGoModel, AspectRatio, ImageSize, DEFAULT_MODEL_PRIORITY
+from app.services.inpaint_service import _aspect_ratio_for_size
 from app.services.llm_client import llm_client, LLMModel
 from app.services.image_processor import image_processor
 from app.utils.prompt_builder import build_prompt, STYLE_PROMPTS, ROOM_TYPE_PROMPTS
@@ -127,15 +130,25 @@ async def generate_renovation_image(
         prompt = build_prompt(style, room_type, custom_prompt)
     
     # 4. 映射宽高比
+    # P0 修复（2026-07-10，评测批量归因坐实，见 evals/PRODUCT_CONTRACT.md P0）：
+    # "auto" 曾硬编码 "4:3"——手机竖拍毛坯被强转横图，模型被迫横向虚构空间（"盲目扩图"的机械成因）。
+    # 现改为按预处理后图片的实际尺寸就近映射（复用 inpaint 路径的 _aspect_ratio_for_size 同款逻辑）。
     ratio_map = {
-        "auto": "4:3",
         "1:1": "1:1",
         "16:9": "16:9",
         "9:16": "9:16",
         "4:3": "4:3",
         "3:4": "3:4",
     }
-    mapped_ratio = ratio_map.get(aspect_ratio, "4:3")
+    if aspect_ratio == "auto":
+        try:
+            with Image.open(io.BytesIO(processed_image)) as _img:
+                mapped_ratio = _aspect_ratio_for_size(*_img.size)
+        except Exception as e:
+            print(f"[WARN] auto 画幅读图失败，回退 4:3: {e}")
+            mapped_ratio = "4:3"
+    else:
+        mapped_ratio = ratio_map.get(aspect_ratio, "4:3")
     
     # 5. 调用 API易 生成效果图（使用模型降级机制）
     _t_gen = time.perf_counter()  # trace 埋点：生图阶段计时起点
@@ -216,6 +229,8 @@ async def generate_renovation_image(
         "output_image_paths": [u.lstrip("/") for u in output_urls],
         "success": True,
         "error": "",
+        # P0 修复留痕：auto 实际映射到的画幅（验证自适应是否生效）
+        "metadata": {"aspect_ratio_mapped": mapped_ratio},
     })
 
     return JSONResponse({
