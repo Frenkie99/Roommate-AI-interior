@@ -12,13 +12,14 @@ from datetime import datetime
 from fastapi import APIRouter, File, UploadFile, Form, HTTPException
 from fastapi.responses import JSONResponse
 from PIL import Image
+from pydantic import BaseModel
 
 from app.services.getgoapi_client import getgoapi_client, GetGoModel, AspectRatio, ImageSize, DEFAULT_MODEL_PRIORITY
 from app.services.inpaint_service import _aspect_ratio_for_size
 from app.services.llm_client import llm_client, LLMModel
 from app.services.image_processor import image_processor
 from app.utils.prompt_builder import build_prompt, STYLE_PROMPTS, ROOM_TYPE_PROMPTS
-from app.utils.trace_logger import write_trace, new_trace_id, image_hash
+from app.utils.trace_logger import write_trace, new_trace_id, image_hash, write_feedback, FEEDBACK_ACTIONS
 
 router = APIRouter()
 
@@ -38,7 +39,8 @@ async def generate_renovation_image(
     room_type: str = Form(None, description="房间类型"),
     custom_prompt: str = Form(None, description="自定义提示词"),
     aspect_ratio: str = Form("auto", description="输出比例"),
-    image_size: str = Form("1K", description="输出大小")
+    image_size: str = Form("1K", description="输出大小"),
+    session_id: str = Form(None, description="前端匿名会话id（点评埋点串联用，可选）")
 ):
     """
     生成装修效果图
@@ -206,9 +208,10 @@ async def generate_renovation_image(
 
     # 8. trace 埋点：真实用户「上传毛坯 → 首次生图成功」的完整记录（评测集头号来源）
     #    只加新代码；write_trace 内部全程 try/except，绝不拖垮生图。
+    trace_id = new_trace_id()
     write_trace({
-        "trace_id": new_trace_id(),
-        "session_id": "",  # 第4步前端反馈接入后串联同一人多次操作
+        "trace_id": trace_id,
+        "session_id": (session_id or "")[:64],
         # —— 输入（存相对路径，便于第5步同步到本地评测平台后解析）——
         "input_image_path": f"input/{input_filename}",
         "input_image_hash": image_hash(processed_image),
@@ -238,6 +241,7 @@ async def generate_renovation_image(
         "message": "success",
         "data": {
             "task_id": task_id,
+            "trace_id": trace_id,
             "status": "succeeded",
             "input_image": input_filename,
             "output_urls": output_urls,
@@ -250,6 +254,32 @@ async def generate_renovation_image(
     })
 
 
+
+
+class FeedbackRequest(BaseModel):
+    trace_id: str
+    action: str
+    session_id: str = ""
+
+
+@router.post("/feedback")
+async def submit_feedback(req: FeedbackRequest):
+    """
+    用户点评埋点（第4步）：记录对某次生图结果的反馈。
+
+    action 取值：satisfied(满意) / unsatisfied(不要了) / download(下载) / regenerate(重新生成)。
+    只追加写 feedback.jsonl，不查证 trace_id 是否存在（评测侧导入时按 trace_id 关联，孤儿记录无害）。
+    """
+    if req.action not in FEEDBACK_ACTIONS:
+        raise HTTPException(status_code=400, detail=f"未知反馈类型: {req.action}，可选: {', '.join(FEEDBACK_ACTIONS)}")
+    if not req.trace_id.strip():
+        raise HTTPException(status_code=400, detail="缺少 trace_id")
+    write_feedback({
+        "trace_id": req.trace_id,
+        "action": req.action,
+        "session_id": req.session_id,
+    })
+    return JSONResponse({"code": 0, "message": "success", "data": {}})
 
 
 @router.get("/styles")

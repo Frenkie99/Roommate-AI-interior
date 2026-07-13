@@ -38,6 +38,26 @@ const styles = [
 // 后端API地址（生产环境使用相对路径，由Nginx代理）
 const API_BASE = '';
 
+// 匿名会话id：持久化在 localStorage，串联同一人多次操作（无任何身份信息）
+const getSessionId = () => {
+  let sid = localStorage.getItem('roommate_session_id');
+  if (!sid) {
+    sid = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    localStorage.setItem('roommate_session_id', sid);
+  }
+  return sid;
+};
+
+// 点评埋点：发送即忘，失败静默，绝不打扰用户
+const sendFeedback = (traceId, action) => {
+  if (!traceId) return;
+  fetch(`${API_BASE}/api/v1/feedback`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ trace_id: traceId, action, session_id: getSessionId() }),
+  }).catch(() => {});
+};
+
 export default function PlaygroundPage() {
   const [selectedRoom, setSelectedRoom] = useState('living_room');
   const [selectedStyle, setSelectedStyle] = useState('modern_minimalist');
@@ -48,6 +68,8 @@ export default function PlaygroundPage() {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [generatedImage, setGeneratedImage] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [lastTraceId, setLastTraceId] = useState(null);
+  const [feedbackGiven, setFeedbackGiven] = useState(null);
   const [notes, setNotes] = useState('');
   const fileInputRef = useRef(null);
   const [isDragover, setIsDragover] = useState(false);
@@ -258,6 +280,8 @@ export default function PlaygroundPage() {
 
   const handleGenerate = async () => {
     if (!uploadedFile) return;
+    // 隐式反馈：拿到过结果又重新生成 = 对上一张不满意的信号
+    if (lastTraceId && generatedImage) sendFeedback(lastTraceId, 'regenerate');
     setIsGenerating(true);
     setGeneratedImage(null);
     setProgress(0);
@@ -273,6 +297,7 @@ export default function PlaygroundPage() {
       formData.append('image', uploadedFile, uploadedFile.name);
       formData.append('style', selectedStyle);
       formData.append('room_type', selectedRoom);
+      formData.append('session_id', getSessionId());
       if (notes) formData.append('custom_prompt', notes);
       
       setProgress(20);
@@ -302,6 +327,8 @@ export default function PlaygroundPage() {
       if (outputUrls.length > 0) {
         const generatedImageUrl = outputUrls[0];
         setGeneratedImage(generatedImageUrl);
+        setLastTraceId(result.data?.trace_id || null);
+        setFeedbackGiven(null);
         addDesignHistory({
           taskId: result.data?.task_id,
           outputUrl: generatedImageUrl,
@@ -472,9 +499,33 @@ export default function PlaygroundPage() {
                     </button>
                   </div>
                   {generatedImage && (
-                    <button 
+                    <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => { sendFeedback(lastTraceId, 'satisfied'); setFeedbackGiven('satisfied'); toast.success('感谢反馈！'); }}
+                      disabled={!!feedbackGiven}
+                      className={`text-xs px-2.5 py-1 border rounded-sm transition-colors flex items-center gap-1 ${
+                        feedbackGiven === 'satisfied'
+                          ? 'border-warm-gold bg-warm-gold/10 text-charcoal'
+                          : 'border-warm-gold/30 text-charcoal hover:border-warm-gold disabled:opacity-40 disabled:cursor-not-allowed'
+                      }`}
+                    >
+                      👍 满意
+                    </button>
+                    <button
+                      onClick={() => { sendFeedback(lastTraceId, 'unsatisfied'); setFeedbackGiven('unsatisfied'); toast('已记录，我们会继续改进', { icon: '🙏' }); }}
+                      disabled={!!feedbackGiven}
+                      className={`text-xs px-2.5 py-1 border rounded-sm transition-colors flex items-center gap-1 ${
+                        feedbackGiven === 'unsatisfied'
+                          ? 'border-warm-gold bg-warm-gold/10 text-charcoal'
+                          : 'border-warm-gold/30 text-charcoal hover:border-warm-gold disabled:opacity-40 disabled:cursor-not-allowed'
+                      }`}
+                    >
+                      👎 不要了
+                    </button>
+                    <button
                       onClick={async () => {
                         try {
+                          sendFeedback(lastTraceId, 'download');
                           const response = await fetch(generatedImage);
                           const blob = await response.blob();
                           const blobUrl = URL.createObjectURL(blob);
@@ -495,6 +546,7 @@ export default function PlaygroundPage() {
                       <Download className="w-3 h-3" />
                       下载
                     </button>
+                    </div>
                   )}
                 </div>
                 <div className="flex-1 p-4 overflow-auto min-h-0">

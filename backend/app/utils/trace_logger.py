@@ -45,6 +45,28 @@ def image_hash(data: bytes) -> str:
         return ""
 
 
+# 第4步用户点评埋点：允许的反馈动作（显式两种 + 隐式两种）
+FEEDBACK_ACTIONS = ("satisfied", "unsatisfied", "download", "regenerate")
+_DEFAULT_FEEDBACK_PATH = os.path.join(_BACKEND_DIR, "data", "feedback.jsonl")
+
+
+def write_feedback(record: dict) -> None:
+    """把一条用户点评追加写入 feedback.jsonl。与 write_trace 同款原则：任何异常吞掉，绝不影响调用方。"""
+    try:
+        path = os.getenv("FEEDBACK_LOG_PATH", _DEFAULT_FEEDBACK_PATH)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        rec = {
+            "trace_id": str(record.get("trace_id", ""))[:64],
+            "action": record.get("action", ""),
+            "session_id": str(record.get("session_id", ""))[:64],
+            "created_at": datetime.now().isoformat(),
+        }
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+    except Exception as e:
+        print(f"[FEEDBACK] 写入失败(已忽略): {e}")
+
+
 def write_trace(trace: dict) -> None:
     """把一条 trace 追加写入 JSONL。任何异常都吞掉，绝不影响调用方（生图）。"""
     try:

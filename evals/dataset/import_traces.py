@@ -82,11 +82,43 @@ def _images_exist(pair: ImagePair, images_root: str) -> bool:
     return os.path.isfile(inp) and os.path.isfile(out)
 
 
+def _read_feedback(feedback_path: str) -> dict:
+    """读 feedback.jsonl，聚合成 {trace_id: feedback_dict}。文件不存在返回空 dict。
+
+    聚合规则：显式点评(satisfied/unsatisfied)取最后一次；download/regenerate 计次数。
+    """
+    result: dict = {}
+    if not feedback_path or not os.path.isfile(feedback_path):
+        return result
+    with open(feedback_path, "r", encoding="utf-8") as f:
+        for i, line in enumerate(f, 1):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rec = json.loads(line)
+            except Exception as e:
+                print(f"[WARN] feedback 第{i}行解析失败,跳过: {e}")
+                continue
+            tid, action = rec.get("trace_id", ""), rec.get("action", "")
+            if not tid or not action:
+                continue
+            fb = result.setdefault(tid, {"explicit": "", "download_count": 0, "regenerate_count": 0})
+            if action in ("satisfied", "unsatisfied"):
+                fb["explicit"] = action
+            elif action == "download":
+                fb["download_count"] += 1
+            elif action == "regenerate":
+                fb["regenerate_count"] += 1
+    return result
+
+
 def import_traces(
     traces_path: str = _DEFAULT_TRACES,
     metadata_path: str = None,
     images_root: str = None,
     require_images: bool = True,
+    feedback_path: str = None,
 ) -> Tuple[int, int, int]:
     """返回 (新增, 跳过_已存在, 跳过_缺图或失败)。"""
     metadata_path = metadata_path or str(METADATA_PATH)
@@ -97,6 +129,17 @@ def import_traces(
         return (0, 0, 0)
 
     traces = _read_traces(traces_path)
+    # 点评埋点（第4步）：默认找 traces.jsonl 同目录下的 feedback.jsonl，按 trace_id 合并进 trace.feedback
+    if feedback_path is None:
+        feedback_path = os.path.join(os.path.dirname(os.path.abspath(traces_path)), "feedback.jsonl")
+    feedback_map = _read_feedback(feedback_path)
+    if feedback_map:
+        merged = 0
+        for t in traces:
+            if t.trace_id in feedback_map:
+                t.feedback = feedback_map[t.trace_id]
+                merged += 1
+        print(f"[feedback] 读到 {len(feedback_map)} 条点评聚合，合并进 {merged} 条 trace")
     meta = DatasetMetadata.load(metadata_path)
     seen = _existing_trace_ids(meta.pairs)
     idx = _next_prod_index(meta.pairs)
@@ -136,12 +179,15 @@ def main():
     ap.add_argument("--images-root", default=None, help="图片相对路径的根目录(默认项目根)")
     ap.add_argument("--no-require-images", action="store_true",
                     help="不校验图片文件是否存在(仅测试转换逻辑时用)")
+    ap.add_argument("--feedback", default=None,
+                    help="feedback.jsonl 路径(默认取 traces 同目录下的 feedback.jsonl,不存在则跳过)")
     args = ap.parse_args()
     import_traces(
         traces_path=args.traces,
         metadata_path=args.metadata,
         images_root=args.images_root,
         require_images=not args.no_require_images,
+        feedback_path=args.feedback,
     )
 
 
