@@ -45,8 +45,8 @@
 > **✅ 点评埋点已部署上线（2026-07-13 晚，用户网页终端执行四条命令）**。远程冒烟验证通过：
 > [1] 后端：`POST /api/v1/feedback` 非法 action 返回 400（白名单生效）、合法请求返回 200——新代码已在生产运行；
 > [2] 前端：生产主 bundle 字节数与本地新构建一致，懒加载 chunk `PlaygroundPage-*.js` 含「满意/不要了」按钮代码。
-> ⚠️ 冒烟时写入过一条测试记录（trace_id=`deploy-smoke-0713`, session_id=`smoke-test`），导入评测集时按 session_id 过滤即可。
-> 唯一未直接验证的是落盘（write_feedback 吞异常，200 不等于写盘成功）：网页终端 `cat /var/www/roommate/backend/data/feedback.jsonl` 应见 deploy-smoke-0713 那条即最终收官。之后 trace+feedback 自然积累。
+> [3] **落盘已确认（2026-07-13 22:20 最终收官）**：feedback.jsonl 两条——冒烟测试记录（trace_id=`deploy-smoke-0713`, session_id=`smoke-test`，**导入评测集时按此 session_id 过滤**）+ 用户真实点击（satisfied，真实 trace_id + localStorage UUID session_id）。**前端按钮→接口→落盘→导入器全链路贯通，第4步埋点正式收官。之后 trace+feedback 自然积累，攒 1-2 周或 30+ 条再拉回分析。**
+> ⚠️ 部署时发现的新待办：nginx 对 index.html 无 Cache-Control 头 → 用户浏览器启发式缓存旧版前端（本次用户强刷才见到按钮；更严重的是下次构建删旧 chunk 后老用户会白屏）。修法=nginx SPA location 给 index.html 加 `no-cache`（assets 带 hash 可长缓存）。另：反馈按钮偏小（工具条右侧 text-xs），采集率待观察，数据说话后再决定要不要挪位置/加引导。
 > **Seedream 5.0 调研已完成（2026-07-13）**：仅作局部编辑备选、低优先。结论：API易同 key 可调（$0.035/张）但**不支持 mask**（指令式定位）、仅收 URL 不收 base64——与现有 Gemini inpaint hack 机制同构，赢不赢只能实测。10 例对比实验设计已定，**等真实 feedback 显示编辑环节确有痛点再跑**。
 > **✅ 前端静默失败已修并上线（同日 150147c）**：超 10MB 上传前拦截+toast 常驻+上传框标注限制；服务器构建时发现 dist 为 root 属主（EACCES）已 chown 给 admin——**同时坐实了 CI 上传步骤失败的根因，恢复自动部署的路障已清**。另：服务器 .env 无 APIYI_KEY，生图走 LLM_APIYI_KEY 兜底（实测可用，暂不动）。
 >
