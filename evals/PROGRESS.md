@@ -42,9 +42,12 @@
 > **重生成实验已取消（2026-07-13 用户拍板）**：P0 修复已在生产双冒烟坐实（竖入竖出），无需再花钱对照重生成。
 > 模块五闭环的"量化裁决"改由**真实 trace 自然合拢**：修复后的真实用户竖图结果攒起来，与修复前评测集里的 8 条 auto bug case 对比即可（零成本、且是真实分布）。
 > **✅ 第 4 步用户点评埋点已完成（2026-07-13 同日，待部署）**：后端 `/api/v1/feedback`（四种 action 白名单，追加写 feedback.jsonl，同款"绝不拖垮主流程"）+ `/generate` 返回 trace_id、接受 session_id（localStorage 匿名持久）；前端效果图旁「👍满意/👎不要了」显式按钮 + 下载/重生成两个隐式信号零 UI 白捡；`import_traces.py` 自动合并 feedback 进评测样本 metadata。测试：后端 TestClient 10/10 + 前端构建过 + 导入器聚合过。
-> **🎯 下次回来第一件事：部署点评埋点**（用户拍板今天不部署，代码已全部 push）。网页终端四条：
-> `cd /var/www/roommate` → `sudo git pull` → `sudo systemctl restart roommate-backend` → `cd frontend && npm run build`。
-> 部署后冒烟：生成一张图 → 点「👍满意」→ `cat backend/data/feedback.jsonl` 见记录即收官。之后 trace+feedback 自然积累。
+> **✅ 点评埋点已部署上线（2026-07-13 晚，用户网页终端执行四条命令）**。远程冒烟验证通过：
+> [1] 后端：`POST /api/v1/feedback` 非法 action 返回 400（白名单生效）、合法请求返回 200——新代码已在生产运行；
+> [2] 前端：生产主 bundle 字节数与本地新构建一致，懒加载 chunk `PlaygroundPage-*.js` 含「满意/不要了」按钮代码。
+> ⚠️ 冒烟时写入过一条测试记录（trace_id=`deploy-smoke-0713`, session_id=`smoke-test`），导入评测集时按 session_id 过滤即可。
+> 唯一未直接验证的是落盘（write_feedback 吞异常，200 不等于写盘成功）：网页终端 `cat /var/www/roommate/backend/data/feedback.jsonl` 应见 deploy-smoke-0713 那条即最终收官。之后 trace+feedback 自然积累。
+> **Seedream 5.0 调研已完成（2026-07-13）**：仅作局部编辑备选、低优先。结论：API易同 key 可调（$0.035/张）但**不支持 mask**（指令式定位）、仅收 URL 不收 base64——与现有 Gemini inpaint hack 机制同构，赢不赢只能实测。10 例对比实验设计已定，**等真实 feedback 显示编辑环节确有痛点再跑**。
 > **✅ 前端静默失败已修并上线（同日 150147c）**：超 10MB 上传前拦截+toast 常驻+上传框标注限制；服务器构建时发现 dist 为 root 属主（EACCES）已 chown 给 admin——**同时坐实了 CI 上传步骤失败的根因，恢复自动部署的路障已清**。另：服务器 .env 无 APIYI_KEY，生图走 LLM_APIYI_KEY 兜底（实测可用，暂不动）。
 >
 > **五模块复盘定格（2026-07-10）**：一~70%(来源缺陷=唯一结构性短板) · 二~95%(差部署开关) · 三~85%(两把可信尺子,指令维等真实数据) · 四~80%(AI归因+失败分布,差feedback) · 五~30%(第一闭环走完80%,差部署+重生成验证)。
