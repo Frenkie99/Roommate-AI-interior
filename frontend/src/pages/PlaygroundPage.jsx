@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import toast from 'react-hot-toast';
 import { Upload, Zap, Download, Send, MessageSquare, Eye, Wand2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import Navbar from '../components/Navbar';
@@ -224,7 +225,15 @@ export default function PlaygroundPage() {
   };
 
   const handleFileSelect = (file) => {
-    if (!file?.type.startsWith('image/')) return;
+    if (!file?.type.startsWith('image/')) {
+      toast.error('仅支持图片文件（JPG、PNG）');
+      return;
+    }
+    // 后端上传限制 10MB，前端提前拦截，避免提交后才失败
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error(`图片大小 ${(file.size / 1024 / 1024).toFixed(1)}MB，超过 10MB 限制，请压缩后重新上传`, { duration: 6000 });
+      return;
+    }
     // 清理旧的 preview URL
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setUploadedFile(file);
@@ -309,6 +318,8 @@ export default function PlaygroundPage() {
       
     } catch (error) {
       console.error('Generate error:', error);
+      // statusText 随 isGenerating=false 一起消失，必须用 toast 让用户看到失败原因
+      toast.error(`生成失败：${error.message}`, { duration: 6000 });
       setStatusText(`错误: ${error.message}`);
       setProgress(0);
     } finally {
@@ -348,7 +359,7 @@ export default function PlaygroundPage() {
                     />
                     <Upload className="w-10 h-10 mx-auto text-warm-gold/40 mb-3" />
                     <p className="text-sm font-medium text-charcoal mb-1">点击或拖拽上传</p>
-                    <p className="text-xs text-charcoal/50">支持 JPG、PNG 格式</p>
+                    <p className="text-xs text-charcoal/50">支持 JPG、PNG 格式，不大于 10MB</p>
                   </div>
                 ) : (
                   <div className="relative">
