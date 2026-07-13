@@ -75,6 +75,23 @@
 
 ## 🗓️ 会话日志（倒序，最新在上）
 
+### 2026-07-13 晚 · 点评埋点部署收官（全链路贯通）+ Seedream 5.0 编辑备选调研
+- **话题起点**：用户提出"要不要接 GPT Image/Seedream、UI 上给用户选模型"。讨论收敛：模型下拉框对小白用户是伪需求
+  （质量责任转嫁）；用户 LibLib 实测 Seedream 全图生成不如 Gemini → 想法收窄为"仅局部编辑环节的备选探索"（低优先，
+  用户明确当前局部编辑非真实痛点）。
+- **Seedream 5.0 渠道调研结论**（详见记忆 roommate-seedream-edit-research）：API易同 key 可调（5.0 约 $0.035/张，
+  生图+编辑统一 `/v1/images/generations`）；但**不支持 mask**（指令式空间定位，火山方舟原生同样）、**仅收 URL 不收
+  base64**。→ 与现有 Gemini inpaint hack（inpaint_service.py 恳求式）机制同构，无架构优势，赢不赢只能实测。
+  10 例对比实验设计已定（编辑区质量/mask 外像素不变性/漂移/延迟单价），**等真实 feedback 证明编辑环节有痛点再跑**。
+- **点评埋点部署（用户网页终端四条命令）+ 三层远程验证**：① 后端非法 action 400/合法 200；② 前端生产 bundle 与本地
+  构建同 hash、按钮代码在懒加载 chunk PlaygroundPage-*.js（第一眼主 bundle 搜不到是懒加载，虚惊）；③ 落盘确认：
+  feedback.jsonl 两条 = 冒烟测试记录（session_id=smoke-test，导入时过滤）+ 用户真实 satisfied 点击。**第4步收官。**
+- **排查插曲→新待办**：用户首测看不到按钮 = 浏览器启发式缓存旧 index.html（nginx 未下发 Cache-Control）。强刷解决。
+  隐患：下次构建删旧 chunk 后缓存旧 index 的老用户会**白屏**，修法 = SPA location 给 index.html 加 no-cache。
+  另观察：按钮在工具条右侧 text-xs 偏小，采集率待数据说话。
+- **下一步 = 数据自然积累期**：攒 1-2 周或 30+ 条 feedback 再拉回导入分析，「不要了」的环节分布裁决后续优先级
+  （Seedream 实验/生成链路/按钮位置）。
+
 ### 2026-07-13 · 部署上线收官：P0 修复+trace 采集进生产，冒烟双确认
 - **部署路径**：用户手动网页终端执行（SSH 密钥方案因密码不对未走通）。git pull fast-forward 9504fcc→565c424 零冲突；
   重启后 `Application startup complete`，无新增依赖、内存健康（可用 459Mi，swap 0）。
