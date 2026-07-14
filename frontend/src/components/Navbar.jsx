@@ -88,11 +88,18 @@ export default function Navbar() {
             <Link to="/playground" className="block text-charcoal/80 hover:text-warm-gold py-2" onClick={() => setIsOpen(false)}>{t.newDesign}</Link>
             <Link to="/history" className="block text-charcoal/80 hover:text-warm-gold py-2" onClick={() => setIsOpen(false)}>{t.history}</Link>
             <div className="pt-4 border-t border-warm-gold/10 space-y-3">
-              <button 
+              <button
                 onClick={() => setShowAuthModal(true)}
                 className="block w-full gold-gradient text-white text-center py-3 rounded-sm"
               >
                 {t.loginSignup}
+              </button>
+              <button
+                onClick={toggleLang}
+                className="w-full flex items-center justify-center gap-1.5 border border-warm-gold/30 text-charcoal/80 py-3 rounded-sm text-sm font-medium"
+              >
+                <Globe className="w-4 h-4" />
+                <span>{lang === 'zh' ? '中文' : 'EN'}</span>
               </button>
             </div>
           </div>

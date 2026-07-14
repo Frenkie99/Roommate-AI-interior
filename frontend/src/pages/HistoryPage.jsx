@@ -131,7 +131,7 @@ export default function HistoryPage() {
       <Navbar />
 
       <main className="pt-[84px] min-h-screen">
-        <div className="bg-white border-b border-warm-gold/10 px-8">
+        <div className="bg-white border-b border-warm-gold/10 px-4 md:px-8">
           <div className="max-w-7xl mx-auto py-4">
             <h1 className="text-lg font-medium text-charcoal">生成的设计</h1>
             <p className="text-sm text-charcoal/50 mt-1">
@@ -140,7 +140,7 @@ export default function HistoryPage() {
           </div>
         </div>
 
-        <div className="py-10 px-8">
+        <div className="py-8 md:py-10 px-4 md:px-8">
           <div className="max-w-7xl mx-auto">
             <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
               <div className="flex flex-wrap items-center gap-3">
@@ -148,7 +148,7 @@ export default function HistoryPage() {
                 <select
                   value={styleFilter}
                   onChange={(event) => setStyleFilter(event.target.value)}
-                  className="text-sm border border-warm-gold/30 rounded-sm px-3 py-2 bg-white focus:outline-none focus:border-warm-gold"
+                  className="text-base md:text-sm border border-warm-gold/30 rounded-sm px-3 py-2 bg-white focus:outline-none focus:border-warm-gold"
                 >
                   <option value="">全部风格</option>
                   {styleOptions.map((option) => (
@@ -158,7 +158,7 @@ export default function HistoryPage() {
                 <select
                   value={roomFilter}
                   onChange={(event) => setRoomFilter(event.target.value)}
-                  className="text-sm border border-warm-gold/30 rounded-sm px-3 py-2 bg-white focus:outline-none focus:border-warm-gold"
+                  className="text-base md:text-sm border border-warm-gold/30 rounded-sm px-3 py-2 bg-white focus:outline-none focus:border-warm-gold"
                 >
                   <option value="">全部房间</option>
                   {roomOptions.map((option) => (

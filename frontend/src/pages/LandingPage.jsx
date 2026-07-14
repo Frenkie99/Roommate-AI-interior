@@ -12,27 +12,36 @@ export default function LandingPage() {
   const videoSectionRef = useRef(null);
   const hasPlayed = useRef(false);
 
-  const handleMouseDown = () => {
-    isDragging.current = true;
-  };
-
-  const handleMouseUp = () => {
-    isDragging.current = false;
-  };
-
-  const handleMouseMove = (e) => {
-    if (!isDragging.current || !sliderRef.current) return;
+  // 用 Pointer 事件而非 Mouse 事件：一套逻辑同时支持鼠标与触屏（手机上原本完全拖不动）
+  const updateSliderFromPointer = (clientX) => {
+    if (!sliderRef.current) return;
     const rect = sliderRef.current.getBoundingClientRect();
-    const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+    const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
     setSliderPosition((x / rect.width) * 100);
   };
 
+  const handlePointerDown = (e) => {
+    isDragging.current = true;
+    updateSliderFromPointer(e.clientX); // 点哪跳哪，不必先按住再拖
+  };
+
+  const handlePointerUp = () => {
+    isDragging.current = false;
+  };
+
+  const handlePointerMove = (e) => {
+    if (!isDragging.current) return;
+    updateSliderFromPointer(e.clientX);
+  };
+
   useEffect(() => {
-    document.addEventListener('mouseup', handleMouseUp);
-    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('pointerup', handlePointerUp);
+    document.addEventListener('pointercancel', handlePointerUp);
+    document.addEventListener('pointermove', handlePointerMove);
     return () => {
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('pointerup', handlePointerUp);
+      document.removeEventListener('pointercancel', handlePointerUp);
+      document.removeEventListener('pointermove', handlePointerMove);
     };
   }, []);
 
@@ -74,15 +83,16 @@ export default function LandingPage() {
       <Navbar />
       
       {/* Hero Section */}
-      <section id="home" className="h-screen flex items-center px-8 pt-24 pb-8 bg-gradient-to-b from-ivory to-mist hero-bg-pattern relative overflow-hidden">
-        {/* Decorative Elements */}
-        <div className="absolute top-32 right-16 w-24 h-24 border border-warm-gold/20 rounded-full animate-float" style={{ animationDelay: '0s' }}></div>
-        <div className="absolute bottom-24 left-16 w-20 h-20 border border-warm-gold/15 rounded-full animate-float" style={{ animationDelay: '1.5s' }}></div>
-        <div className="absolute top-48 left-1/4 w-2 h-2 bg-warm-gold/30 rounded-full animate-float" style={{ animationDelay: '0.5s' }}></div>
-        <div className="absolute bottom-32 right-1/4 w-2 h-2 bg-warm-gold/20 rounded-full animate-float" style={{ animationDelay: '1s' }}></div>
+      {/* 移动端用 min-h-screen 让内容自然撑开（原来的 h-screen 会把堆叠后的文字+图片挤爆/截断） */}
+      <section id="home" className="min-h-screen lg:h-screen flex items-center px-4 md:px-8 pt-24 pb-12 lg:pb-8 bg-gradient-to-b from-ivory to-mist hero-bg-pattern relative overflow-hidden">
+        {/* Decorative Elements - 窄屏会压到正文，仅桌面端显示 */}
+        <div className="hidden lg:block absolute top-32 right-16 w-24 h-24 border border-warm-gold/20 rounded-full animate-float" style={{ animationDelay: '0s' }}></div>
+        <div className="hidden lg:block absolute bottom-24 left-16 w-20 h-20 border border-warm-gold/15 rounded-full animate-float" style={{ animationDelay: '1.5s' }}></div>
+        <div className="hidden lg:block absolute top-48 left-1/4 w-2 h-2 bg-warm-gold/30 rounded-full animate-float" style={{ animationDelay: '0.5s' }}></div>
+        <div className="hidden lg:block absolute bottom-32 right-1/4 w-2 h-2 bg-warm-gold/20 rounded-full animate-float" style={{ animationDelay: '1s' }}></div>
 
         <div className="max-w-7xl mx-auto w-full animate-fade-in">
-          <div className="grid lg:grid-cols-12 gap-6 items-center">
+          <div className="grid lg:grid-cols-12 gap-10 lg:gap-6 items-center">
             {/* Left: Text Content (5 columns) */}
             <div className="lg:col-span-5 space-y-6 relative">
               <div className="inline-block">
@@ -109,24 +119,26 @@ export default function LandingPage() {
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/>
                   </svg>
-                  <span>拖动滑块对比</span>
+                  <span className="lg:hidden">滑动对比改造前后</span>
+                  <span className="hidden lg:inline">拖动滑块对比</span>
                 </span>
               </div>
             </div>
 
             {/* Right: Comparison Slider */}
             <div className="lg:col-span-7 relative">
-              <div 
+              <div
                 ref={sliderRef}
-                className="rounded-lg shadow-2xl relative overflow-hidden cursor-ew-resize select-none"
-                onMouseDown={handleMouseDown}
+                /* touch-none：拖滑块时不要让页面跟着上下滚 */
+                className="rounded-lg shadow-2xl relative overflow-hidden cursor-ew-resize select-none touch-none"
+                onPointerDown={handlePointerDown}
               >
                 {/* Before Image (毛坯图) */}
                 <div className="relative">
                   <img
                     src="/assets/hero section/毛坯图.webp"
                     alt="Before"
-                    className="w-full h-[380px] md:h-[420px] lg:h-[450px] object-cover pointer-events-none"
+                    className="w-full h-[260px] sm:h-[340px] md:h-[420px] lg:h-[450px] object-cover pointer-events-none"
                     draggable="false"
                     fetchPriority="high"
                     decoding="async"
@@ -143,7 +155,7 @@ export default function LandingPage() {
                   <img
                     src="/assets/hero section/效果图.webp"
                     alt="After"
-                    className="w-full h-[380px] md:h-[420px] lg:h-[450px] object-cover pointer-events-none"
+                    className="w-full h-[260px] sm:h-[340px] md:h-[420px] lg:h-[450px] object-cover pointer-events-none"
                     draggable="false"
                     fetchPriority="high"
                     decoding="async"
@@ -176,9 +188,9 @@ export default function LandingPage() {
       <div className="section-divider max-w-4xl mx-auto"></div>
 
       {/* How It Works Section - 左视频右文字布局 */}
-      <section id="features" ref={videoSectionRef} className="py-24 px-8 bg-mist">
+      <section id="features" ref={videoSectionRef} className="py-16 md:py-24 px-4 md:px-8 bg-mist">
         <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
+          <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
             {/* Left: Video */}
             <div className="relative rounded-lg overflow-hidden shadow-2xl">
               <video
@@ -212,7 +224,7 @@ export default function LandingPage() {
       </section>
 
       {/* Gallery Section */}
-      <section id="gallery" className="min-h-screen py-16 px-8 bg-ivory flex flex-col justify-center">
+      <section id="gallery" className="min-h-screen py-16 px-4 md:px-8 bg-ivory flex flex-col justify-center">
         <div className="max-w-7xl mx-auto w-full">
           <div className="text-center mb-12">
             <p className="text-warm-gold text-sm font-medium tracking-[0.3em] uppercase mb-6">Design Gallery</p>
@@ -239,13 +251,13 @@ export default function LandingPage() {
       </section>
 
       {/* CTA Section - 黑色背景 */}
-      <section className="py-[100px] px-8 bg-obsidian">
+      <section className="py-16 md:py-[100px] px-4 md:px-8 bg-obsidian">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-5xl md:text-6xl font-bold text-ivory mb-8 tracking-wide" style={{ fontFamily: '"Alibaba PuHuiTi", "PingFang SC", "Microsoft YaHei", sans-serif', fontWeight: 700 }}>准备好焕新你的空间了吗？</h2>
-          <p className="text-lg text-ivory/60 font-light mb-12 max-w-2xl mx-auto">
+          <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold text-ivory mb-6 md:mb-8 tracking-wide" style={{ fontFamily: '"Alibaba PuHuiTi", "PingFang SC", "Microsoft YaHei", sans-serif', fontWeight: 700 }}>准备好焕新你的空间了吗？</h2>
+          <p className="text-base md:text-lg text-ivory/60 font-light mb-8 md:mb-12 max-w-2xl mx-auto">
             加入我们，用 AI 打造理想家居。
           </p>
-          <Link to="/playground" className="inline-flex items-center gap-3 gold-gradient text-white px-12 py-5 rounded-sm text-sm font-medium tracking-wide hover:opacity-90 transition-opacity">
+          <Link to="/playground" className="inline-flex items-center gap-3 gold-gradient text-white px-10 md:px-12 py-4 md:py-5 rounded-sm text-sm font-medium tracking-wide hover:opacity-90 transition-opacity">
             <span>开始您的设计</span>
             <ArrowRight className="w-4 h-4" />
           </Link>

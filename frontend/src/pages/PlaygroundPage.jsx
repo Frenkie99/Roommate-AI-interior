@@ -88,6 +88,7 @@ export default function PlaygroundPage() {
   const canvasRef = useRef(null);
   const imageContainerRef = useRef(null);
   const chatInputRef = useRef(null);
+  const previewPanelRef = useRef(null);
 
   // 聊天引擎 hook
   const {
@@ -102,42 +103,45 @@ export default function PlaygroundPage() {
     setGeneratedImage, setSelectedMask, setSelectedStyle, setViewMode,
   });
 
-  // 框选/点选模式 - 鼠标按下开始绘制
-  const handleMouseDown = useCallback((e) => {
+  // 框选模式 - 按下开始绘制（Pointer 事件：鼠标/触屏/手写笔通用）
+  const handlePointerDown = useCallback((e) => {
     if (viewMode !== 'refine' || !generatedImage || isSegmenting) return;
-    
+
     const img = imageContainerRef.current?.querySelector('img');
     if (!img) return;
-    
+
+    // 捕获指针：手指/鼠标拖出图片范围也能继续收到 move/up
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+
     const imgRect = img.getBoundingClientRect();
     const scaleX = img.naturalWidth / imgRect.width;
     const scaleY = img.naturalHeight / imgRect.height;
     const x = Math.round((e.clientX - imgRect.left) * scaleX);
     const y = Math.round((e.clientY - imgRect.top) * scaleY);
-    
+
     setIsDrawingBox(true);
     setBoxStart({ x, y, screenX: e.clientX - imgRect.left, screenY: e.clientY - imgRect.top });
     setBoxEnd({ x, y, screenX: e.clientX - imgRect.left, screenY: e.clientY - imgRect.top });
   }, [viewMode, generatedImage, isSegmenting]);
 
-  // 框选模式 - 鼠标移动更新框
-  const handleMouseMove = useCallback((e) => {
+  // 框选模式 - 移动更新框
+  const handlePointerMove = useCallback((e) => {
     if (!isDrawingBox || !boxStart) return;
-    
+
     const img = imageContainerRef.current?.querySelector('img');
     if (!img) return;
-    
+
     const imgRect = img.getBoundingClientRect();
     const scaleX = img.naturalWidth / imgRect.width;
     const scaleY = img.naturalHeight / imgRect.height;
     const x = Math.round((e.clientX - imgRect.left) * scaleX);
     const y = Math.round((e.clientY - imgRect.top) * scaleY);
-    
+
     setBoxEnd({ x, y, screenX: e.clientX - imgRect.left, screenY: e.clientY - imgRect.top });
   }, [isDrawingBox, boxStart]);
 
-  // 框选模式 - 鼠标松开发送分割请求
-  const handleMouseUp = useCallback(async (e) => {
+  // 框选模式 - 松开发送分割请求
+  const handlePointerUp = useCallback(async (e) => {
     if (!isDrawingBox || !boxStart || !boxEnd) {
       setIsDrawingBox(false);
       return;
@@ -282,6 +286,10 @@ export default function PlaygroundPage() {
     if (!uploadedFile) return;
     // 隐式反馈：拿到过结果又重新生成 = 对上一张不满意的信号
     if (lastTraceId && generatedImage) sendFeedback(lastTraceId, 'regenerate');
+    // 移动端是纵向排布，生成按钮在画布上方；不滚过去用户看不到进度，会以为没反应
+    if (window.matchMedia('(max-width: 1023px)').matches) {
+      previewPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
     setIsGenerating(true);
     setGeneratedImage(null);
     setProgress(0);
@@ -359,12 +367,13 @@ export default function PlaygroundPage() {
       <Navbar />
       
       <main className="pt-[84px] min-h-screen">
-        <div className="p-6 h-[calc(100vh-84px)] overflow-hidden">
-          <div className="grid grid-cols-12 gap-6 h-full">
+        {/* 移动端：自然高度、整页滚动；桌面端（lg+）：固定一屏、各栏内部滚动 */}
+        <div className="p-4 md:p-6 lg:h-[calc(100vh-84px)] lg:overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 lg:h-full">
             {/* Left Panel: Controls */}
-            <div className="col-span-3 overflow-y-auto pr-2 space-y-4 animate-fade-in">
+            <div className="lg:col-span-3 lg:overflow-y-auto lg:pr-2 space-y-4 animate-fade-in">
               {/* Upload Area */}
-              <div className="luxury-card rounded-lg p-5">
+              <div className="luxury-card rounded-lg p-4 lg:p-5">
                 <h3 className="font-medium text-charcoal mb-3 flex items-center gap-2">
                   <span className="w-5 h-5 bg-warm-gold/10 rounded-full flex items-center justify-center text-xs text-warm-gold font-bold">1</span>
                   <span>上传房间照片</span>
@@ -402,7 +411,7 @@ export default function PlaygroundPage() {
               </div>
 
               {/* Room Type */}
-              <div className="luxury-card rounded-lg p-5">
+              <div className="luxury-card rounded-lg p-4 lg:p-5">
                 <h3 className="font-medium text-charcoal mb-3 flex items-center gap-2">
                   <span className="w-5 h-5 bg-warm-gold/10 rounded-full flex items-center justify-center text-xs text-warm-gold font-bold">2</span>
                   <span>选择房间类型</span>
@@ -421,12 +430,13 @@ export default function PlaygroundPage() {
               </div>
 
               {/* Style Selector */}
-              <div className="luxury-card rounded-lg p-5">
+              <div className="luxury-card rounded-lg p-4 lg:p-5">
                 <h3 className="font-medium text-charcoal mb-3 flex items-center gap-2">
                   <span className="w-5 h-5 bg-warm-gold/10 rounded-full flex items-center justify-center text-xs text-warm-gold font-bold">3</span>
                   <span>选择设计风格</span>
                 </h3>
-                <div className="grid grid-cols-2 gap-2">
+                {/* 手机上 3 列：10 个风格从 5 行压到 4 行，少滚约 400px（小卡片仍看得清风格） */}
+                <div className="grid grid-cols-3 sm:grid-cols-2 gap-2">
                   {styles.map(style => (
                     <div
                       key={style.id}
@@ -443,7 +453,7 @@ export default function PlaygroundPage() {
               </div>
 
               {/* Additional Notes */}
-              <div className="luxury-card rounded-lg p-5">
+              <div className="luxury-card rounded-lg p-4 lg:p-5">
                 <h3 className="font-medium text-charcoal mb-3 flex items-center gap-2">
                   <span className="w-5 h-5 bg-warm-gold/10 rounded-full flex items-center justify-center text-xs text-warm-gold font-bold">4</span>
                   <span>补充说明（可选）</span>
@@ -451,7 +461,7 @@ export default function PlaygroundPage() {
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="w-full border border-warm-gold/20 rounded-lg p-2.5 bg-transparent focus:border-warm-gold focus:outline-none transition-colors text-sm resize-none h-16 placeholder:text-charcoal/40"
+                  className="w-full border border-warm-gold/20 rounded-lg p-2.5 bg-transparent focus:border-warm-gold focus:outline-none transition-colors text-base lg:text-sm resize-none h-16 placeholder:text-charcoal/40"
                   placeholder="描述您的偏好，如：暖色调、自然材质、更多收纳空间..."
                 />
               </div>
@@ -468,7 +478,8 @@ export default function PlaygroundPage() {
             </div>
 
             {/* Center Panel: Preview */}
-            <div className="col-span-6 flex flex-col animate-fade-in min-h-0" style={{ animationDelay: '0.1s' }}>
+            {/* 移动端给足高度，否则内部 flex-1 会塌成 0 高；桌面端由父级 h-full 撑开 */}
+            <div ref={previewPanelRef} className="lg:col-span-6 flex flex-col animate-fade-in min-h-[70vh] lg:min-h-0" style={{ animationDelay: '0.1s' }}>
               {/* Preview Area */}
               <div className="luxury-card rounded-lg overflow-hidden flex-1 flex flex-col min-h-0">
                 <div className="bg-mist/50 p-3 border-b border-warm-gold/10 flex items-center justify-between flex-shrink-0">
@@ -594,13 +605,13 @@ export default function PlaygroundPage() {
                     
                     {/* 生成结果 */}
                     {generatedImage && !isGenerating && (
-                      <div 
+                      <div
                         ref={imageContainerRef}
-                        className={`relative w-full h-full ${viewMode === 'refine' ? 'cursor-crosshair' : ''}`}
-                        onMouseDown={handleMouseDown}
-                        onMouseMove={handleMouseMove}
-                        onMouseUp={handleMouseUp}
-                        onMouseLeave={() => { if (isDrawingBox) { setIsDrawingBox(false); setBoxStart(null); setBoxEnd(null); } }}
+                        className={`relative w-full h-full ${viewMode === 'refine' ? 'cursor-crosshair touch-none' : ''}`}
+                        onPointerDown={handlePointerDown}
+                        onPointerMove={handlePointerMove}
+                        onPointerUp={handlePointerUp}
+                        onPointerCancel={() => { if (isDrawingBox) { setIsDrawingBox(false); setBoxStart(null); setBoxEnd(null); } }}
                       >
                         <img src={displayImage || generatedImage} alt="Generated Design" className="w-full h-full object-contain rounded-lg select-none" draggable={false} />
                         
@@ -633,7 +644,7 @@ export default function PlaygroundPage() {
                         {/* 精修模式提示 */}
                         {viewMode === 'refine' && !selectedMask && !isSegmenting && !isDrawingBox && (
                           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-full text-xs">
-                            拖动鼠标框选要修改的家具
+                            拖动框选要修改的家具
                           </div>
                         )}
                         
@@ -651,7 +662,8 @@ export default function PlaygroundPage() {
                         {selectedMask && viewMode === 'refine' && (
                           <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-warm-gold text-white px-4 py-2 rounded-full text-xs flex items-center gap-2">
                             <Wand2 className="w-3 h-3" />
-                            已选中区域，请在右侧输入修改指令
+                            <span className="lg:hidden">已选中区域，请在下方输入修改指令</span>
+                            <span className="hidden lg:inline">已选中区域，请在右侧输入修改指令</span>
                           </div>
                         )}
                       </div>
@@ -663,7 +675,7 @@ export default function PlaygroundPage() {
             </div>
 
             {/* Right Panel: AI Chat */}
-            <div className="col-span-3 animate-fade-in min-h-0" style={{ animationDelay: '0.2s' }}>
+            <div className="lg:col-span-3 animate-fade-in h-[70vh] lg:h-auto min-h-0" style={{ animationDelay: '0.2s' }}>
               <div className="luxury-card rounded-lg overflow-hidden h-full flex flex-col min-h-0">
                 <div className="bg-mist/50 p-3 border-b border-warm-gold/10 flex items-center gap-2">
                   <div className="w-7 h-7 bg-warm-gold/10 rounded-full flex items-center justify-center">
@@ -733,7 +745,8 @@ export default function PlaygroundPage() {
                       onChange={(e) => setChatInput(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && !isGenerating && (selectedMask ? sendMessageWithMask() : sendMessage())}
                       disabled={isGenerating}
-                      className={`flex-1 border rounded-lg px-3 py-2 text-xs focus:outline-none transition-colors disabled:opacity-50 ${
+                      /* 移动端字号必须 >=16px，否则 iOS Safari 聚焦时会自动放大整个页面 */
+                      className={`flex-1 border rounded-lg px-3 py-2 text-base lg:text-xs focus:outline-none transition-colors disabled:opacity-50 ${
                         selectedMask ? 'border-warm-gold bg-warm-gold/5 focus:border-warm-gold' : 'border-warm-gold/20 focus:border-warm-gold'
                       }`}
                       placeholder={selectedMask ? "描述对选中区域的修改..." : previewUrl ? "描述设计需求或问我装修问题..." : "问我任何装修问题，如：小户型怎么布局？"}
