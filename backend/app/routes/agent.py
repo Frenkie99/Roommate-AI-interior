@@ -66,7 +66,7 @@ async def agent_chat(
 
         response = await generate_renovation_image(
             image=upload_image,
-            style=context.get("style") or "modern_minimalist",
+            style=context.get("style") or "natural_wood",
             room_type=context.get("room_type"),
             custom_prompt=prompt,
             aspect_ratio="auto",

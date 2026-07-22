@@ -7,32 +7,25 @@ import { useChatEngine } from '../chat/useChatEngine';
 import { IMAGE_PROMPTS, KNOWLEDGE_PROMPTS, REFINE_PROMPTS } from '../chat/quickPrompts';
 import { addDesignHistory } from '../services/historyService';
 
-// 房间类型映射 v2.0：按距离家门口远近排序（玄关→主卧）
+// 房间类型映射 v3.0：精简至7个（2026-07-22）
 const roomTypes = [
-  { id: 'entrance', label: '玄关', labelEn: 'Entry' },
   { id: 'living_room', label: '客厅', labelEn: 'Living Room' },
   { id: 'dining_room', label: '餐厅', labelEn: 'Dining' },
   { id: 'kitchen', label: '厨房', labelEn: 'Kitchen' },
-  { id: 'balcony', label: '阳台', labelEn: 'Balcony' },
-  { id: 'study', label: '书房', labelEn: 'Study' },
-  { id: 'bathroom', label: '卫生间', labelEn: 'Bathroom' },
-  { id: 'kids_room', label: '儿童房', labelEn: 'Kids' },
   { id: 'bedroom', label: '卧室', labelEn: 'Bedroom' },
-  { id: 'master_bedroom', label: '主卧', labelEn: 'Master' },
+  { id: 'bathroom', label: '卫生间', labelEn: 'Bathroom' },
+  { id: 'study', label: '书房', labelEn: 'Study' },
+  { id: 'kids_room', label: '儿童房', labelEn: 'Kids' },
 ];
 
-// 风格映射 v2.0：本地代表性图片（/public/styles/）
+// 风格映射 v3.0：精简至6个风格（2026-07-22）
 const styles = [
   { id: 'modern_luxury', label: '现代轻奢', img: '/styles/现代轻奢.webp' },
   { id: 'chinese_modern', label: '新中式', img: '/styles/新中式.webp' },
-  { id: 'american_transitional', label: '美式', img: '/styles/美式.webp' },
-  { id: 'european_neoclassical', label: '欧式', img: '/styles/欧式.webp' },
-  { id: 'industrial_loft', label: '工业风', img: '/styles/工业风.webp' },
   { id: 'natural_wood', label: '原木风', img: '/styles/原木风.webp' },
-  { id: 'japanese_traditional', label: '日式', img: '/styles/日式.webp' },
+  { id: 'wabi_sabi', label: '侘寂风', img: '/styles/侘寂风.webp' },
   { id: 'bohemian', label: '波西米亚', img: '/styles/波西米亚.webp' },
-  { id: 'bauhaus', label: '包豪斯', img: '/styles/包豪斯.webp' },
-  { id: 'modern_minimalist', label: '现代简约', img: '/styles/现代简约.webp' },
+  { id: 'bauhaus_mcm', label: '包豪斯 / 中古风', img: '/styles/包豪斯中古风.webp' },
 ];
 
 // 后端API地址（生产环境使用相对路径，由Nginx代理）
@@ -60,7 +53,7 @@ const sendFeedback = (traceId, action) => {
 
 export default function PlaygroundPage() {
   const [selectedRoom, setSelectedRoom] = useState('living_room');
-  const [selectedStyle, setSelectedStyle] = useState('modern_minimalist');
+  const [selectedStyle, setSelectedStyle] = useState('natural_wood');
   const [progress, setProgress] = useState(0);
   const [statusText, setStatusText] = useState('');
   const [uploadedImage, setUploadedImage] = useState(null);

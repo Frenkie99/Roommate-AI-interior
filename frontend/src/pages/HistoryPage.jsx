@@ -5,37 +5,37 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { deleteDesignHistory, getDesignHistory } from '../services/historyService';
 
+// 风格中文标签映射（含旧ID兼容，历史记录可能引用已删除的风格）
 const STYLE_LABELS = {
-  modern_minimalist: '现代简约',
-  scandinavian: '北欧风格',
-  chinese_modern: '新中式',
-  light_luxury: '轻奢风格',
+  // v3.0 当前6个风格
   modern_luxury: '现代轻奢',
-  japanese_wood: '日式原木',
-  japanese_traditional: '日式',
-  industrial: '工业风',
-  industrial_loft: '工业风',
-  american_country: '美式田园',
-  american_transitional: '美式',
-  french_romantic: '法式浪漫',
-  mediterranean: '地中海',
-  european_neoclassical: '欧式',
+  chinese_modern: '新中式',
   natural_wood: '原木风',
+  wabi_sabi: '侘寂风',
   bohemian: '波西米亚',
-  bauhaus: '包豪斯',
+  bauhaus_mcm: '包豪斯 / 中古风',
+  // 已删除风格（兼容历史记录）
+  modern_minimalist: '现代简约（已下线）',
+  european_neoclassical: '欧式（已下线）',
+  industrial_loft: '工业风（已下线）',
+  american_transitional: '美式（已下线）',
+  japanese_traditional: '日式（已下线）',
+  bauhaus: '包豪斯（已下线）',
 };
 
 const ROOM_LABELS = {
-  entrance: '玄关',
+  // v3.0 当前7个房间类型
   living_room: '客厅',
   dining_room: '餐厅',
   kitchen: '厨房',
-  balcony: '阳台',
-  study: '书房',
-  bathroom: '卫生间',
-  kids_room: '儿童房',
   bedroom: '卧室',
-  master_bedroom: '主卧',
+  bathroom: '卫生间',
+  study: '书房',
+  kids_room: '儿童房',
+  // 已删除房间类型（兼容历史记录）
+  entrance: '玄关（已下线）',
+  balcony: '阳台（已下线）',
+  master_bedroom: '主卧（已下线）',
 };
 
 const SOURCE_LABELS = {

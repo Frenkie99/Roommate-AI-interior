@@ -73,39 +73,6 @@ STYLE_PROMPTS: Dict[str, Dict] = {
         "lighting": "soft diffused lantern effect, hidden strip lighting, warm atmosphere, focused spotlights on art",
         "details": "bonsai pine, calligraphy art, porcelain vases, circular moon gate motifs, symmetry"
     },
-    "american_transitional": {
-        "name": "美式风格",
-        "logic": "强调线条感（护墙板）和体量感大的舒适家具",
-        "vibe": "Warm, inviting, and comfortable with classic American charm",
-        "core": "modern american transitional interior",
-        "materials": "wainscoting wall panels, dark oak flooring, linen fabric, brass hardware, crown molding",
-        "colors": "warm neutral tones, navy blue, sage green, cream white, antique brass",
-        "furniture": "large comfortable fabric sofa, leather armchairs, solid wood coffee table, shaker style cabinets",
-        "lighting": "warm floor lamps, wall sconces, brass pendant lights, cozy inviting atmosphere",
-        "details": "decorative pillows, area rugs, framed artworks, fireplace mantel, books"
-    },
-    "european_neoclassical": {
-        "name": "欧式风格",
-        "logic": "侧重于石膏线条、鱼骨拼地板和优雅的比例",
-        "vibe": "Elegant, timeless, and romantically European with classical proportions",
-        "core": "neoclassical european interior",
-        "materials": "intricate wall moldings (boiserie), herringbone wood floor, marble fireplace, plaster relief",
-        "colors": "creamy white, beige, pastel tones, gold leaf accents, light grey",
-        "furniture": "curved elegant furniture, velvet upholstery, carved wood details, cabriole legs",
-        "lighting": "crystal chandelier, natural window light, bright and airy, romantic glow",
-        "details": "ornate mirrors, oil paintings, floral arrangements, crown molding details, curtains"
-    },
-    "industrial_loft": {
-        "name": "工业风",
-        "logic": "暴露的结构美学，引入微水泥等现代材质，减少脏旧感",
-        "vibe": "Raw, edgy, and urban with refined industrial aesthetics",
-        "core": "modern industrial loft interior",
-        "materials": "exposed concrete walls, micro-cement floor, black steel, red brick, distressed leather",
-        "colors": "cement gray, matte black, rust orange, dark wood, metallic silver",
-        "furniture": "iron frame furniture, chesterfield leather sofa, raw wood tables, open shelving",
-        "lighting": "edison bulbs, track lighting, cold daylight, dramatic shadows, metal pendant lights",
-        "details": "exposed ductwork, pipes, vintage factory decor, large metal windows, concrete texture"
-    },
     "natural_wood": {
         "name": "原木风",
         "logic": "现代极简与自然的结合，强调大面积浅色木饰面",
@@ -117,16 +84,16 @@ STYLE_PROMPTS: Dict[str, Dict] = {
         "lighting": "soft sunlight, warm ambient glow, paper lamps, natural atmosphere",
         "details": "dried flowers, ceramic vases, minimal decor, sheer curtains, wood grain texture"
     },
-    "japanese_traditional": {
-        "name": "日式",
-        "logic": "严格遵循传统日式元素，如榻榻米、障子门，强调低矮重心",
-        "vibe": "Zen, tranquil, and authentically Japanese with mindful simplicity",
-        "core": "authentic japanese ryokan style interior",
-        "materials": "tatami mats, shoji screens (rice paper), cedar wood (sugi), bamboo, clay walls",
-        "colors": "natural wood color, straw yellow, matcha green, white, charcoal gray",
-        "furniture": "low wooden tables (chabudai), floor cushions (zabuton), futon, built-in storage",
-        "lighting": "diffused soft light, andon lamps, natural daylight filtering through paper, zen atmosphere",
-        "details": "ikebana flower arrangement, hanging scrolls, sliding doors, tea set, minimalism"
+    "wabi_sabi": {
+        "name": "侘寂风",
+        "logic": "接受不完美与无常之美，强调自然材料的原始肌理与时间痕迹",
+        "vibe": "Quiet, imperfect, and deeply grounded — beauty in impermanence and weathered authenticity",
+        "core": "wabi-sabi interior celebrating natural imperfection and patina",
+        "materials": "hand-troweled clay plaster walls, reclaimed solid wood with visible grain and knots, raw stone (river rock and unpolished slate), hand-thrown ceramic, tsuchi-kabe (earth wall), oxidized iron",
+        "colors": "warm ash grey, bone white, raw umber, faded indigo, moss green, sun-bleached beige — all muted, no synthetic saturation",
+        "furniture": "low-slung solid wood pieces with visible joinery, organic irregular forms, weathered timber benches, hand-built shelving, floor cushions (zabuton), pieces that show maker's marks",
+        "lighting": "single-source warm light (2700K max), washi paper lamps casting diffused shadows, candlelight pools, strong light-shadow contrast (komorebi), negative space in darkness",
+        "details": "kintsugi-repaired ceramics, dried branches in rough clay vessels, hand-woven hemp textiles, visible wood knots and cracks celebrated, emptiness as a design element, moss and stone compositions"
     },
     "bohemian": {
         "name": "波西米亚",
@@ -139,27 +106,16 @@ STYLE_PROMPTS: Dict[str, Dict] = {
         "lighting": "fairy lights, warm bulb string lights, moroccan lanterns, cozy warm glow",
         "details": "many indoor plants, woven wall hangings, ethnic patterns, cluttercore aesthetic, baskets"
     },
-    "bauhaus": {
-        "name": "包豪斯",
-        "logic": "形式追随功能，使用钢管家具、三原色点缀和几何抽象感",
-        "vibe": "Functional, geometric, and artistically modernist with primary color accents",
-        "core": "bauhaus modernist interior",
-        "materials": "tubular steel (chrome), glass, plywood, leather, smooth plaster",
-        "colors": "white background, black lines, primary colors accents (red, yellow, blue)",
-        "furniture": "tubular steel chairs (cantilever), functional modular furniture, geometric forms",
-        "lighting": "spherical glass lamps, adjustable metal desk lamps, bright distinct lighting",
-        "details": "geometric abstract art, clean lines, lack of ornamentation, industrial precision, grid layout"
-    },
-    "modern_minimalist": {
-        "name": "现代简约",
-        "logic": "少即是多，利用留白（Negative Space）和隐藏式设计",
-        "vibe": "Clean, airy, and architecturally pure with intentional negative space",
-        "core": "ultra-modern minimalist interior",
-        "materials": "matte white surfaces, self-leveling cement, glass, anodized aluminum",
-        "colors": "monochromatic white, cool gray, black contrasts, neutral palette",
-        "furniture": "blocky geometric furniture, hidden handle cabinets, sharp lines, suspended furniture",
-        "lighting": "linear recessed lights, hidden light troughs, cool natural light, shadowless illumination",
-        "details": "decluttered space, hidden storage, negative space, no visible wires, architectural purity"
+    "bauhaus_mcm": {
+        "name": "包豪斯 / 中古风",
+        "logic": "包豪斯的功能主义骨架 + 中古现代主义的有机温暖，几何秩序中嵌入自然材质",
+        "vibe": "Intellectual warmth — rigorous geometry softened by aged wood, patinated leather, and lived-in comfort",
+        "core": "bauhaus principles fused with mid-century modern organic warmth",
+        "materials": "teak and walnut (oil-finished, not lacquered), tubular chrome steel, molded bent plywood (Eames-era shells), saddle leather, spun fiberglass, nubby wool textiles, smooth matte plaster walls",
+        "colors": "warm walnut brown base (60%), parchment white (25%), burnt orange / mustard yellow / avocado green as controlled accents (15% total), matte black for structural lines only",
+        "furniture": "iconic mid-century silhouettes — low-profile teak credenzas with tapered legs, cantilevered chrome chairs, molded plywood lounge shells, kidney-shaped coffee tables, floating storage units, furniture raised on slender legs for visual lightness",
+        "lighting": "arc floor lamps with brass domes, spherical rice-paper pendants (Noguchi-style), adjustable-angle task lighting, warm 2700K throughout, distinct light pools defining functional zones",
+        "details": "abstract expressionist prints in simple frames, sunburst wall clocks, ceramic vessels with matte glazes, vintage glassware, negative space between furniture groupings, every object has a function"
     },
 }
 
@@ -184,14 +140,6 @@ ROOM_TYPE_PROMPTS: Dict[str, Dict] = {
         "hardscape": "Ceiling: flat clean ceiling with soft perimeter lighting. Walls: upholstered or wood-paneled headboard wall, warm neutral wall paint.",
         "furniture": "Layout: double bed centered against the main wall. Items: symmetrical nightstands, floating wall shelves, sliding door wardrobe to save space.",
         "softscape": "layered high-thread-count bedding, blackout curtains, soft bedside pendant lights, plush bedside rug"
-    },
-    "master_bedroom": {
-        "name": "主卧",
-        "logic": "强调套房感和功能分区（睡眠区+休闲区/梳妆区）",
-        "core": "luxurious master bedroom suite with functional zoning",
-        "hardscape": "Ceiling: intricate multi-level ceiling design, central statement chandelier. Walls: decorative molding (wainscoting) or wallpaper, bookmatched stone accents.",
-        "furniture": "Layout: King-size bed with bench at foot, separate seating corner with armchairs. Items: vanity dresser, walk-in closet visibility.",
-        "softscape": "premium velvet bedding, double-layer drapery, architectural wall sconces, art gallery wall, fresh flowers"
     },
     "kitchen": {
         "name": "厨房",
@@ -232,22 +180,6 @@ ROOM_TYPE_PROMPTS: Dict[str, Dict] = {
         "hardscape": "Ceiling: creative lighting (cloud/star shape) or colorful paint. Walls: half-wall paint, chalkboard wall or washable wallpaper.",
         "furniture": "Layout: zoned for sleep and play. Items: bunk bed or house-frame bed, low-height storage bins, study desk.",
         "softscape": "soft non-slip play rug, colorful scatter cushions, whimsical wall decals, warm night light"
-    },
-    "balcony": {
-        "name": "阳台",
-        "logic": "强调室内空间的延伸，模糊室内外界限",
-        "core": "relaxing outdoor balcony garden oasis",
-        "hardscape": "Ceiling: wooden slat ceiling or weather-resistant paint. Walls: vertical garden wall or outdoor screen.",
-        "furniture": "Layout: corner seating arrangement. Items: weather-resistant rattan chairs, small round coffee table.",
-        "softscape": "potted plants varying in height, string lights, outdoor waterproof rug, glass railing visualization"
-    },
-    "entrance": {
-        "name": "玄关",
-        "logic": "第一印象，强调收纳的隐蔽性和照明的仪式感",
-        "core": "welcoming entryway foyer with smart storage",
-        "hardscape": "Ceiling: recessed spotlight focusing on decor. Walls: full-length mirror, decorative wall hooks or paneling.",
-        "furniture": "Layout: clear passage width. Items: slim console table, built-in shoe cabinet (floor-to-ceiling).",
-        "softscape": "decorative tray for keys, sculptural vase, warm entry light, durable runner rug"
     },
 }
 
