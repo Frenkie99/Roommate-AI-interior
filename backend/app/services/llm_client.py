@@ -14,13 +14,11 @@ from app.utils.prompt_builder import GLOBAL_STRUCTURE_CONSTRAINTS, STYLE_PROMPTS
 
 
 class LLMModel(str, Enum):
-    """支持的 LLM 模型列表"""
-    # DeepSeek 模型（OpenAI 兼容格式）
-    DEEPSEEK_CHAT = "deepseek-chat"
-    DEEPSEEK_V3 = "deepseek-v3"
-    # Gemini 模型（Gemini 格式）
-    GEMINI_3_FLASH_PREVIEW = "gemini-3-flash-preview"
-    GEMINI_25_FLASH_PREVIEW = "gemini-2.5-flash-preview"
+    """支持的 LLM 模型列表（API易平台，2026-07 更新）"""
+    # Gemini 图像模型 — 支持 image→text 和 text→text（API易上唯一可用系列）
+    GEMINI_25_FLASH_IMAGE = "gemini-2.5-flash-image"          # 首选：快速、便宜
+    GEMINI_3_PRO_IMAGE_PREVIEW = "gemini-3-pro-image-preview" # 备选：质量更高
+    # 已下线: gemini-3-flash-preview, gemini-2.5-flash-preview, deepseek-chat, deepseek-v3
 
 
 class LLMClient:
@@ -49,10 +47,10 @@ class LLMClient:
         """将图片数据转换为 base64"""
         return base64.b64encode(image_data).decode("utf-8")
     
-    # 模型降级顺序：Gemini 视觉 → DeepSeek 纯文本
+    # 视觉模型降级顺序（Gemini 图像模型 → 纯文本降级）
     _VISION_MODEL_PRIORITY = [
-        LLMModel.GEMINI_3_FLASH_PREVIEW,
-        LLMModel.GEMINI_25_FLASH_PREVIEW,
+        LLMModel.GEMINI_25_FLASH_IMAGE,
+        LLMModel.GEMINI_3_PRO_IMAGE_PREVIEW,
     ]
 
     async def analyze_room_and_generate_prompt(
@@ -61,7 +59,7 @@ class LLMClient:
         style: str,
         room_type: Optional[str] = None,
         custom_prompt: Optional[str] = None,
-        model: LLMModel = LLMModel.GEMINI_3_FLASH_PREVIEW
+        model: LLMModel = LLMModel.GEMINI_25_FLASH_IMAGE
     ) -> Dict[str, Any]:
         """
         分析毛坯房图片并生成定制化装修提示词
@@ -94,7 +92,6 @@ class LLMClient:
                     }],
                     "generationConfig": {
                         "responseModalities": ["TEXT"],
-                        "responseMimeType": "application/json",
                         "temperature": 0.7,
                         "maxOutputTokens": 2048
                     }
@@ -119,19 +116,19 @@ class LLMClient:
                 print(f"[LLM] Gemini 视觉模型 {vision_model} 失败: {e}, 尝试下一个...")
                 continue
 
-        # --- 降级：DeepSeek 纯文本分析（不需要图片） ---
-        print("[LLM] 所有 Gemini 视觉模型不可用，降级到 DeepSeek 纯文本分析")
+        # --- 降级：纯文本分析（不需要图片，使用 Gemini 图像模型做纯文本） ---
+        print("[LLM] 所有 Gemini 视觉模型不可用，降级到纯文本分析")
         try:
             text_prompt = self._build_text_only_prompt(style, room_type, custom_prompt)
             text_result = await self.chat_text(
                 prompt=text_prompt,
-                model=LLMModel.DEEPSEEK_CHAT,
+                model=LLMModel.GEMINI_25_FLASH_IMAGE,
                 system_prompt="你是专业室内设计师，擅长分析空间并生成设计提示词。",
                 max_tokens=2048
             )
             parsed = self._parse_llm_response(text_result, style, room_type, custom_prompt)
             if parsed.get("code") == 0 and isinstance(parsed.get("data"), dict):
-                parsed["data"]["vision_used"] = False  # 静默降级到盲 DeepSeek（隐患频率 trace 埋点用）
+                parsed["data"]["vision_used"] = False  # 降级到纯文本（trace 埋点用）
             return parsed
         except Exception as e:
             return {
@@ -304,24 +301,23 @@ IMPORTANT: Output a single valid JSON object only."""
                 "data": None
             }
     
-    # chat_text 自动降级模型列表
+    # chat_text 自动降级模型列表（API易仅 Gemini 图像模型可用）
     _TEXT_MODEL_FALLBACK = [
-        ("deepseek", LLMModel.DEEPSEEK_CHAT),
-        ("gemini", "gemini-2.5-flash-image"),
-        ("gemini", "gemini-3-pro-image-preview"),
+        ("gemini", LLMModel.GEMINI_25_FLASH_IMAGE),
+        ("gemini", LLMModel.GEMINI_3_PRO_IMAGE_PREVIEW),
     ]
 
     async def chat_text(
         self,
         prompt: str,
-        model: LLMModel = LLMModel.DEEPSEEK_CHAT,
+        model: LLMModel = LLMModel.GEMINI_25_FLASH_IMAGE,
         system_prompt: str = "你是专业室内设计顾问。",
         max_tokens: int = 2048
     ) -> str:
         """
         纯文本对话（用于RAG问答）- 自动降级
 
-        依次尝试: DeepSeek → gemini-2.5-flash-image → gemini-3-pro-image-preview
+        依次尝试: gemini-2.5-flash-image → gemini-3-pro-image-preview
 
         Returns:
             AI生成的文本回复
@@ -394,12 +390,10 @@ IMPORTANT: Output a single valid JSON object only."""
         await self.client.aclose()
 
 
-# 模型优先级配置（DeepSeek 优先）
+# 模型优先级配置（仅 Gemini 图像模型可用）
 DEFAULT_LLM_MODEL_PRIORITY = [
-    LLMModel.DEEPSEEK_CHAT,
-    LLMModel.DEEPSEEK_V3,
-    LLMModel.GEMINI_3_FLASH_PREVIEW,
-    LLMModel.GEMINI_25_FLASH_PREVIEW,
+    LLMModel.GEMINI_25_FLASH_IMAGE,
+    LLMModel.GEMINI_3_PRO_IMAGE_PREVIEW,
 ]
 
 # 全局客户端实例
