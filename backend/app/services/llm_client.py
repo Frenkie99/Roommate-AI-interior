@@ -47,10 +47,10 @@ class LLMClient:
         """将图片数据转换为 base64"""
         return base64.b64encode(image_data).decode("utf-8")
     
-    # 视觉模型降级顺序（Gemini 图像模型 → 纯文本降级）
+    # 视觉模型降级顺序（3 Pro 优先，质量更高）
     _VISION_MODEL_PRIORITY = [
-        LLMModel.GEMINI_25_FLASH_IMAGE,
         LLMModel.GEMINI_3_PRO_IMAGE_PREVIEW,
+        LLMModel.GEMINI_25_FLASH_IMAGE,
     ]
 
     async def analyze_room_and_generate_prompt(
@@ -59,7 +59,7 @@ class LLMClient:
         style: str,
         room_type: Optional[str] = None,
         custom_prompt: Optional[str] = None,
-        model: LLMModel = LLMModel.GEMINI_25_FLASH_IMAGE
+        model: LLMModel = LLMModel.GEMINI_3_PRO_IMAGE_PREVIEW
     ) -> Dict[str, Any]:
         """
         分析毛坯房图片并生成定制化装修提示词

@@ -40,8 +40,8 @@ from datetime import datetime, timezone, timedelta
 BASE_URL = "https://api.apiyi.com"
 # 模型优先级（API易上 gemini-3-flash-preview 已下线，图像模型支持 TEXT 输出）
 MODEL_PRIORITY = [
-    "gemini-2.5-flash-image",        # 更快更便宜，首选
-    "gemini-3-pro-image-preview",    # 备选，质量更高但较慢
+    "gemini-3-pro-image-preview",    # 首选：质量更高，分析更细腻
+    "gemini-2.5-flash-image",        # 备选：更快更便宜
 ]
 
 # 路径 — 均相对于项目根目录

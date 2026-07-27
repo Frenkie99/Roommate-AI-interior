@@ -1,14 +1,14 @@
 {
   "modern_luxury": {
     "_meta": {
-      "model": "gemini-2.5-flash-image",
+      "model": "gemini-3-pro-image-preview",
       "image_count": 16,
       "folder": "01_modern_luxury",
-      "extracted_at": "2026-07-24T19:02:51.386285+08:00"
+      "extracted_at": "2026-07-27T14:03:37.408734+08:00"
     },
-    "MATERIAL_AND_FINISHES": "大面积使用哑光或低光泽度的微水泥、艺术涂料作为墙面和天花的基础饰面，呈现细腻的灰白或米色调。木饰面（多为浅色橡木或胡桃木）作为背景墙、收纳单元或局部造型的补充，增加自然温润感。大理石或岩板（白色系带灰色纹理或深色系带白色纹理）应用于台面、背景墙局部及茶几表面，提供精致的视觉焦点。金属元素（拉丝不锈钢、哑光黑或古铜色）作为灯具、家具腿部或装饰线条的细节点缀。玻璃（透明或茶色）用于柜门或隔断，增加通透感。织物（如棉麻、绒布、皮革）用于软性表面，强调舒适与触感。",
-    "COLOR_PALETTE": "色彩分配以中性色为主导：主色调（60%）为米白、浅灰、暖灰等低饱和度色彩，营造宁静开阔的基底。辅助色（25%）为木色、深灰、棕色等自然大地色系，用于家具、局部墙面或收纳单元，提供层次感和稳定性。点缀色（15%）为低饱和度的橙棕、橄榄绿、深蓝或黑色，通过抱枕、艺术品、小型摆件或单人休闲表面进行局部提亮，增加精致感和视觉趣味。",
-    "LIGHTING_SCHEME": "采用无主灯设计，以间接照明为主。环境光通过线性灯带（隐藏于吊顶边缘、墙面凹槽或层板下方）提供柔和均匀的基础照明，色温多为 3000K-3500K 的暖白光。重点照明通过嵌入式射灯或筒灯，精准投射于艺术品、展示架或功能区域，强调细节。气氛照明通过落地灯、桌面灯或壁灯，以其独特的造型和局部光晕营造温馨氛围，色温同样偏暖。整体光影逻辑强调层次感和局部聚焦，避免刺眼直射。",
-    "FURNITURE_STYLE": "家具造型以低矮、宽大、圆润的几何形态为主，线条流畅且极简。强调水平延伸感和体块的雕塑感。支撑结构多采用内嵌、隐藏或纤细的金属/木质腿部，营造轻盈感。表面工艺多为哑光、半哑光或带有细腻纹理的皮革、绒布、科技布或漆面。收纳单元多为定制化嵌入式设计，与墙面融为一体，强调功能性与整体性。强调舒适度与包裹感，注重材质的对比与拼接。"
+    "MATERIAL_AND_FINISHES": "Primary vertical architectural surfaces utilize large-format matte or lacquered panels in warm neutral tones, frequently accented by vertical fluted timber cladding and dramatic polished sintered stone or marble slabs with prominent veining. Horizontal ground surfaces feature large-format neutral grey tiling or medium-dark timber planking, often layered with large, textured woven area coverings. Integrated architectural joinery and storage structures employ dark timber veneers or matte dark grey lacquer finishes, often incorporating glass-fronted display sections and metal trim.",
+    "COLOR_PALETTE": "Dominant (60%): Warm neutrals including creamy off-white, beige, and greige applied to main walls, ceilings, and large upholstered volumes. Secondary (30%): Deep, grounding tones such as walnut or dark oak wood, charcoal grey, and black metal accents, alongside dramatic monochrome or warm-veined stone patterns. Accent (10%): Earthy, saturated hues like burnt orange, terracotta, saddle leather brown, and muted olive green introduced through standalone sculptural pieces, textiles, and decor.",
+    "LIGHTING_SCHEME": "A sophisticated 'no main light' architectural approach utilizing recessed ceiling spotlights and linear slots for general illumination. The defining characteristic is extensive integrated warm LED strip lighting (approx. 2700K-3000K) concealed within joinery, shelving units, ceiling coves, and behind floating architectural panels to create atmospheric depth. This is supplemented by contemporary, sculptural freestanding floor luminaires and minimalist linear suspension fixtures.",
+    "FURNITURE_STYLE": "The design language features low-profile, grounded forms balancing clean rectilinear lines with softening organic curves. Primary seating volumes are upholstered in textured woven fabrics (like bouclé) or smooth leathers. Supporting surfaces frequently utilize polished stone tops mounted on sculptural bases or slender dark metal frames. Standalone accent pieces often exhibit artistic, non-traditional silhouettes with mixed material palettes including metal, leather, and stone."
   }
 }
