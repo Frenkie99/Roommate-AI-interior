@@ -84,13 +84,14 @@ def build_system_prompt(image_count: int) -> str:
 1. 提取共性：只提取在大多数图片中共同出现的【视觉肌理、色彩体系、光影逻辑、家具语言】。忽略单张图特有的杂物或特定布局。
 2. 零房间依赖（极度重要）：风格描述中【严禁】出现特定房间的具象家具名词（如 bed, sofa, dining table, bathtub）。必须泛化为类别词（例如：将 boucle sofa 泛化为 low-profile seating；将 double bed 泛化为 primary sleeping surface）。
 3. 属性精确绑定：材质不可绑定房间，只能绑定表面类型（如：用于墙面和地面，而非用于卧室）。
+4. 输出语言（极度重要）：所有字段的值【必须全部用英文】撰写，无论输入图片或本指令是何种语言。禁止输出中文。
 
-请输出纯 JSON 格式，结构严格如下：
+请输出纯 JSON 格式，结构严格如下（字段值用英文填写）：
 {{
-  "MATERIAL_AND_FINISHES": "描述主材与辅材体系，如微水泥、木饰面等，并说明适用的表面类型。",
-  "COLOR_PALETTE": "描述色彩分配策略，必须量化比例，如主色 60%、辅助色 25%、点缀色 5%。",
-  "LIGHTING_SCHEME": "描述光照逻辑，包括环境光、主灯/无主灯设定、气氛灯带分布及色温 K 值。",
-  "FURNITURE_STYLE": "描述家具的通用造型语言，如线条风格、腿部材质、表面工艺。严禁出现具体功能家具名称。"
+  "MATERIAL_AND_FINISHES": "Describe primary/secondary material systems and the surface types they apply to, in English.",
+  "COLOR_PALETTE": "Describe the color allocation strategy with quantified ratios, e.g. dominant 60%, secondary 25%, accent 5%. In English.",
+  "LIGHTING_SCHEME": "Describe the lighting logic: ambient, main/no-main-light setup, accent strips and color temperature in K. In English.",
+  "FURNITURE_STYLE": "Describe the generic furniture design language: lines, legs, finishes. No specific functional furniture names. In English."
 }}
 
 只输出 JSON，不要包含 markdown 代码块标记。"""
