@@ -18,7 +18,7 @@ from app.services.getgoapi_client import getgoapi_client, GetGoModel, AspectRati
 from app.services.inpaint_service import _aspect_ratio_for_size
 from app.services.llm_client import llm_client, LLMModel
 from app.services.image_processor import image_processor
-from app.utils.prompt_builder import build_prompt, STYLE_PROMPTS, ROOM_TYPE_PROMPTS
+from app.utils.prompt_builder import build_prompt, STYLE_PROMPTS, ROOM_TYPE_PROMPTS, resolve_style_id
 from app.utils.trace_logger import write_trace, new_trace_id, image_hash, write_feedback, FEEDBACK_ACTIONS
 
 router = APIRouter()
@@ -52,7 +52,8 @@ async def generate_renovation_image(
     # trace 埋点计时起点（只加新代码，不影响生图逻辑）
     _t_start = time.perf_counter()
 
-    # 0. 校验 style 和 room_type
+    # 0. 旧风格 ID 重映射（老用户缓存/历史记录兼容），然后校验 style 和 room_type
+    style = resolve_style_id(style)
     if style not in STYLE_PROMPTS:
         available_styles = list(STYLE_PROMPTS.keys())
         raise HTTPException(

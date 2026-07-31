@@ -22,7 +22,7 @@ const roomTypes = [
 const styles = [
   { id: 'modern_luxury', label: '现代轻奢', img: '/styles/现代轻奢.webp' },
   { id: 'chinese_modern', label: '新中式', img: '/styles/新中式.webp' },
-  { id: 'natural_wood', label: '原木风', img: '/styles/原木风.webp' },
+  { id: 'aman_style', label: '安缦风', img: '/styles/安缦风.webp' },
   { id: 'wabi_sabi', label: '侘寂风', img: '/styles/侘寂风.webp' },
   { id: 'bohemian', label: '波西米亚', img: '/styles/波西米亚.webp' },
   { id: 'bauhaus_mcm', label: '包豪斯 / 中古风', img: '/styles/包豪斯中古风.webp' },
@@ -53,7 +53,7 @@ const sendFeedback = (traceId, action) => {
 
 export default function PlaygroundPage() {
   const [selectedRoom, setSelectedRoom] = useState('living_room');
-  const [selectedStyle, setSelectedStyle] = useState('natural_wood');
+  const [selectedStyle, setSelectedStyle] = useState('aman_style');
   const [progress, setProgress] = useState(0);
   const [statusText, setStatusText] = useState('');
   const [uploadedImage, setUploadedImage] = useState(null);

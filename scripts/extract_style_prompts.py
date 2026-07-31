@@ -69,6 +69,7 @@ BJT = timezone(timedelta(hours=8))
 STYLE_ID_OVERRIDE = {
     "new_chinese": "chinese_modern",
     "warm_wood": "natural_wood",
+    "Aman_Style": "aman_style",
 }
 
 # ---------------------------------------------------------------------------

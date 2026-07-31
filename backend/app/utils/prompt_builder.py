@@ -11,6 +11,8 @@ Prompt 构建工具 - 提示词工程核心模块 v4.0 (API易平台 Gemini 专�
 
 from typing import Optional, Dict, List
 from dataclasses import dataclass
+import json
+from pathlib import Path
 
 
 # ============================================================================
@@ -73,16 +75,16 @@ STYLE_PROMPTS: Dict[str, Dict] = {
         "lighting": "soft diffused lantern effect, hidden strip lighting, warm atmosphere, focused spotlights on art",
         "details": "bonsai pine, calligraphy art, porcelain vases, circular moon gate motifs, symmetry"
     },
-    "natural_wood": {
-        "name": "原木风",
-        "logic": "现代极简与自然的结合，强调大面积浅色木饰面",
-        "vibe": "Warm, organic, and naturally calming with Scandinavian influences",
-        "core": "warm minimalist natural wood interior",
-        "materials": "light ash wood, matte micro-cement, cotton linen, rattan, travertine stone",
-        "colors": "warm white, beige, light wood tones, cream, earth tones",
-        "furniture": "curved wooden furniture, boucle sofa, low profile designs, organic shapes",
-        "lighting": "soft sunlight, warm ambient glow, paper lamps, natural atmosphere",
-        "details": "dried flowers, ceramic vases, minimal decor, sheer curtains, wood grain texture"
+    "aman_style": {
+        "name": "安缦风",
+        "logic": "度假酒店式的静谧奢华，强调天然材质肌理、低矮体量与留白",
+        "vibe": "Serene, resort-like quiet luxury with Japandi restraint and organic warmth",
+        "core": "Aman resort-inspired tranquil luxury interior with organic minimalism",
+        "materials": "warm micro-cement, textured art paint, wood veneer from light oak to deep walnut, matte neutral stone, handcrafted ceramics",
+        "colors": "cream, off-white, warm greige base (60%), natural wood tones (25%), matte black and dark bronze accents (15%)",
+        "furniture": "low-profile grounded seating with rounded organic forms, boucle and linen upholstery, solid wood pieces with chunky cylindrical legs",
+        "lighting": "architectural concealed lighting at 2700K-3000K, cove strips, shelf lighting, frameless recessed spots, sculptural diffused floor lamps",
+        "details": "handcrafted ceramic vessels, linen textiles, negative space as design element, wood grain texture, quiet zen compositions"
     },
     "wabi_sabi": {
         "name": "侘寂风",
@@ -118,6 +120,69 @@ STYLE_PROMPTS: Dict[str, Dict] = {
         "details": "abstract expressionist prints in simple frames, sunburst wall clocks, ceramic vessels with matte glazes, vintage glassware, negative space between furniture groupings, every object has a function"
     },
 }
+
+# ============================================================================
+# 旧风格 ID 迁移映射（风格精简/改名后，兼容老用户缓存与历史记录里的旧值）
+# 改名类映射到继任风格；彻底删除类映射到当前默认风格 aman_style
+# ============================================================================
+
+LEGACY_STYLE_ID_MAP: Dict[str, str] = {
+    "natural_wood": "aman_style",            # 2026-07-31 原木风更名为安缦风
+    "japanese_traditional": "wabi_sabi",     # v3.0 日式更名为侘寂风
+    "bauhaus": "bauhaus_mcm",                # v3.0 包豪斯并入包豪斯/中古风
+    "modern_minimalist": "aman_style",       # v3.0 已删除 → 默认风格
+    "european_neoclassical": "aman_style",   # v3.0 已删除 → 默认风格
+    "industrial_loft": "aman_style",         # v3.0 已删除 → 默认风格
+    "american_transitional": "aman_style",   # v3.0 已删除 → 默认风格
+}
+
+DEFAULT_STYLE = "aman_style"
+
+
+def resolve_style_id(style: Optional[str]) -> str:
+    """把旧风格 ID 重映射到现行 ID；未知值原样返回（由调用方校验）"""
+    if not style:
+        return DEFAULT_STYLE
+    return LEGACY_STYLE_ID_MAP.get(style, style)
+
+
+# ============================================================================
+# 提取产物接入（scripts/extract_style_prompts.py 的多图交集运算结果）
+# 四段式提取结果覆盖手写版的 materials/colors/lighting/furniture 四个字段，
+# 其余字段（name/logic/vibe/core/details）保持手写。JSON 缺失时静默使用手写版。
+# ============================================================================
+
+_EXTRACTED_STYLE_JSON = (
+    Path(__file__).resolve().parents[2]
+    / "prompts" / "prompt_data_preparation" / "style_prompts.json"
+)
+
+_FOUR_PART_TO_STYLE_FIELD = {
+    "MATERIAL_AND_FINISHES": "materials",
+    "COLOR_PALETTE": "colors",
+    "LIGHTING_SCHEME": "lighting",
+    "FURNITURE_STYLE": "furniture",
+}
+
+
+def _apply_extracted_style_prompts() -> None:
+    """用提取的四段式风格描述覆盖 STYLE_PROMPTS 对应字段"""
+    if not _EXTRACTED_STYLE_JSON.exists():
+        return
+    try:
+        data = json.loads(_EXTRACTED_STYLE_JSON.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return
+    for style_id, extracted in data.items():
+        if style_id not in STYLE_PROMPTS or not isinstance(extracted, dict):
+            continue
+        for src_field, dst_field in _FOUR_PART_TO_STYLE_FIELD.items():
+            value = extracted.get(src_field)
+            if value:
+                STYLE_PROMPTS[style_id][dst_field] = value
+
+
+_apply_extracted_style_prompts()
 
 # ============================================================================
 # 房间类型提示词库 v2.0 (Gemini 3 Spatial Edition)

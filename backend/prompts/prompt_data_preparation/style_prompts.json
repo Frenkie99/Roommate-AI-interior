@@ -10,5 +10,65 @@
     "COLOR_PALETTE": "Dominant (60%): Warm neutrals including creamy off-white, beige, and greige applied to main walls, ceilings, and large upholstered volumes. Secondary (30%): Deep, grounding tones such as walnut or dark oak wood, charcoal grey, and black metal accents, alongside dramatic monochrome or warm-veined stone patterns. Accent (10%): Earthy, saturated hues like burnt orange, terracotta, saddle leather brown, and muted olive green introduced through standalone sculptural pieces, textiles, and decor.",
     "LIGHTING_SCHEME": "A sophisticated 'no main light' architectural approach utilizing recessed ceiling spotlights and linear slots for general illumination. The defining characteristic is extensive integrated warm LED strip lighting (approx. 2700K-3000K) concealed within joinery, shelving units, ceiling coves, and behind floating architectural panels to create atmospheric depth. This is supplemented by contemporary, sculptural freestanding floor luminaires and minimalist linear suspension fixtures.",
     "FURNITURE_STYLE": "The design language features low-profile, grounded forms balancing clean rectilinear lines with softening organic curves. Primary seating volumes are upholstered in textured woven fabrics (like bouclé) or smooth leathers. Supporting surfaces frequently utilize polished stone tops mounted on sculptural bases or slender dark metal frames. Standalone accent pieces often exhibit artistic, non-traditional silhouettes with mixed material palettes including metal, leather, and stone."
+  },
+  "chinese_modern": {
+    "_meta": {
+      "model": "gemini-3-pro-image-preview",
+      "image_count": 13,
+      "folder": "02_new_chinese",
+      "extracted_at": "2026-07-31T22:32:59.787733+08:00"
+    },
+    "MATERIAL_AND_FINISHES": "空间主材以温润的天然木饰面（如胡桃木、橡木）为主，广泛应用于定制柜体、家具框架及建筑格栅构件。立面背景大量采用米色系且具触感的材质，如艺术涂料、微水泥或带有织物纹理的壁纸，部分区域辅以传统山水题材的绢画或木质半墙护板。地面铺装统一为大尺寸哑光中性色瓷砖或浅色实木地板。点缀材质包括粗陶、深色金属细框以及天然石材台面。",
+    "COLOR_PALETTE": "整体采用极具东方韵味的暖中性色调。主色调（约 60%）为米白、奶油色及暖灰，覆盖墙面、天花及大面积软装织物；辅助色（约 30%）为中深色调的暖木棕色，体现于木作结构与家具主体；点缀色（约 10%）包含深炭黑、哑光古铜色金属件、以及源自植物与水墨艺术品的低饱和度墨绿或大地色系。",
+    "LIGHTING_SCHEME": "强调见光不见灯的暖调氛围营造，色温普遍控制在 2700K-3000K。核心逻辑为无主灯设计，极度依赖建筑化照明，包括天花迭级、柜体底部及装饰壁龛内的暗藏 LED 暖光灯带，以提供均匀柔和的环境光。重点照明采用磁吸轨道灯或射灯洗墙，突出材质纹理与艺术品。局部搭配具有装饰性的新中式吊灯、落地灯及台灯补充层次感。",
+    "FURNITURE_STYLE": "融合现代极简轮廓与传统东方榫卯结构的改良语汇。所有支撑类及储物类家具均以带有手工感的实木框架为主体，线条简练洗练，常带有圆润的倒角、马蹄腿或官帽椅元素的抽象化表达。坐卧类家具形态低矮，体量轻盈，软包部分统一采用棉麻、粗布等天然质朴的素色织物，强调舒适与禅意并存的视觉语言。"
+  },
+  "aman_style": {
+    "_meta": {
+      "model": "gemini-3-pro-image-preview",
+      "image_count": 12,
+      "folder": "03_Aman_Style",
+      "extracted_at": "2026-07-31T22:33:30.393322+08:00"
+    },
+    "MATERIAL_AND_FINISHES": "空间主材广泛采用自然肌理，垂直表面大量使用暖色调微水泥、艺术涂料及米色系纹理壁纸。木饰面（从浅橡木到深胡桃木色）是核心辅材，用于墙面护墙板、定制柜体立面及部分天花吊顶。水平地面以浅色宽幅木地板或大尺寸哑光中性色石材/微水泥为主。点缀性表面采用深色哑光石材、深色金属及具有手工感的陶瓷或玻璃。",
+    "COLOR_PALETTE": "整体采用有机暖中性色调。主色（60%）：奶油色、米白、浅灰褐及暖米色，用于墙体、天花及大面积软装。辅助色（25%）：自然木本色（浅木至中深木色）及大地棕色系，用于立面结构和固定家具。点缀色（15%）：哑光黑、深古铜色金属件及深炭灰色石材，用于勾勒线条和视觉重心。",
+    "LIGHTING_SCHEME": "强调见光不见灯的建筑化照明逻辑，色温统一为暖光（约2700K-3000K）。广泛使用天花暗藏灯带、柜体层板灯条及墙面造型背光营造柔和氛围。基础照明依赖无边框嵌入式射灯。装饰性照明（吊灯、落地灯）作为雕塑感元素出现，提供柔和的漫射光。",
+    "FURNITURE_STYLE": "融合了有机极简主义与Japandi风格。大型软包坐具及休憩表面普遍采用低矮、落地式设计，形态圆润、曲线柔和，面料强调重磅肌理感（如圈绒、亚麻）。硬质家具（置物台面、收纳体）多为实木材质，常采用粗壮的圆柱形桌腿、墩座底座或非对称的有机形态。整体语言强调体量感与触感，而非纤细线条。"
+  },
+  "wabi_sabi": {
+    "_meta": {
+      "model": "gemini-3-pro-image-preview",
+      "image_count": 15,
+      "folder": "04_wabi_sabi",
+      "extracted_at": "2026-07-31T22:34:13.841798+08:00"
+    },
+    "MATERIAL_AND_FINISHES": "空间主导表面（墙面、天花）普遍采用具有手工感和深度肌理的涂装，如微水泥、石灰涂料或黏土灰泥，呈现哑光、不均匀的自然质感。地面多为无缝的微水泥或大尺寸哑光石纹砖，部分区域采用宽幅质朴木地板。建筑结构件（横梁、立柱）和定制柜体大量使用表面未经过度打磨、保留结疤和自然纹理的回收木或老木饰面。软装面料强调天然触感，广泛使用亚麻、棉麻混纺、圈绒（Boucle）以及黄麻、剑麻编织地毯。石材元素多为粗糙、未抛光的自然形态。",
+    "COLOR_PALETTE": "主色调（约 65%）由温暖的中性色构成，包括沙色、米灰、奶油色和灰白色，用于绝大多数墙地面和大型软包家具。辅助色（约 25%）为中深色调的自然木色，来源于建筑木结构和固定家具。点缀色（约 10%）包括陶土色、深褐色、焦炭灰等大地色系，以及用于五金件和灯具的哑光黑色。",
+    "LIGHTING_SCHEME": "优先最大化自然采光，营造柔和的光影过渡。人工照明遵循“无主灯”逻辑，核心在于氛围营造。大量使用色温约 2700K-3000K 的暖色隐形 LED 灯带，内嵌于天花凹槽、层板下、镜后及踢脚线处，以洗墙光方式强调材质肌理。功能性照明由极简的暗装射灯或轨道灯承担。装饰性灯具多采用纸、藤编、粗陶或石膏等自然材质，光线柔和发散。",
+    "FURNITURE_STYLE": "家具语言强调低矮、落地和体量感，造型以有机曲线、圆角或质朴的块面结构为主，避免尖锐棱角。支撑类和储物类家具多采用实木原材，强调厚重感和手工拙朴痕迹，常结合藤编元素作为柜门透气面。坐卧类家具多为全软包设计，面料肌理丰富，形态慵懒放松。整体极简，摒弃复杂装饰性五金，多用暗拉手或无拉手设计。"
+  },
+  "bohemian": {
+    "_meta": {
+      "model": "gemini-3-pro-image-preview",
+      "image_count": 13,
+      "folder": "05_bohemian",
+      "extracted_at": "2026-07-31T22:34:50.091990+08:00"
+    },
+    "MATERIAL_AND_FINISHES": "主导垂直表面体系为暖色调的纹理灰泥、微水泥或石灰涂料，常伴有暴露的粗糙原木梁柱结构或局部质朴石材/砖墙点缀。水平地面表面多采用浇筑混凝土、大尺寸天然石灰华地砖或宽幅质朴木地板，并广泛覆盖黄麻、剑麻或复古图腾羊毛编织地毯。软装与陈设大量使用藤编、柳编、棉麻绳结（Macrame）及未上釉的粗陶器皿。",
+    "COLOR_PALETTE": "以暖白、奶油色、沙色和浅陶土色等大地中性色为绝对主导背景（约占 60%）。辅助色调由浅至中等深度的天然原木色、焦糖色及赤陶/铁锈红纺织品构成（约占 30%）。点缀色主要来自植物的灰绿色以及少量的做旧黄铜或哑光黑色金属元素（约占 10%）。",
+    "LIGHTING_SCHEME": "高度依赖自然采光。人工照明逻辑强调氛围营造而非均匀照度，极少使用现代内嵌筒灯。核心特征是大量使用由藤、竹、草编等天然纤维制成的大型吊灯和壁灯，以及粗陶底座的台灯/落地灯。光线柔和、发散，色温偏暖（约 2700K-3000K），形成温暖的光影斑驳感。",
+    "FURNITURE_STYLE": "通用语言为有机、质朴且强调触感。主体物件通常具有低矮的轮廓和厚重的体量感。主要材质包括带有自然瑕疵、风化感或未经精细打磨的原木（如带有活边的台面）。支撑结构常采用编织工艺（绳编、藤条）。软包表面高度强调肌理，常见材质为圈绒（Boucle）、粗纺亚麻或厚重的棉线编织物。"
+  },
+  "bauhaus_mcm": {
+    "_meta": {
+      "model": "gemini-3-pro-image-preview",
+      "image_count": 19,
+      "folder": "06_bauhaus_mcm",
+      "extracted_at": "2026-07-31T22:35:19.751404+08:00"
+    },
+    "MATERIAL_AND_FINISHES": "Dominant use of warm, medium-to-dark toned wood veneers (e.g., walnut or teak) applied to built-in storage, wall paneling, and patterned flooring (herringbone or chevron). Extensive application of small-format geometric ceramic tiles (squares, rectangles) in vibrant tones or checkered patterns on vertical feature surfaces, wet zone walls, and specific floor areas. Neutral matte painted wall surfaces balanced with accents of polished chrome metal tubing and clear or textured glass elements.",
+    "COLOR_PALETTE": "Base foundation of warm neutrals (off-white, cream) and rich wood browns constituting approximately 60% of the visual weight. A strong secondary palette of deep blues, forest greens, and earthy terracotta applied to architectural features, textiles, and tiled surfaces, making up about 30%. Vibrant primary color accents (red, yellow, bright blue) utilized in lighting fixtures, structural frames, and smaller decor items, accounting for the remaining 10%.",
+    "LIGHTING_SCHEME": "Layered illumination strategy combining functional recessed ceiling spotlights with prominent, sculptural statement pendant luminaires (often retro-futuristic metal forms or organic paper lantern styles). Widespread integration of warm white LED strip lighting (approx. 3000K) within joinery coves, under-surface areas, and shelving for ambient glow. Supplemented by adjustable, retro-inspired floor and surface task lamps.",
+    "FURNITURE_STYLE": "Mid-20th-century modern design language characterized by geometric forms and mixed materials. Seating elements frequently utilize tubular steel frames (chrome or painted) or molded plywood structures with distinct upholstery. Storage and surface units are typically constructed from warm wood veneers, often raised on slender tapered wooden legs or minimalist metal bases, emphasizing clean lines and functional sculpture."
   }
 }

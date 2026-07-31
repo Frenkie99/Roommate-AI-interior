@@ -7,14 +7,15 @@ import { deleteDesignHistory, getDesignHistory } from '../services/historyServic
 
 // 风格中文标签映射（含旧ID兼容，历史记录可能引用已删除的风格）
 const STYLE_LABELS = {
-  // v3.0 当前6个风格
+  // v3.1 当前6个风格
   modern_luxury: '现代轻奢',
   chinese_modern: '新中式',
-  natural_wood: '原木风',
+  aman_style: '安缦风',
   wabi_sabi: '侘寂风',
   bohemian: '波西米亚',
   bauhaus_mcm: '包豪斯 / 中古风',
   // 已删除风格（兼容历史记录）
+  natural_wood: '原木风（已下线）',
   modern_minimalist: '现代简约（已下线）',
   european_neoclassical: '欧式（已下线）',
   industrial_loft: '工业风（已下线）',
