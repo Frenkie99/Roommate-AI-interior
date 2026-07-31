@@ -134,14 +134,26 @@ def resize_if_needed(data: bytes) -> bytes:
         if max(w, h) <= MAX_IMAGE_DIMENSION:
             return data
 
+        # resize 前保存原始格式：resize 后 img.format 会丢失（变 None）
+        fmt = (img.format or "JPEG").upper()
+        if fmt not in ("JPEG", "PNG", "WEBP"):
+            fmt = "JPEG"
+
         ratio = MAX_IMAGE_DIMENSION / max(w, h)
         new_size = (int(w * ratio), int(h * ratio))
         img = img.resize(new_size, Image.LANCZOS)
 
+        # JPEG 不支持透明通道/调色板，RGBA/P 等模式需先转 RGB（透明底垫白）
+        if fmt == "JPEG" and img.mode != "RGB":
+            if img.mode in ("RGBA", "LA", "P"):
+                background = Image.new("RGB", img.size, (255, 255, 255))
+                rgba = img.convert("RGBA")
+                background.paste(rgba, mask=rgba.split()[-1])
+                img = background
+            else:
+                img = img.convert("RGB")
+
         buf = BytesIO()
-        fmt = img.format or "JPEG"
-        if fmt.upper() not in ("JPEG", "PNG", "WEBP"):
-            fmt = "JPEG"
         img.save(buf, format=fmt, quality=85)
         resized = buf.getvalue()
 
@@ -254,7 +266,11 @@ def call_gemini(images_parts: list[dict], style_id: str, api_key: str) -> Option
                     result = _parse_response(resp.json(), style_id)
                     if result:
                         result["_model_used"] = model  # 记录实际使用的模型
-                    return result
+                        return result
+                    # 解析失败（截断/非 JSON）：先重试，重试耗尽后自然降级到备选模型
+                    print(f"   🔄 响应解析失败，将重试...")
+                    last_error = "parse_failed"
+                    continue
 
                 if resp.status_code == 429:
                     print(f"   ⏳ Rate limited")
@@ -276,10 +292,13 @@ def call_gemini(images_parts: list[dict], style_id: str, api_key: str) -> Option
                     last_error = f"HTTP {resp.status_code}"
                     continue
 
-                # 4xx 不可重试
+                # 4xx 单模型不可重试，但可能是模型级问题（下线/改名/不支持），
+                # 降级尝试备选模型而非直接放弃整个风格
                 error_body = resp.text[:500]
                 print(f"   ❌ 客户端错误: {error_body}")
-                return None
+                print(f"   🔀 跳过模型 {model}，尝试备选...")
+                last_error = f"HTTP {resp.status_code}"
+                break
 
             except httpx.TimeoutException:
                 print(f"\n   ⏰ 请求超时 ({REQUEST_TIMEOUT}s)")
