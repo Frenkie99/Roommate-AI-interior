@@ -1,7 +1,8 @@
 """
-API易 客户端 - Gemini Image Generation
-API文档: https://api.apiyi.com
-支持模型: gemini-3-pro-image-preview, gemini-2.5-flash-image
+Gemini Image Generation 客户端
+双供应商架构:
+  - Google AI Studio 直连（主力，需 GEMINI_API_KEY）
+  - API易 代理（备选，需 APIYI_KEY 或 LLM_APIYI_KEY）
 """
 
 import os
@@ -11,13 +12,12 @@ import logging
 from typing import Optional, List
 from enum import Enum
 
-# 配置日志
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
 class GetGoModel(str, Enum):
-    """支持的模型列表"""
+    """支持的 Gemini 模型列表"""
     GEMINI_3_PRO_IMAGE = "gemini-3-pro-image-preview"
     GEMINI_25_FLASH_IMAGE = "gemini-2.5-flash-image"
     GEMINI_25_FLASH_IMAGE_PREVIEW = "gemini-2.5-flash-image-preview"
@@ -39,55 +39,108 @@ class ImageSize(str, Enum):
     SIZE_4K = "4K"
 
 
-class GetGoAPIClient:
-    """GetGoAPI 客户端"""
-    
-    # 重试配置
+# ---------------------------------------------------------------------------
+# Shared helpers (Google & APIYI both use Gemini API format)
+# ---------------------------------------------------------------------------
+
+def _image_to_base64(image_data: bytes) -> str:
+    return base64.b64encode(image_data).decode('utf-8')
+
+
+def _base64_to_image(base64_str: str) -> bytes:
+    return base64.b64decode(base64_str)
+
+
+def _detect_mime_type(image_data: bytes) -> str:
+    if image_data[:8] == b'\x89PNG\r\n\x1a\n':
+        return "image/png"
+    elif image_data[:2] == b'\xff\xd8':
+        return "image/jpeg"
+    elif image_data[:4] == b'RIFF' and image_data[8:12] == b'WEBP':
+        return "image/webp"
+    return "image/jpeg"
+
+
+def _build_gemini_payload(
+    prompt: str,
+    reference_image: Optional[bytes],
+    aspect_ratio: str,
+    image_size: str,
+) -> dict:
+    """Build Gemini API request payload (shared across providers)"""
+    parts = []
+    if reference_image:
+        mime_type = _detect_mime_type(reference_image)
+        parts.append({
+            "inlineData": {
+                "mimeType": mime_type,
+                "data": _image_to_base64(reference_image)
+            }
+        })
+    parts.append({"text": prompt})
+
+    return {
+        "contents": [{"parts": parts}],
+        "generationConfig": {
+            "responseModalities": ["IMAGE"],
+            "imageConfig": {
+                "aspectRatio": aspect_ratio,
+                "imageSize": image_size
+            }
+        }
+    }
+
+
+def _parse_gemini_response(result: dict) -> dict:
+    """Parse Gemini API response and extract image data (shared across providers)"""
+    candidates = result.get("candidates", [])
+    if not candidates:
+        return {"code": -1, "msg": "API returned empty candidates", "data": None}
+
+    images = []
+    for candidate in candidates:
+        for part in candidate.get("content", {}).get("parts", []):
+            inline_data = part.get("inlineData", {})
+            image_b64 = inline_data.get("data", "")
+            if image_b64:
+                images.append({
+                    "data": _base64_to_image(image_b64),
+                    "mime_type": inline_data.get("mimeType", "image/jpeg")
+                })
+
+    if not images:
+        return {"code": -1, "msg": "No image data in response", "data": None}
+
+    return {"code": 0, "msg": "success", "data": {"images": images}}
+
+
+# ---------------------------------------------------------------------------
+# Google AI Studio direct client (PRIMARY)
+# ---------------------------------------------------------------------------
+
+class GoogleAIDirectClient:
+    """Google AI Studio direct — bypass middleman, call Gemini API natively"""
+
+    BASE_URL = "https://generativelanguage.googleapis.com"
     MAX_RETRIES = 3
-    RETRY_DELAY = 2.0
-    
-    # API 基础 URL (API易平台)
-    BASE_URL = "https://api.apiyi.com"
-    
+
     def __init__(self):
-        # 增加超时时间
         self.client = httpx.AsyncClient(
             timeout=httpx.Timeout(connect=30.0, read=300.0, write=30.0, pool=30.0)
         )
-    
+
     @property
-    def api_key(self) -> str:
-        """每次动态获取 API Key，不缓存"""
-        return os.getenv("APIYI_KEY") or os.getenv("LLM_APIYI_KEY")
-    
-    def _get_headers(self) -> dict:
-        """获取请求头"""
-        if not self.api_key:
-            raise ValueError("APIYI_KEY not set in environment")
-        return {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.api_key}"
-        }
-    
-    def image_to_base64(self, image_data: bytes) -> str:
-        """将图片字节数据转换为 Base64 字符串"""
-        return base64.b64encode(image_data).decode('utf-8')
-    
-    def base64_to_image(self, base64_str: str) -> bytes:
-        """将 Base64 字符串转换为图片字节数据"""
-        return base64.b64decode(base64_str)
-    
-    def _detect_mime_type(self, image_data: bytes) -> str:
-        """检测图片 MIME 类型"""
-        if image_data[:8] == b'\x89PNG\r\n\x1a\n':
-            return "image/png"
-        elif image_data[:2] == b'\xff\xd8':
-            return "image/jpeg"
-        elif image_data[:4] == b'RIFF' and image_data[8:12] == b'WEBP':
-            return "image/webp"
-        else:
-            return "image/jpeg"
-    
+    def api_key(self) -> Optional[str]:
+        return os.getenv("GEMINI_API_KEY")
+
+    @property
+    def is_configured(self) -> bool:
+        return bool(self.api_key)
+
+    def _build_url(self, model_name: str) -> str:
+        model = model_name.value if hasattr(model_name, 'value') else str(model_name)
+        return f"{self.BASE_URL}/v1beta/models/{model}:generateContent?key={self.api_key}"
+
     async def generate_image(
         self,
         prompt: str,
@@ -95,157 +148,172 @@ class GetGoAPIClient:
         model: str = GetGoModel.GEMINI_3_PRO_IMAGE,
         aspect_ratio: str = AspectRatio.RATIO_4_3,
         image_size: str = ImageSize.SIZE_1K,
-        number_of_images: int = 1
+        number_of_images: int = 1,
     ) -> dict:
-        """
-        生成室内设计效果图
-        
-        Args:
-            prompt: 提示词
-            reference_image: 参考图片（原始字节数据）
-            model: 使用的模型
-            aspect_ratio: 输出图像比例
-            image_size: 输出图像大小
-            number_of_images: 生成图片数量
-        
-        Returns:
-            生成结果
-        """
-        # 构建 parts
-        parts = []
-        
-        # 如果有参考图片，先添加图片
-        if reference_image:
-            mime_type = self._detect_mime_type(reference_image)
-            image_base64 = self.image_to_base64(reference_image)
-            parts.append({
-                "inlineData": {
-                    "mimeType": mime_type,
-                    "data": image_base64
-                }
-            })
-        
-        # 添加提示词
-        parts.append({"text": prompt})
-        
-        # 构建请求体
-        payload = {
-            "contents": [{
-                "parts": parts
-            }],
-            "generationConfig": {
-                "responseModalities": ["IMAGE"],
-                "imageConfig": {
-                    "aspectRatio": aspect_ratio,
-                    "imageSize": image_size
-                }
-            }
-        }
-        
-        # API URL - 确保使用模型名称字符串而非枚举对象
-        model_name = model.value if hasattr(model, 'value') else str(model)
-        api_url = f"{self.BASE_URL}/v1beta/models/{model_name}:generateContent"
-        
+        """Call Google Gemini API directly to generate interior design images"""
+        if not self.is_configured:
+            return {"code": -1, "msg": "GEMINI_API_KEY not configured", "data": None}
+
+        payload = _build_gemini_payload(prompt, reference_image, aspect_ratio, image_size)
+        api_url = self._build_url(model)
+
         last_error = None
         for attempt in range(self.MAX_RETRIES):
             try:
-                logger.info(f"[API易] 尝试 {attempt + 1}/{self.MAX_RETRIES}，模型: {model}")
-                
+                logger.info(f"[Google] attempt {attempt + 1}/{self.MAX_RETRIES}, model: {model}")
+
                 response = await self.client.post(
                     api_url,
-                    headers=self._get_headers(),
-                    json=payload
+                    headers={"Content-Type": "application/json"},
+                    json=payload,
                 )
-                
-                # 检查响应状态
+
                 if response.status_code == 200:
-                    result = response.json()
-                    
-                    # 解析响应
-                    candidates = result.get("candidates", [])
-                    if not candidates:
-                        return {
-                            "code": -1,
-                            "msg": "API 返回空结果",
-                            "data": None
-                        }
-                    
-                    # 提取图片数据
-                    images = []
-                    for candidate in candidates:
-                        content = candidate.get("content", {})
-                        parts = content.get("parts", [])
-                        for part in parts:
-                            inline_data = part.get("inlineData", {})
-                            if inline_data:
-                                image_base64 = inline_data.get("data", "")
-                                mime_type = inline_data.get("mimeType", "image/jpeg")
-                                if image_base64:
-                                    images.append({
-                                        "data": self.base64_to_image(image_base64),
-                                        "mime_type": mime_type
-                                    })
-                    
-                    if not images:
-                        return {
-                            "code": -1,
-                            "msg": "未获取到生成的图片",
-                            "data": None
-                        }
-                    
-                    logger.info(f"[API易] 生成成功，获取到 {len(images)} 张图片")
-                    return {
-                        "code": 0,
-                        "msg": "success",
-                        "data": {
-                            "images": images,
-                            "model": model
-                        }
-                    }
-                
-                # 处理错误响应
+                    parsed = _parse_gemini_response(response.json())
+                    if parsed.get("code") == 0 and parsed.get("data"):
+                        parsed["data"]["used_model"] = str(model)
+                        parsed["data"]["provider"] = "google_direct"
+                        logger.info(f"[Google] success, {len(parsed['data']['images'])} image(s)")
+                    return parsed
+
                 error_text = response.text
-                logger.warning(f"[API易] HTTP {response.status_code}: {error_text}")
-                
-                # 如果是服务端错误，重试
+                logger.warning(f"[Google] HTTP {response.status_code}: {error_text[:300]}")
+
                 if response.status_code >= 500:
-                    last_error = f"HTTP {response.status_code}: {error_text}"
+                    last_error = f"HTTP {response.status_code}"
                     continue
-                
-                # 客户端错误，直接返回
+
                 return {
                     "code": -1,
-                    "msg": f"API 错误 ({response.status_code}): {error_text}",
+                    "msg": f"Google API error ({response.status_code}): {error_text[:200]}",
                     "data": None
                 }
-                
+
             except httpx.TimeoutException as e:
-                logger.warning(f"[API易] 超时: {str(e)}")
-                last_error = f"请求超时: {str(e)}"
+                logger.warning(f"[Google] timeout: {e}")
+                last_error = f"timeout: {e}"
                 continue
             except httpx.HTTPError as e:
-                logger.warning(f"[API易] 网络错误: {str(e)}")
-                last_error = f"网络错误: {str(e)}"
+                logger.warning(f"[Google] network error: {e}")
+                last_error = f"network: {e}"
                 continue
             except Exception as e:
-                logger.error(f"[API易] 未知错误: {str(e)}")
-                last_error = f"未知错误: {str(e)}"
+                logger.error(f"[Google] unexpected: {e}")
+                last_error = f"unexpected: {e}"
                 continue
-        
-        # 所有重试都失败
-        # 提供更友好的错误信息
-        friendly_msg = f"API 请求失败（已重试 {self.MAX_RETRIES} 次）: {last_error}"
-        if "no available channels" in str(last_error):
-            friendly_msg += " — 可能原因：API Key 未开通该模型权限，请检查 APIYI_KEY 配置。"
-        elif "401" in str(last_error) or "令牌" in str(last_error):
-            friendly_msg += " — 可能原因：API Key 无效或已过期，请检查 .env 中的配置。"
 
         return {
             "code": -1,
-            "msg": friendly_msg,
-            "data": None
+            "msg": f"Google API failed after {self.MAX_RETRIES} retries: {last_error}",
+            "data": None,
         }
-    
+
+    async def close(self):
+        await self.client.aclose()
+
+
+# ---------------------------------------------------------------------------
+# APIYI proxy client (FALLBACK)
+# ---------------------------------------------------------------------------
+
+class GetGoAPIClient:
+    """APIYI proxy client — access Gemini via api.apiyi.com"""
+
+    MAX_RETRIES = 3
+    BASE_URL = "https://api.apiyi.com"
+
+    def __init__(self):
+        self.client = httpx.AsyncClient(
+            timeout=httpx.Timeout(connect=30.0, read=300.0, write=30.0, pool=30.0)
+        )
+
+    @property
+    def api_key(self) -> Optional[str]:
+        return os.getenv("APIYI_KEY") or os.getenv("LLM_APIYI_KEY")
+
+    @property
+    def is_configured(self) -> bool:
+        return bool(self.api_key)
+
+    def _get_headers(self) -> dict:
+        if not self.api_key:
+            raise ValueError("APIYI_KEY or LLM_APIYI_KEY not set")
+        return {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}"
+        }
+
+    def _build_url(self, model_name: str) -> str:
+        model = model_name.value if hasattr(model_name, 'value') else str(model_name)
+        return f"{self.BASE_URL}/v1beta/models/{model}:generateContent"
+
+    async def generate_image(
+        self,
+        prompt: str,
+        reference_image: Optional[bytes] = None,
+        model: str = GetGoModel.GEMINI_3_PRO_IMAGE,
+        aspect_ratio: str = AspectRatio.RATIO_4_3,
+        image_size: str = ImageSize.SIZE_1K,
+        number_of_images: int = 1,
+    ) -> dict:
+        """Call APIYI Gemini API to generate interior design images"""
+        if not self.is_configured:
+            return {"code": -1, "msg": "APIYI_KEY / LLM_APIYI_KEY not configured", "data": None}
+
+        payload = _build_gemini_payload(prompt, reference_image, aspect_ratio, image_size)
+        api_url = self._build_url(model)
+
+        last_error = None
+        for attempt in range(self.MAX_RETRIES):
+            try:
+                logger.info(f"[APIYI] attempt {attempt + 1}/{self.MAX_RETRIES}, model: {model}")
+
+                response = await self.client.post(
+                    api_url,
+                    headers=self._get_headers(),
+                    json=payload,
+                )
+
+                if response.status_code == 200:
+                    parsed = _parse_gemini_response(response.json())
+                    if parsed.get("code") == 0 and parsed.get("data"):
+                        parsed["data"]["used_model"] = str(model)
+                        parsed["data"]["provider"] = "apiyi"
+                        logger.info(f"[APIYI] success, {len(parsed['data']['images'])} image(s)")
+                    return parsed
+
+                error_text = response.text
+                logger.warning(f"[APIYI] HTTP {response.status_code}: {error_text[:300]}")
+
+                if response.status_code >= 500:
+                    last_error = f"HTTP {response.status_code}"
+                    continue
+
+                return {
+                    "code": -1,
+                    "msg": f"APIYI error ({response.status_code}): {error_text[:200]}",
+                    "data": None
+                }
+
+            except httpx.TimeoutException as e:
+                logger.warning(f"[APIYI] timeout: {e}")
+                last_error = f"timeout: {e}"
+                continue
+            except httpx.HTTPError as e:
+                logger.warning(f"[APIYI] network error: {e}")
+                last_error = f"network: {e}"
+                continue
+            except Exception as e:
+                logger.error(f"[APIYI] unexpected: {e}")
+                last_error = f"unexpected: {e}"
+                continue
+
+        return {
+            "code": -1,
+            "msg": f"APIYI failed after {self.MAX_RETRIES} retries: {last_error}",
+            "data": None,
+        }
+
     async def generate_with_fallback(
         self,
         prompt: str,
@@ -253,75 +321,129 @@ class GetGoAPIClient:
         model_priority: Optional[List[str]] = None,
         aspect_ratio: str = AspectRatio.RATIO_4_3,
         image_size: str = ImageSize.SIZE_1K,
-        number_of_images: int = 1
+        number_of_images: int = 1,
     ) -> dict:
-        """
-        带模型降级的图片生成
-        
-        Args:
-            prompt: 提示词
-            reference_image: 参考图片
-            model_priority: 模型优先级列表
-            aspect_ratio: 输出图像比例
-            image_size: 输出图像大小
-            number_of_images: 生成图片数量
-        
-        Returns:
-            生成结果
-        """
+        """APIYI model-level fallback (kept for backward compatibility)"""
         if model_priority is None:
-            model_priority = [
-                GetGoModel.GEMINI_3_PRO_IMAGE,
-                GetGoModel.GEMINI_25_FLASH_IMAGE,
-            ]
-        
+            model_priority = [GetGoModel.GEMINI_3_PRO_IMAGE, GetGoModel.GEMINI_25_FLASH_IMAGE]
+
         last_error = None
         for model in model_priority:
-            logger.info(f"[API易] 尝试模型: {model}")
-            
             result = await self.generate_image(
-                prompt=prompt,
-                reference_image=reference_image,
-                model=model,
-                aspect_ratio=aspect_ratio,
-                image_size=image_size,
-                number_of_images=number_of_images
+                prompt=prompt, reference_image=reference_image,
+                model=model, aspect_ratio=aspect_ratio,
+                image_size=image_size, number_of_images=number_of_images,
             )
-            
             if result.get("code") == 0:
-                logger.info(f"[API易] 模型 {model} 生成成功")
-                if "data" in result and result["data"]:
-                    result["data"]["used_model"] = model
                 return result
-            
+
             error_msg = result.get("msg", "")
             last_error = error_msg
-            
-            # 如果是超时或服务端错误，尝试下一个模型
             if "timeout" in error_msg.lower() or "500" in error_msg or "503" in error_msg:
-                logger.warning(f"[API易] 模型 {model} 失败（{error_msg}），尝试下一个模型")
                 continue
-            
-            # 其他错误直接返回
-            logger.error(f"[API易] 模型 {model} 失败（不可重试）: {error_msg}")
             return result
-        
+
         return {
             "code": -1,
-            "msg": f"所有模型都生成失败，最后错误: {last_error}。请检查 API Key 是否有 Gemini 图像模型权限。",
-            "data": None
+            "msg": f"APIYI all models failed. Last error: {last_error}",
+            "data": None,
         }
-    
+
     async def close(self):
-        """关闭客户端连接"""
         await self.client.aclose()
 
 
-# 模型优先级配置
+# ---------------------------------------------------------------------------
+# Multi-provider fallback: Google Direct (primary) → APIYI (backup)
+# ---------------------------------------------------------------------------
+
+_google_client: Optional[GoogleAIDirectClient] = None
+_apiyi_client: Optional[GetGoAPIClient] = None
+
+
+def _get_google_client() -> GoogleAIDirectClient:
+    global _google_client
+    if _google_client is None:
+        _google_client = GoogleAIDirectClient()
+    return _google_client
+
+
+def _get_apiyi_client() -> GetGoAPIClient:
+    global _apiyi_client
+    if _apiyi_client is None:
+        _apiyi_client = GetGoAPIClient()
+    return _apiyi_client
+
+
+async def generate_design_image(
+    prompt: str,
+    reference_image: Optional[bytes] = None,
+    model_priority: Optional[List[str]] = None,
+    aspect_ratio: str = AspectRatio.RATIO_4_3,
+    image_size: str = ImageSize.SIZE_1K,
+    number_of_images: int = 1,
+) -> dict:
+    """
+    Generate interior design renderings with multi-provider auto-fallback.
+
+    Priority: Google AI Studio direct → APIYI proxy
+    Within each provider, models are tried in model_priority order.
+    """
+    if model_priority is None:
+        model_priority = [GetGoModel.GEMINI_3_PRO_IMAGE, GetGoModel.GEMINI_25_FLASH_IMAGE]
+
+    # --- Tier 1: Google AI Studio direct (primary) ---
+    google = _get_google_client()
+    if google.is_configured:
+        logger.info("[Fallback] trying Google AI Studio (primary)...")
+        for model in model_priority:
+            result = await google.generate_image(
+                prompt=prompt, reference_image=reference_image,
+                model=model, aspect_ratio=aspect_ratio,
+                image_size=image_size, number_of_images=number_of_images,
+            )
+            if result.get("code") == 0:
+                logger.info(f"[Fallback] Google Direct success with {model}")
+                return result
+
+            error_msg = result.get("msg", "")
+            # Only skip to next model on transient errors
+            if "timeout" not in error_msg.lower() and "500" not in error_msg and "503" not in error_msg:
+                break
+
+    # --- Tier 2: APIYI proxy (backup) ---
+    apiyi = _get_apiyi_client()
+    if apiyi.is_configured:
+        logger.info("[Fallback] trying APIYI (backup)...")
+        for model in model_priority:
+            result = await apiyi.generate_image(
+                prompt=prompt, reference_image=reference_image,
+                model=model, aspect_ratio=aspect_ratio,
+                image_size=image_size, number_of_images=number_of_images,
+            )
+            if result.get("code") == 0:
+                logger.info(f"[Fallback] APIYI success with {model}")
+                return result
+
+            error_msg = result.get("msg", "")
+            if "timeout" not in error_msg.lower() and "500" not in error_msg and "503" not in error_msg:
+                break
+
+    return {
+        "code": -1,
+        "msg": "All providers and models exhausted. Check GEMINI_API_KEY or APIYI_KEY.",
+        "data": None,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Backward-compatible exports
+# ---------------------------------------------------------------------------
+
 DEFAULT_MODEL_PRIORITY = [
-    GetGoModel.GEMINI_3_PRO_IMAGE,  # 使用 Pro 版本，质量更高，结构保持更好
-    GetGoModel.GEMINI_25_FLASH_IMAGE,  # 降级备选
+    GetGoModel.GEMINI_3_PRO_IMAGE,
+    GetGoModel.GEMINI_25_FLASH_IMAGE,
 ]
 
-# 全局客户端实例
+# Legacy global instance (for callers that haven't migrated to generate_design_image)
 getgoapi_client = GetGoAPIClient()

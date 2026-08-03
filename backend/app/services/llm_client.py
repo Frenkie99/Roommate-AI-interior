@@ -123,7 +123,7 @@ class LLMClient:
             text_result = await self.chat_text(
                 prompt=text_prompt,
                 model=LLMModel.GEMINI_25_FLASH_IMAGE,
-                system_prompt="你是专业室内设计师，擅长分析空间并生成设计提示词。",
+                system_prompt="You are a professional interior designer. Analyze spaces and generate design prompts.",
                 max_tokens=2048
             )
             parsed = self._parse_llm_response(text_result, style, room_type, custom_prompt)
@@ -311,7 +311,7 @@ IMPORTANT: Output a single valid JSON object only."""
         self,
         prompt: str,
         model: LLMModel = LLMModel.GEMINI_25_FLASH_IMAGE,
-        system_prompt: str = "你是专业室内设计顾问。",
+        system_prompt: str = "You are a professional interior design consultant.",
         max_tokens: int = 2048
     ) -> str:
         """

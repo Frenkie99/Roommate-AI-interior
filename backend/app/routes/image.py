@@ -14,7 +14,7 @@ from fastapi.responses import JSONResponse
 from PIL import Image
 from pydantic import BaseModel
 
-from app.services.getgoapi_client import getgoapi_client, GetGoModel, AspectRatio, ImageSize, DEFAULT_MODEL_PRIORITY
+from app.services.getgoapi_client import getgoapi_client, GetGoModel, AspectRatio, ImageSize, DEFAULT_MODEL_PRIORITY, generate_design_image
 from app.services.inpaint_service import _aspect_ratio_for_size
 from app.services.llm_client import llm_client, LLMModel
 from app.services.image_processor import image_processor
@@ -153,9 +153,9 @@ async def generate_renovation_image(
     else:
         mapped_ratio = ratio_map.get(aspect_ratio, "4:3")
     
-    # 5. 调用 API易 生成效果图（使用模型降级机制）
-    _t_gen = time.perf_counter()  # trace 埋点：生图阶段计时起点
-    result = await getgoapi_client.generate_with_fallback(
+    # 5. 调用 Gemini 生成效果图（Google 直连优先 → API易 备选）
+    _t_gen = time.perf_counter()  # trace: generation phase timer start
+    result = await generate_design_image(
         prompt=prompt,
         reference_image=processed_image,
         model_priority=DEFAULT_MODEL_PRIORITY,
