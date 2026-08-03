@@ -354,7 +354,128 @@ class GetGoAPIClient:
 
 
 # ---------------------------------------------------------------------------
-# Multi-provider fallback: Google Direct (primary) → APIYI (backup)
+# Custom Gemini-compatible providers (NEW API / ONE API style platforms)
+# Configure via env vars: CUSTOM_API_1_URL, CUSTOM_API_1_KEY, CUSTOM_API_1_MODELS
+# ---------------------------------------------------------------------------
+
+class CustomGeminiProvider:
+    """Configurable Gemini-native provider (e.g., NEW API / ONE API platforms)"""
+
+    MAX_RETRIES = 3
+
+    def __init__(self, name: str, base_url: str, api_key: str, models: List[str]):
+        self.name = name
+        self.base_url = base_url.rstrip("/")
+        self._api_key = api_key
+        self.models = models
+        self.client = httpx.AsyncClient(
+            timeout=httpx.Timeout(connect=30.0, read=300.0, write=30.0, pool=30.0)
+        )
+
+    @property
+    def is_configured(self) -> bool:
+        return bool(self._api_key and self.base_url and self.models)
+
+    def _build_url(self, model_name: str) -> str:
+        return f"{self.base_url}/v1beta/models/{model_name}:generateContent"
+
+    def _get_headers(self) -> dict:
+        return {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self._api_key}"
+        }
+
+    async def generate_image(
+        self,
+        prompt: str,
+        reference_image: Optional[bytes] = None,
+        model: str = "",
+        aspect_ratio: str = AspectRatio.RATIO_4_3,
+        image_size: str = ImageSize.SIZE_1K,
+        number_of_images: int = 1,
+    ) -> dict:
+        """Call custom Gemini-compatible API to generate images"""
+        if not model:
+            model = self.models[0] if self.models else "gemini-2.5-flash-image"
+
+        payload = _build_gemini_payload(prompt, reference_image, aspect_ratio, image_size)
+        api_url = self._build_url(model)
+
+        last_error = None
+        for attempt in range(self.MAX_RETRIES):
+            try:
+                logger.info(f"[{self.name}] attempt {attempt + 1}/{self.MAX_RETRIES}, model: {model}")
+
+                response = await self.client.post(
+                    api_url,
+                    headers=self._get_headers(),
+                    json=payload,
+                )
+
+                if response.status_code == 200:
+                    parsed = _parse_gemini_response(response.json())
+                    if parsed.get("code") == 0 and parsed.get("data"):
+                        parsed["data"]["used_model"] = str(model)
+                        parsed["data"]["provider"] = self.name
+                        logger.info(f"[{self.name}] success, {len(parsed['data']['images'])} image(s)")
+                    return parsed
+
+                error_text = response.text
+                logger.warning(f"[{self.name}] HTTP {response.status_code}: {error_text[:300]}")
+
+                if response.status_code >= 500:
+                    last_error = f"HTTP {response.status_code}"
+                    continue
+
+                return {
+                    "code": -1,
+                    "msg": f"{self.name} error ({response.status_code}): {error_text[:200]}",
+                    "data": None
+                }
+
+            except httpx.TimeoutException as e:
+                logger.warning(f"[{self.name}] timeout: {e}")
+                last_error = f"timeout: {e}"
+                continue
+            except httpx.HTTPError as e:
+                logger.warning(f"[{self.name}] network error: {e}")
+                last_error = f"network: {e}"
+                continue
+            except Exception as e:
+                logger.error(f"[{self.name}] unexpected: {e}")
+                last_error = f"unexpected: {e}"
+                continue
+
+        return {
+            "code": -1,
+            "msg": f"{self.name} failed after {self.MAX_RETRIES} retries: {last_error}",
+            "data": None,
+        }
+
+    async def close(self):
+        await self.client.aclose()
+
+
+def _load_custom_providers() -> List[CustomGeminiProvider]:
+    """Load custom Gemini providers from CUSTOM_API_* env vars"""
+    providers = []
+    i = 1
+    while True:
+        url = os.getenv(f"CUSTOM_API_{i}_URL")
+        key = os.getenv(f"CUSTOM_API_{i}_KEY")
+        if not url or not key:
+            break
+        name = os.getenv(f"CUSTOM_API_{i}_NAME", f"custom_{i}")
+        models_str = os.getenv(f"CUSTOM_API_{i}_MODELS", "gemini-2.5-flash-image")
+        models = [m.strip() for m in models_str.split(",") if m.strip()]
+        providers.append(CustomGeminiProvider(name, url, key, models))
+        logger.info(f"[Providers] loaded custom provider '{name}': {url} ({len(models)} models)")
+        i += 1
+    return providers
+
+
+# ---------------------------------------------------------------------------
+# Multi-provider fallback chain
 # ---------------------------------------------------------------------------
 
 _google_client: Optional[GoogleAIDirectClient] = None
@@ -386,16 +507,35 @@ async def generate_design_image(
     """
     Generate interior design renderings with multi-provider auto-fallback.
 
-    Priority: Google AI Studio direct → APIYI proxy
-    Within each provider, models are tried in model_priority order.
+    Priority: Custom providers (CUSTOM_API_*) → Google AI Studio → APIYI
+    Within each provider, models are tried in order.
     """
     if model_priority is None:
         model_priority = [GetGoModel.GEMINI_3_PRO_IMAGE, GetGoModel.GEMINI_25_FLASH_IMAGE]
 
-    # --- Tier 1: Google AI Studio direct (primary) ---
+    # --- Tier 1: Custom Gemini-compatible providers (burn existing balance first) ---
+    for provider in _load_custom_providers():
+        if not provider.is_configured:
+            continue
+        logger.info(f"[Fallback] trying custom provider '{provider.name}'...")
+        for model in provider.models:
+            result = await provider.generate_image(
+                prompt=prompt, reference_image=reference_image,
+                model=model, aspect_ratio=aspect_ratio,
+                image_size=image_size, number_of_images=number_of_images,
+            )
+            if result.get("code") == 0:
+                logger.info(f"[Fallback] {provider.name} success with {model}")
+                return result
+
+            error_msg = result.get("msg", "")
+            if "timeout" not in error_msg.lower() and "500" not in error_msg and "503" not in error_msg:
+                break
+
+    # --- Tier 2: Google AI Studio direct ---
     google = _get_google_client()
     if google.is_configured:
-        logger.info("[Fallback] trying Google AI Studio (primary)...")
+        logger.info("[Fallback] trying Google AI Studio...")
         for model in model_priority:
             result = await google.generate_image(
                 prompt=prompt, reference_image=reference_image,
@@ -407,14 +547,13 @@ async def generate_design_image(
                 return result
 
             error_msg = result.get("msg", "")
-            # Only skip to next model on transient errors
             if "timeout" not in error_msg.lower() and "500" not in error_msg and "503" not in error_msg:
                 break
 
-    # --- Tier 2: APIYI proxy (backup) ---
+    # --- Tier 3: APIYI proxy (last resort) ---
     apiyi = _get_apiyi_client()
     if apiyi.is_configured:
-        logger.info("[Fallback] trying APIYI (backup)...")
+        logger.info("[Fallback] trying APIYI (last resort)...")
         for model in model_priority:
             result = await apiyi.generate_image(
                 prompt=prompt, reference_image=reference_image,
@@ -431,7 +570,7 @@ async def generate_design_image(
 
     return {
         "code": -1,
-        "msg": "All providers and models exhausted. Check GEMINI_API_KEY or APIYI_KEY.",
+        "msg": "All providers and models exhausted. Check API key configuration.",
         "data": None,
     }
 
