@@ -507,7 +507,7 @@ async def generate_design_image(
     """
     Generate interior design renderings with multi-provider auto-fallback.
 
-    Priority: Custom providers (CUSTOM_API_*) → Google AI Studio → APIYI
+    Priority: Custom providers (CUSTOM_API_*) → APIYI
     Within each provider, models are tried in order.
     """
     if model_priority is None:
@@ -532,25 +532,7 @@ async def generate_design_image(
             if "timeout" not in error_msg.lower() and "500" not in error_msg and "503" not in error_msg:
                 break
 
-    # --- Tier 2: Google AI Studio direct ---
-    google = _get_google_client()
-    if google.is_configured:
-        logger.info("[Fallback] trying Google AI Studio...")
-        for model in model_priority:
-            result = await google.generate_image(
-                prompt=prompt, reference_image=reference_image,
-                model=model, aspect_ratio=aspect_ratio,
-                image_size=image_size, number_of_images=number_of_images,
-            )
-            if result.get("code") == 0:
-                logger.info(f"[Fallback] Google Direct success with {model}")
-                return result
-
-            error_msg = result.get("msg", "")
-            if "timeout" not in error_msg.lower() and "500" not in error_msg and "503" not in error_msg:
-                break
-
-    # --- Tier 3: APIYI proxy (last resort) ---
+    # --- Tier 2: APIYI proxy (last resort) ---
     apiyi = _get_apiyi_client()
     if apiyi.is_configured:
         logger.info("[Fallback] trying APIYI (last resort)...")
