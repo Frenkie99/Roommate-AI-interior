@@ -545,6 +545,168 @@ def build_prompt_result(
     return PromptResult(prompt=prompt)
 
 
+# ============================================================================
+# v3.0 提示词引擎 — 指令优先 + 压缩关键词 + LLM 分析主导
+# 核心思路: "告诉模型做什么"而非"描述风格长什么样"
+# ============================================================================
+
+# 从长段落提取关键词的填充词黑名单
+_COMPRESSION_FILLER = [
+    "A rich interplay of", "The design language emphasizes", "A layered",
+    "philosophy focusing on", "Extensive use of", "The defining characteristic is",
+    "Primary architectural surfaces", "Primary surfaces feature", "Dominant surfaces feature",
+    "Secondary applications involve", "Accent elements consist of",
+    "A warm, calming neutral palette", "A highly organic and neutral scheme",
+    "Base foundation of", "Dominant use of", "Design language emphasizes",
+    "The design language features", "Characterized by", "focusing on", "applied to",
+    "are extensively used for", "cover general wall areas", "features highly textured",
+    "is supplemented by", "utilizing", "employing", "constituting",
+    "making up about", "accounting for the remaining",
+    "It features", "The overall aesthetic is",
+    "Primary seating volumes are", "Supporting surfaces frequently utilize",
+    "Standalone accent pieces often exhibit",
+    "Hard surface pieces and storage units are constructed from",
+    "Seating and sleeping surfaces are typically",
+    "Seating categories are generous and",
+    "Surface elements (tables, consoles, plinths) are typically",
+    "Large upholstered pieces are",
+    "Freestanding wooden or stone elements feature",
+    "Seating elements frequently utilize",
+    "Storage and surface units are typically",
+    "Profiles are generally",
+    "The design language emphasizes",
+    "frequently accented by", "often layered with", "often incorporating",
+    "often resting on", "with visible", "alongside", "alongside dramatic",
+    "introduced through", "providing linear definition",
+]
+
+def _compress_text(text: str) -> str:
+    """Compress verbose architectural description into keyword-dense instruction."""
+    import re
+    result = text
+
+    # 1. Remove filler phrases
+    for filler in _COMPRESSION_FILLER:
+        result = result.replace(filler, "")
+
+    # 2. Remove percentage notations (the model doesn't need them)
+    result = re.sub(r'Dominant\s*\(\d+%\):\s*', '', result)
+    result = re.sub(r'Secondary\s*\(\d+%\):\s*', '', result)
+    result = re.sub(r'Accent\s*\(\d+%\):\s*', '', result)
+    result = re.sub(r'Base foundation of\s*', '', result)
+
+    # 3. Remove orphaned adjectives and fix grammar
+    result = re.sub(r'\bdominates\b', '', result)
+    result = re.sub(r'\bis\s+extensively\s+used\b', '', result)
+    result = re.sub(r'\bare\s+extensively\s+used\b', '', result)
+
+    # 4. Clean up whitespace and punctuation
+    result = re.sub(r'\s{2,}', ' ', result)
+    result = re.sub(r',\s*,', ',', result)
+    result = re.sub(r'^\s*[.,;:]\s*', '', result)  # leading punctuation
+    result = re.sub(r'\s+[.,;:]', '.', result)      # space before punctuation
+    result = re.sub(r'\.{2,}', '.', result)          # multiple periods
+    result = re.sub(r'^\s*,?\s*', '', result)
+    result = re.sub(r'\s*,?\s*$', '', result)
+
+    # 5. If still too long, take first 2-3 sentences
+    sentences = [s.strip() for s in result.split('.') if s.strip() and len(s.strip()) > 5]
+    if len(sentences) > 3:
+        result = '. '.join(sentences[:3]) + '.'
+    else:
+        result = '. '.join(sentences) + '.'
+
+    return result.strip(' .')
+
+
+def build_prompt_v3(
+    style: str,
+    room_type: Optional[str] = None,
+    llm_analysis: Optional[Dict] = None,
+    custom_prompt: Optional[str] = None,
+    preserve_structure: bool = True,
+) -> str:
+    """
+    v3.0 指令优先提示词引擎
+
+    与 v2 的核心区别：
+    1. LLM 空间分析放在最前面（让模型先理解"这个房间长什么样"）
+    2. 风格关键词经过压缩（去论文腔，变指令式）
+    3. 房间布局和家具位置精确描述
+    4. 总长度控制在 ~200 词以内
+    """
+    if llm_analysis is None:
+        llm_analysis = {}
+
+    style_info = STYLE_PROMPTS.get(style, {})
+    style_name = style_info.get("name", style)
+    room_info = ROOM_TYPE_PROMPTS.get(room_type, {})
+    room_name = room_info.get("name", room_type) if room_type else "room"
+
+    room_analysis = llm_analysis.get("room_analysis", {})
+    design_rec = llm_analysis.get("design_recommendations", {})
+
+    parts = []
+
+    # ===== 1. 任务指令（一句） =====
+    vibe = style_info.get('vibe', '')
+    parts.append(f"Transform this {room_name} into a {style_name} interior. {vibe}")
+
+    # ===== 2. LLM 空间感知（优先）=====
+    if room_analysis:
+        spatial = room_analysis.get("space_description", "") or room_analysis.get("physical_features", "")
+        if spatial:
+            parts.append(f"ROOM CONTEXT: {spatial}")
+
+    if design_rec:
+        rec_parts = []
+        if design_rec.get("layout_suggestion"):
+            rec_parts.append(f"Layout: {design_rec['layout_suggestion']}")
+        if design_rec.get("furniture_placement"):
+            rec_parts.append(f"Furniture: {design_rec['furniture_placement']}")
+        if design_rec.get("lighting_design"):
+            rec_parts.append(f"Lighting: {design_rec['lighting_design']}")
+        if design_rec.get("color_scheme"):
+            rec_parts.append(f"Colors: {design_rec['color_scheme']}")
+        if rec_parts:
+            parts.append("DESIGN PLAN: " + "; ".join(rec_parts))
+
+    # ===== 3. 压缩风格关键词 =====
+    if style_info:
+        materials = _compress_text(style_info.get('materials', ''))
+        colors = _compress_text(style_info.get('colors', ''))
+        lighting = _compress_text(style_info.get('lighting', ''))
+        furniture = _compress_text(style_info.get('furniture', ''))
+
+        if materials:
+            parts.append(f"MATERIALS: {materials}")
+        if colors:
+            parts.append(f"COLORS: {colors}")
+        if lighting:
+            parts.append(f"LIGHTING: {lighting}")
+        if furniture:
+            parts.append(f"FURNITURE: {furniture}")
+
+    # ===== 4. 房间特定布局（仅当 LLM 未提供时使用）=====
+    has_dynamic_layout = bool(design_rec.get("layout_suggestion") or design_rec.get("furniture_placement"))
+    if room_info and not has_dynamic_layout:
+        parts.append(f"LAYOUT: {room_info.get('furniture', '')}")
+        parts.append(f"SOFT FURNISHINGS: {room_info.get('softscape', '')}")
+
+    # ===== 5. 结构约束 =====
+    if preserve_structure:
+        parts.append("CONSTRAINTS: Keep all walls, windows, doors, and ceiling height exactly as shown. Do not remodel.")
+
+    # ===== 6. 用户需求 =====
+    if custom_prompt:
+        parts.append(f"REQUIREMENTS: {custom_prompt}")
+
+    # ===== 7. 质量 =====
+    parts.append("QUALITY: photorealistic architectural photography, 8k resolution, natural lighting, ultra-detailed textures")
+
+    return "\n\n".join(parts)
+
+
 def get_style_info(style: str) -> Optional[Dict]:
     """获取指定风格的详细信息"""
     return STYLE_PROMPTS.get(style)
