@@ -525,12 +525,14 @@ async def generate_design_image(
                 image_size=image_size, number_of_images=number_of_images,
             )
             if result.get("code") == 0:
-                logger.info(f"[Fallback] {provider.name} success with {model}")
+                logger.info(f"[Fallback] ✅ {provider.name} SUCCESS (model: {model})")
                 return result
 
             error_msg = result.get("msg", "")
+            logger.warning(f"[Fallback] ❌ {provider.name} FAILED: {error_msg[:100]}")
             if "timeout" not in error_msg.lower() and "500" not in error_msg and "503" not in error_msg:
                 break
+            logger.info(f"[Fallback] ↪ {provider.name} temporary error, trying next model...")
 
     # --- Tier 2: APIYI proxy (last resort) ---
     apiyi = _get_apiyi_client()
@@ -543,12 +545,14 @@ async def generate_design_image(
                 image_size=image_size, number_of_images=number_of_images,
             )
             if result.get("code") == 0:
-                logger.info(f"[Fallback] APIYI success with {model}")
+                logger.info(f"[Fallback] ✅ APIYI SUCCESS (model: {model})")
                 return result
 
             error_msg = result.get("msg", "")
+            logger.warning(f"[Fallback] ❌ APIYI FAILED: {error_msg[:100]}")
             if "timeout" not in error_msg.lower() and "500" not in error_msg and "503" not in error_msg:
                 break
+            logger.info(f"[Fallback] ↪ APIYI temporary error, trying next model...")
 
     return {
         "code": -1,
