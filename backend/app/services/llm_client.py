@@ -10,7 +10,7 @@ from typing import Optional, Dict, Any, List
 from enum import Enum
 import json
 
-from app.utils.prompt_builder import GLOBAL_STRUCTURE_CONSTRAINTS, STYLE_PROMPTS, build_prompt_v3
+from app.utils.prompt_builder import GLOBAL_STRUCTURE_CONSTRAINTS, STYLE_PROMPTS, build_prompt_v2
 
 
 class LLMModel(str, Enum):
@@ -264,8 +264,8 @@ IMPORTANT: Output a single valid JSON object only."""
             print(f"[LLM] room_analysis: {json.dumps(analysis_data.get('room_analysis', {}), ensure_ascii=False)[:200]}")
             print(f"[LLM] design_recommendations: {json.dumps(analysis_data.get('design_recommendations', {}), ensure_ascii=False)[:200]}")
 
-            # 使用 build_prompt_v3 构建指令式提示词
-            enhanced_prompt = build_prompt_v3(
+            # 使用 build_prompt_v2 构建最终提示词
+            enhanced_prompt = build_prompt_v2(
                 style=style,
                 room_type=room_type,
                 llm_analysis=analysis_data,
@@ -286,8 +286,8 @@ IMPORTANT: Output a single valid JSON object only."""
             }
             
         except json.JSONDecodeError as e:
-            # JSON 解析失败，使用 v3 指令式提示词作为备用
-            fallback_prompt = build_prompt_v3(style, room_type, custom_prompt=custom_prompt)
+            # JSON 解析失败，使用静态提示词作为备用
+            fallback_prompt = build_prompt_v2(style, room_type, custom_prompt=custom_prompt)
             
             return {
                 "code": 0,

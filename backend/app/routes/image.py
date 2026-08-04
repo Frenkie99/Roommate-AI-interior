@@ -18,7 +18,7 @@ from app.services.getgoapi_client import getgoapi_client, GetGoModel, AspectRati
 from app.services.inpaint_service import _aspect_ratio_for_size
 from app.services.llm_client import llm_client, LLMModel
 from app.services.image_processor import image_processor
-from app.utils.prompt_builder import build_prompt, build_prompt_v3, STYLE_PROMPTS, ROOM_TYPE_PROMPTS, resolve_style_id
+from app.utils.prompt_builder import build_prompt, build_prompt_v2, STYLE_PROMPTS, ROOM_TYPE_PROMPTS, resolve_style_id
 from app.utils.trace_logger import write_trace, new_trace_id, image_hash, write_feedback, FEEDBACK_ACTIONS
 
 router = APIRouter()
@@ -112,31 +112,25 @@ async def generate_renovation_image(
 
             if llm_result.get("code") == 0:
                 llm_analysis = llm_result.get("data", {})
-                # v3: 用 LLM 分析结果 + 压缩关键词构建指令式 prompt
-                prompt = build_prompt_v3(style, room_type, llm_analysis, custom_prompt)
+                prompt = build_prompt_v2(style, room_type, llm_analysis, custom_prompt)
                 vision_analysis_ok = llm_analysis.get("vision_used")
                 vision_analysis = llm_analysis.get("analysis") or {}
                 prompt_source = "llm_vision" if vision_analysis_ok else "blind_deepseek"
                 print(f"[LLM] 智能提示词生成成功")
             else:
                 print(f"[LLM] 分析失败: {llm_result.get('message')}, 使用静态提示词")
-                prompt = build_prompt_v3(style, room_type, custom_prompt=custom_prompt)
+                prompt = build_prompt_v2(style, room_type, custom_prompt=custom_prompt)
                 vision_analysis_ok = False
                 prompt_source = "static_on_error"
         except Exception as e:
             print(f"[LLM] 异常: {str(e)}, 使用静态提示词")
-            prompt = build_prompt_v3(style, room_type, custom_prompt=custom_prompt)
+            prompt = build_prompt_v2(style, room_type, custom_prompt=custom_prompt)
             vision_analysis_ok = False
             prompt_source = "static_on_error"
         finally:
             _vision_ms = int((time.perf_counter() - _t_vision) * 1000)
     else:
-        prompt = build_prompt_v3(style, room_type, custom_prompt=custom_prompt)
-
-    print(f"[PROMPT] source={prompt_source}, length={len(prompt)} chars", flush=True)
-    for section in prompt.split('\n\n'):
-        if section.strip():
-            print(f"[PROMPT]   {section[:120]}...", flush=True)
+        prompt = build_prompt_v2(style, room_type, custom_prompt=custom_prompt)
 
     # 4. 映射宽高比
     # P0 修复（2026-07-10，评测批量归因坐实，见 evals/PRODUCT_CONTRACT.md P0）：
