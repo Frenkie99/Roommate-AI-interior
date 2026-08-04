@@ -4,6 +4,7 @@
 """
 
 import json
+import traceback
 from typing import Optional
 
 from fastapi import APIRouter, File, Form, UploadFile
@@ -64,41 +65,61 @@ async def agent_chat(
         if not upload_image:
             return {"error": "missing_upload_image"}
 
-        response = await generate_renovation_image(
-            image=upload_image,
-            style=context.get("style") or "aman_style",
-            room_type=context.get("room_type"),
-            custom_prompt=prompt,
-            aspect_ratio="auto",
-            image_size="1K",
-        )
-        body = _json_response_data(response)
-        if body.get("code") != 0:
-            return {"error": body.get("message") or "generate_failed"}
-        return body.get("data") or {}
+        try:
+            response = await generate_renovation_image(
+                image=upload_image,
+                style=context.get("style") or "aman_style",
+                room_type=context.get("room_type"),
+                custom_prompt=prompt,
+                aspect_ratio="auto",
+                image_size="1K",
+            )
+            body = _json_response_data(response)
+            if body.get("code") != 0:
+                return {"error": body.get("message") or "generate_failed"}
+            return body.get("data") or {}
+        except Exception as e:
+            print(f"[AGENT] generate_tool exception: {e}")
+            traceback.print_exc()
+            return {"error": f"generate_tool crashed: {e}"}
 
     async def refine_tool(prompt: str, context: dict) -> dict:
         if not current_image or not mask_base64:
             return {"error": "missing_refine_inputs"}
 
-        response = await inpaint_region(
-            image=current_image,
-            mask_base64=mask_base64,
-            prompt=prompt,
-            negative_prompt=None,
-            strength=0.85,
-        )
-        body = _json_response_data(response)
-        if body.get("code") != 0:
-            return {"error": body.get("message") or "refine_failed"}
-        return body.get("data") or {}
+        try:
+            response = await inpaint_region(
+                image=current_image,
+                mask_base64=mask_base64,
+                prompt=prompt,
+                negative_prompt=None,
+                strength=0.85,
+            )
+            body = _json_response_data(response)
+            if body.get("code") != 0:
+                return {"error": body.get("message") or "refine_failed"}
+            return body.get("data") or {}
+        except Exception as e:
+            print(f"[AGENT] refine_tool exception: {e}")
+            traceback.print_exc()
+            return {"error": f"refine_tool crashed: {e}"}
 
     agent = DesignAgent(
         knowledge_tool=knowledge_tool,
         generate_tool=generate_tool,
         refine_tool=refine_tool,
     )
-    result = await agent.handle_chat(message=message, context=context_data, history=history_data)
+
+    try:
+        result = await agent.handle_chat(message=message, context=context_data, history=history_data)
+    except Exception as e:
+        print(f"[AGENT] handle_chat exception: {e}")
+        traceback.print_exc()
+        return JSONResponse({
+            "code": -1,
+            "message": f"Agent error: {e}",
+            "data": {"action": "error", "assistant_message": f"处理失败：{e}。请重试。"},
+        }, status_code=500)
 
     return JSONResponse({
         "code": 0,
