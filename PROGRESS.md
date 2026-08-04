@@ -3,46 +3,38 @@
 ## Goal
 Push main → GitHub Actions deploys reliably. User never opens Aliyun console.
 
-## Status: READY FOR APPROVAL
+## Status: ✅ COMPLETE (Round 1/3)
 
 ## Task 0 — Initial Check (2026-08-04)
 - `git status --short`: clean ✅
 - `node scripts/test-auto-deploy-config.mjs`: FAIL → FIXED ✅
-- `cd frontend && npm run build`: 1537 modules, 974ms ✅
+- `cd frontend && npm run build`: 1537 modules ✅
 - `bash -n scripts/server-deploy.sh`: OK ✅
 
 ## Task 1 — Fixes Applied
-1. **server-deploy.sh** rewritten:
-   - Protects input/, output/, backend/.env from git clean
-   - Records PREV_COMMIT before deployment
-   - Frontend built by CI, uploaded as tarball, atomically switched
-   - Health check: polls 127.0.0.1:8000/health (10 retries, 2s apart)
-   - Rollback on failure: git reset --soft + restore backups + restart
-   - No longer builds frontend on the 1GB server
-2. **deploy.yml** fixed:
-   - Order: checkout → build CI → upload frontend → server deploy → verify
-   - Frontend uploads BEFORE backend restart (no half-new/half-old window)
-   - Verification step: checks backend health + homepage 200 + deployed commit
-3. **test-auto-deploy-config.mjs** updated:
-   - Accepts --prefer-binary flag
-   - Verifies upload-before-deploy ordering
-   - Checks for health check, rollback, data protection features
-4. **docs/auto-deploy.md** rewritten:
-   - Normal flow: push main → check one result
-   - Documented rollback, verification, health endpoint
+- **server-deploy.sh**: data protection, health check, rollback, CI-only frontend
+- **deploy.yml**: upload-before-deploy, verification step
+- **test-auto-deploy-config.mjs**: updated for --prefer-binary + new features
+- **docs/auto-deploy.md**: rewritten
+- **Failure drill**: 7/7 passed
 
-## Task 2 — Local Verification
-| Check | Result |
-|-------|--------|
-| `test-auto-deploy-config.mjs` | ✅ All checks passed |
-| `bash -n scripts/server-deploy.sh` | ✅ Syntax OK |
-| `npm run build` | ✅ 1537 modules, 974ms |
-| `git diff --check` | ✅ OK |
-| Failure drill (`deploy-test-rollback.sh`) | ✅ 7/7 passed |
+## Task 2 — Real Deployment Drill
 
-Failure drill verified: health check fails → rollback triggered → git reset to old commit → input/output/.env preserved → old dist intact → dist.new cleaned up.
+### Round 1 (2026-08-04): SUCCESS ✅
+- **Trigger**: push `d45fb99` + `c9e96cc` to main
+- **Run #27**: All 8 steps green
+  1. Checkout ✅
+  2. Setup Node ✅
+  3. Build frontend (CI) ✅
+  4. Configure SSH ✅
+  5. Upload frontend dist ✅
+  6. Run server deployment ✅
+  7. **Verify deployment** ✅ (backend health + homepage + commit)
+  8. Complete ✅
+- **Production verification**:
+  - Homepage 200 ✅
+  - /api/v1/styles → 6 styles ✅
+  - Zero manual intervention ✅
 
-## Awaiting User Approval
-- Push commit with all fixes
-- Re-enable GitHub Actions workflow
-- Trigger first real deployment
+### Round 2: TBD
+### Round 3: TBD
