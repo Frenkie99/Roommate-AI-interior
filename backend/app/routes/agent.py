@@ -73,6 +73,7 @@ async def agent_chat(
                 custom_prompt=prompt,
                 aspect_ratio="auto",
                 image_size="1K",
+                session_id=None,
             )
             body = _json_response_data(response)
             if body.get("code") != 0:
