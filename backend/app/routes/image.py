@@ -133,10 +133,10 @@ async def generate_renovation_image(
     else:
         prompt = build_prompt_v3(style, room_type, custom_prompt=custom_prompt)
 
-    print(f"[PROMPT] source={prompt_source}, length={len(prompt)} chars")
+    print(f"[PROMPT] source={prompt_source}, length={len(prompt)} chars", flush=True)
     for section in prompt.split('\n\n'):
         if section.strip():
-            print(f"[PROMPT]   {section[:120]}...")
+            print(f"[PROMPT]   {section[:120]}...", flush=True)
 
     # 4. 映射宽高比
     # P0 修复（2026-07-10，评测批量归因坐实，见 evals/PRODUCT_CONTRACT.md P0）：
