@@ -31,16 +31,14 @@ def _load_inpaint_providers() -> List[Tuple[str, str, str]]:
     """
     providers = []
 
-    # Custom providers from env vars
-    i = 1
-    while True:
+    # Custom providers from env vars (gaps allowed)
+    for i in range(1, 11):
         url = os.getenv(f"CUSTOM_API_{i}_URL")
         key = os.getenv(f"CUSTOM_API_{i}_KEY")
         if not url or not key:
-            break
+            continue
         name = os.getenv(f"CUSTOM_API_{i}_NAME", f"custom_{i}")
         providers.append((name, url.rstrip("/"), key))
-        i += 1
 
     # API易 as fallback
     apiyi_key = os.getenv("APIYI_KEY") or os.getenv("LLM_APIYI_KEY")

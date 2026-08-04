@@ -24,14 +24,12 @@ class LLMModel(str, Enum):
 def _get_llm_providers() -> List[Dict[str, str]]:
     """Load LLM providers: custom first, API易 last."""
     providers = []
-    i = 1
-    while True:
+    for i in range(1, 11):
         url = os.getenv(f"CUSTOM_API_{i}_URL")
         key = os.getenv(f"CUSTOM_API_{i}_KEY")
         if not url or not key:
-            break
+            continue
         providers.append({"name": os.getenv(f"CUSTOM_API_{i}_NAME", f"custom_{i}"), "url": url.rstrip("/"), "key": key})
-        i += 1
     # API易 as last resort
     apiyi_key = os.getenv("CHAT_APIYI_KEY") or os.getenv("LLM_APIYI_KEY")
     if apiyi_key:

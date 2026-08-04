@@ -459,18 +459,16 @@ class CustomGeminiProvider:
 def _load_custom_providers() -> List[CustomGeminiProvider]:
     """Load custom Gemini providers from CUSTOM_API_* env vars"""
     providers = []
-    i = 1
-    while True:
+    for i in range(1, 11):  # support up to 10 custom providers, gaps allowed
         url = os.getenv(f"CUSTOM_API_{i}_URL")
         key = os.getenv(f"CUSTOM_API_{i}_KEY")
         if not url or not key:
-            break
+            continue  # skip gaps, don't break
         name = os.getenv(f"CUSTOM_API_{i}_NAME", f"custom_{i}")
         models_str = os.getenv(f"CUSTOM_API_{i}_MODELS", "gemini-2.5-flash-image")
         models = [m.strip() for m in models_str.split(",") if m.strip()]
         providers.append(CustomGeminiProvider(name, url, key, models))
         logger.info(f"[Providers] loaded custom provider '{name}': {url} ({len(models)} models)")
-        i += 1
     return providers
 
 
