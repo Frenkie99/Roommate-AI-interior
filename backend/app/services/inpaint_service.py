@@ -1,17 +1,20 @@
 """
 Inpainting 局部替换服务
-使用 API易平台 进行局部图像编辑
+多供应商 fallback: 自定义平台 → API易
 """
 
 import asyncio
 import base64
 import io
 import os
-from typing import Optional
+import logging
+from typing import Optional, List, Tuple
 
 import httpx
 import numpy as np
 from PIL import Image
+
+logger = logging.getLogger(__name__)
 
 
 def _aspect_ratio_for_size(width: int, height: int) -> str:
@@ -21,35 +24,121 @@ def _aspect_ratio_for_size(width: int, height: int) -> str:
     return min(candidates.items(), key=lambda kv: abs(kv[1] - ratio))[0]
 
 
+def _load_inpaint_providers() -> List[Tuple[str, str, str]]:
+    """
+    Load inpaint providers in priority order.
+    Returns list of (name, base_url, api_key).
+    """
+    providers = []
+
+    # Custom providers from env vars
+    i = 1
+    while True:
+        url = os.getenv(f"CUSTOM_API_{i}_URL")
+        key = os.getenv(f"CUSTOM_API_{i}_KEY")
+        if not url or not key:
+            break
+        name = os.getenv(f"CUSTOM_API_{i}_NAME", f"custom_{i}")
+        providers.append((name, url.rstrip("/"), key))
+        i += 1
+
+    # API易 as fallback
+    apiyi_key = os.getenv("APIYI_KEY") or os.getenv("LLM_APIYI_KEY")
+    if apiyi_key:
+        providers.append(("apiyi", "https://api.apiyi.com", apiyi_key))
+
+    return providers
+
+
 class InpaintService:
-    """
-    Inpainting 服务
-    通过 API易平台 Gemini 模型实现局部替换
-    """
+    """Inpainting 服务 — 多供应商自动降级"""
 
     def __init__(self):
-        self.api_key = os.getenv("APIYI_KEY") or os.getenv("LLM_APIYI_KEY")
-        self.api_url = "https://api.apiyi.com"
         self.model = "gemini-3-pro-image-preview"
         self.client = httpx.AsyncClient(timeout=300.0)
 
     async def close(self):
-        """关闭客户端连接"""
         await self.client.aclose()
 
     def _image_to_base64(self, image: Image.Image, format: str = "PNG") -> str:
-        """将 PIL Image 转换为 base64 字符串"""
         buffer = io.BytesIO()
         image.save(buffer, format=format)
         return base64.b64encode(buffer.getvalue()).decode("utf-8")
 
     def _mask_to_base64(self, mask: np.ndarray) -> str:
-        """将 mask 数组转换为 base64 字符串"""
         mask_array = np.array(mask, dtype=np.uint8)
         if mask_array.max() == 1:
             mask_array = mask_array * 255
         mask_image = Image.fromarray(mask_array, mode="L")
         return self._image_to_base64(mask_image)
+
+    async def _try_inpaint(
+        self,
+        provider_name: str,
+        base_url: str,
+        api_key: str,
+        image: Image.Image,
+        mask: np.ndarray,
+        prompt: str,
+        edit_prompt: str,
+        aspect_ratio: str,
+    ) -> Image.Image:
+        """Try inpaint with a specific provider. Raises on failure."""
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        }
+        api_url = f"{base_url}/v1beta/models/{self.model}:generateContent"
+
+        image_b64 = self._image_to_base64(image, "JPEG")
+        mask_b64 = self._mask_to_base64(mask)
+
+        payload = {
+            "contents": [{
+                "parts": [
+                    {"inlineData": {"mimeType": "image/jpeg", "data": image_b64}},
+                    {"inlineData": {"mimeType": "image/png", "data": mask_b64}},
+                    {"text": edit_prompt},
+                ]
+            }],
+            "generationConfig": {
+                "responseModalities": ["IMAGE"],
+                "imageConfig": {
+                    "aspectRatio": aspect_ratio,
+                    "imageSize": "1K",
+                },
+            },
+        }
+
+        for attempt in range(3):
+            try:
+                response = await self.client.post(api_url, headers=headers, json=payload)
+
+                if response.status_code == 200:
+                    result = response.json()
+                    candidates = result.get("candidates", [])
+                    if candidates:
+                        parts = candidates[0].get("content", {}).get("parts", [])
+                        for part in parts:
+                            if "inlineData" in part:
+                                img_data = part["inlineData"].get("data", "")
+                                if img_data:
+                                    logger.info(f"[Inpaint] {provider_name} success")
+                                    return Image.open(io.BytesIO(base64.b64decode(img_data)))
+                    raise Exception("API returned no image data")
+
+                if response.status_code >= 500 and attempt < 2:
+                    await asyncio.sleep(2 * (attempt + 1))
+                    continue
+
+                raise Exception(f"HTTP {response.status_code}: {response.text[:200]}")
+            except Exception as e:
+                if attempt < 2:
+                    await asyncio.sleep(2 * (attempt + 1))
+                    continue
+                raise
+
+        raise Exception(f"{provider_name} inpaint failed after 3 retries")
 
     async def inpaint(
         self,
@@ -59,17 +148,9 @@ class InpaintService:
         negative_prompt: Optional[str] = None,
         strength: float = 0.85,
     ) -> Image.Image:
-        """
-        执行局部替换：发送原图 + mask 两张图，mask 作为位置参考。
-        """
-        if not self.api_key:
-            raise Exception("APIYI_KEY 或 LLM_APIYI_KEY 未配置")
-
+        """局部替换 — 多供应商自动降级"""
         if image.mode != "RGB":
             image = image.convert("RGB")
-
-        image_b64 = self._image_to_base64(image, "JPEG")
-        mask_b64 = self._mask_to_base64(mask)
 
         edit_prompt = f"""I'm providing two images:
 1. First image: An interior design photo
@@ -85,68 +166,25 @@ Important requirements:
 
 Generate a new interior design image with the masked area replaced."""
 
-        payload = {
-            "contents": [{
-                "parts": [
-                    {
-                        "inlineData": {
-                            "mimeType": "image/jpeg",
-                            "data": image_b64,
-                        }
-                    },
-                    {
-                        "inlineData": {
-                            "mimeType": "image/png",
-                            "data": mask_b64,
-                        }
-                    },
-                    {"text": edit_prompt},
-                ]
-            }],
-            "generationConfig": {
-                "responseModalities": ["IMAGE"],
-                "imageConfig": {
-                    "aspectRatio": _aspect_ratio_for_size(image.size[0], image.size[1]),
-                    "imageSize": "1K",
-                },
-            },
-        }
+        aspect_ratio = _aspect_ratio_for_size(image.size[0], image.size[1])
+        providers = _load_inpaint_providers()
 
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json",
-        }
-        api_url = f"{self.api_url}/v1beta/models/{self.model}:generateContent"
+        if not providers:
+            raise Exception("No API key configured for inpaint (check CUSTOM_API_*_KEY or APIYI_KEY/LLM_APIYI_KEY)")
 
-        max_retries = 3
-        for attempt in range(max_retries):
+        last_error = None
+        for name, url, key in providers:
+            logger.info(f"[Inpaint] trying provider '{name}'...")
             try:
-                response = await self.client.post(api_url, headers=headers, json=payload)
+                result = await self._try_inpaint(name, url, key, image, mask, prompt, edit_prompt, aspect_ratio)
+                logger.info(f"[Inpaint] ✅ {name} success")
+                return result
+            except Exception as e:
+                logger.warning(f"[Inpaint] ❌ {name} failed: {e}")
+                last_error = e
+                continue
 
-                if response.status_code == 200:
-                    result = response.json()
-                    candidates = result.get("candidates", [])
-                    if candidates:
-                        parts = candidates[0].get("content", {}).get("parts", [])
-                        for part in parts:
-                            if "inlineData" in part:
-                                img_data = part["inlineData"].get("data", "")
-                                if img_data:
-                                    return Image.open(io.BytesIO(base64.b64decode(img_data)))
-                    raise Exception("API 返回中未找到图片")
-
-                if response.status_code >= 500 and attempt < max_retries - 1:
-                    await asyncio.sleep(2 * (attempt + 1))
-                    continue
-
-                raise Exception(f"API 错误: {response.status_code} - {response.text}")
-            except Exception:
-                if attempt < max_retries - 1:
-                    await asyncio.sleep(2 * (attempt + 1))
-                    continue
-                raise
-
-        raise Exception("局部替换失败")
+        raise last_error or Exception("All inpaint providers failed")
 
     async def replace_furniture(
         self,
