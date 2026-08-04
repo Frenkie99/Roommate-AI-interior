@@ -132,7 +132,12 @@ async def generate_renovation_image(
             _vision_ms = int((time.perf_counter() - _t_vision) * 1000)
     else:
         prompt = build_prompt_v3(style, room_type, custom_prompt=custom_prompt)
-    
+
+    print(f"[PROMPT] source={prompt_source}, length={len(prompt)} chars")
+    for section in prompt.split('\n\n'):
+        if section.strip():
+            print(f"[PROMPT]   {section[:120]}...")
+
     # 4. 映射宽高比
     # P0 修复（2026-07-10，评测批量归因坐实，见 evals/PRODUCT_CONTRACT.md P0）：
     # "auto" 曾硬编码 "4:3"——手机竖拍毛坯被强转横图，模型被迫横向虚构空间（"盲目扩图"的机械成因）。
