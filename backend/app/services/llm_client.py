@@ -260,7 +260,10 @@ IMPORTANT: Output a single valid JSON object only."""
                     raise ValueError("无法在响应中找到有效的 JSON 块")
 
             analysis_data = json.loads(json_str)
-            
+            print(f"[LLM] analysis_data keys: {list(analysis_data.keys())}")
+            print(f"[LLM] room_analysis: {json.dumps(analysis_data.get('room_analysis', {}), ensure_ascii=False)[:200]}")
+            print(f"[LLM] design_recommendations: {json.dumps(analysis_data.get('design_recommendations', {}), ensure_ascii=False)[:200]}")
+
             # 使用 build_prompt_v3 构建指令式提示词
             enhanced_prompt = build_prompt_v3(
                 style=style,
