@@ -22,7 +22,7 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Build frontend (in CI runner, not on the 1GB server)
+      - name: Build frontend (CI runner, not the 1GB server)
         working-directory: frontend
         run: |
           npm ci
@@ -46,6 +46,27 @@ jobs:
           port="${ALIYUN_PORT:-22}"
           ssh-keyscan -p "$port" -H "$ALIYUN_HOST" >> ~/.ssh/known_hosts
 
+      - name: Upload frontend dist to server
+        env:
+          ALIYUN_HOST: ${{ secrets.ALIYUN_HOST }}
+          ALIYUN_USER: ${{ secrets.ALIYUN_USER }}
+          ALIYUN_PORT: ${{ secrets.ALIYUN_PORT }}
+        run: |
+          set -Eeuo pipefail
+          user="${ALIYUN_USER:-admin}"
+          port="${ALIYUN_PORT:-22}"
+
+          tar -C frontend/dist -czf - . | \
+            ssh -i ~/.ssh/aliyun_deploy_key \
+              -p "$port" \
+              -o BatchMode=yes \
+              -o StrictHostKeyChecking=yes \
+              -o ServerAliveInterval=30 \
+              "$user@$ALIYUN_HOST" \
+              "cat > /tmp/frontend-dist.tar.gz"
+
+          echo "Frontend dist uploaded to server"
+
       - name: Run server deployment
         env:
           ALIYUN_HOST: ${{ secrets.ALIYUN_HOST }}
@@ -61,6 +82,7 @@ jobs:
           app_dir="${ALIYUN_APP_DIR:-/var/www/roommate}"
           backend_service="${ALIYUN_BACKEND_SERVICE:-roommate-backend.service}"
 
+          echo "=== Deploying ==="
           ssh -i ~/.ssh/aliyun_deploy_key \
             -p "$port" \
             -o BatchMode=yes \
@@ -68,10 +90,10 @@ jobs:
             -o ServerAliveInterval=30 \
             -o ServerAliveCountMax=120 \
             "$user@$ALIYUN_HOST" \
-            "APP_DIR='$app_dir' BRANCH='main' BACKEND_SERVICE='$backend_service' SKIP_FRONTEND_BUILD=1 bash -s" \
+            "APP_DIR='$app_dir' BRANCH='main' BACKEND_SERVICE='$backend_service' bash -s" \
             < scripts/server-deploy.sh
 
-      - name: Upload built frontend to server
+      - name: Verify deployment
         env:
           ALIYUN_HOST: ${{ secrets.ALIYUN_HOST }}
           ALIYUN_USER: ${{ secrets.ALIYUN_USER }}
@@ -82,6 +104,40 @@ jobs:
           user="${ALIYUN_USER:-admin}"
           port="${ALIYUN_PORT:-22}"
           app_dir="${ALIYUN_APP_DIR:-/var/www/roommate}"
-          # 原子化替换 dist：先解压到 dist.new，再用 mv 瞬间切换，
-          # 避免 "rm -rf dist 后、解压未完成" 的几秒内静态资源 404。
-          tar -C frontend/dist -czf - . | ssh -i ~/.ssh/aliyun_deploy_key -p "$port" -o BatchMode=yes -o StrictHostKeyChecking=yes "$user@$ALIYUN_HOST" "set -e; rm -rf '$app_dir/frontend/dist.new' '$app_dir/frontend/dist.old'; mkdir -p '$app_dir/frontend/dist.new'; tar -C '$app_dir/frontend/dist.new' -xzf -; [ -d '$app_dir/frontend/dist' ] && mv '$app_dir/frontend/dist' '$app_dir/frontend/dist.old'; mv '$app_dir/frontend/dist.new' '$app_dir/frontend/dist'; rm -rf '$app_dir/frontend/dist.old'"
+
+          echo "=== Verifying deployment ==="
+
+          # Check backend health
+          backend_ok=false
+          ssh -i ~/.ssh/aliyun_deploy_key \
+            -p "$port" \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            "$user@$ALIYUN_HOST" \
+            "curl -sf --connect-timeout 5 http://127.0.0.1:8000/health" && backend_ok=true || true
+
+          # Check homepage
+          homepage_ok=false
+          curl -sf --connect-timeout 10 "https://roommate-ai.cn" >/dev/null && homepage_ok=true || true
+
+          # Check deployed commit
+          deployed_commit="unknown"
+          deployed_commit="$(ssh -i ~/.ssh/aliyun_deploy_key \
+            -p "$port" -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            "$user@$ALIYUN_HOST" \
+            "cat ${app_dir}/.deployed-commit 2>/dev/null || echo 'unknown'")" || true
+
+          echo "Backend health: $backend_ok"
+          echo "Homepage 200: $homepage_ok"
+          echo "Deployed commit: $deployed_commit"
+
+          if [ "$backend_ok" != "true" ]; then
+            echo "::error::Backend health check failed"
+            exit 1
+          fi
+          if [ "$homepage_ok" != "true" ]; then
+            echo "::error::Homepage check failed"
+            exit 1
+          fi
+
+          echo "=== Deployment verified ==="
