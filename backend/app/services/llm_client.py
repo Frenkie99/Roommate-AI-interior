@@ -286,7 +286,6 @@ IMPORTANT: Output a single valid JSON object only."""
             
         except json.JSONDecodeError as e:
             # JSON 解析失败，使用 v3 指令式提示词作为备用
-            from app.utils.prompt_builder import build_prompt_v3
             fallback_prompt = build_prompt_v3(style, room_type, custom_prompt=custom_prompt)
             
             return {
