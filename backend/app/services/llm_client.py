@@ -10,7 +10,12 @@ from typing import Optional, Dict, Any, List
 from enum import Enum
 import json
 
-from app.utils.prompt_builder import GLOBAL_STRUCTURE_CONSTRAINTS, STYLE_PROMPTS, build_prompt_v2
+from app.utils.prompt_builder import (
+    GLOBAL_STRUCTURE_CONSTRAINTS,
+    STYLE_PROMPTS,
+    build_prompt_v2,
+    normalize_llm_analysis,
+)
 
 
 class LLMModel(str, Enum):
@@ -259,10 +264,16 @@ IMPORTANT: Output a single valid JSON object only."""
                 if not json_str:
                     raise ValueError("无法在响应中找到有效的 JSON 块")
 
-            analysis_data = json.loads(json_str)
-            print(f"[LLM] analysis_data keys: {list(analysis_data.keys())}")
-            print(f"[LLM] room_analysis: {json.dumps(analysis_data.get('room_analysis', {}), ensure_ascii=False)[:200]}")
-            print(f"[LLM] design_recommendations: {json.dumps(analysis_data.get('design_recommendations', {}), ensure_ascii=False)[:200]}")
+            raw_analysis = json.loads(json_str)
+            analysis_data, analysis_valid = normalize_llm_analysis(raw_analysis)
+            if not analysis_valid:
+                raise ValueError("LLM 分析缺少有效的空间分析字段")
+
+            print(
+                "[LLM] analysis_valid=true "
+                f"room_fields={list(analysis_data['room_analysis'].keys())} "
+                f"design_fields={list(analysis_data['design_recommendations'].keys())}"
+            )
 
             # 使用 build_prompt_v2 构建最终提示词
             enhanced_prompt = build_prompt_v2(
@@ -278,6 +289,8 @@ IMPORTANT: Output a single valid JSON object only."""
                 "message": "LLM 分析成功",
                 "data": {
                     "analysis": analysis_data,
+                    "analysis_valid": True,
+                    "fallback_reason": "",
                     "enhanced_prompt": enhanced_prompt,
                     "original_style": style,
                     "room_type": room_type,
@@ -285,15 +298,23 @@ IMPORTANT: Output a single valid JSON object only."""
                 }
             }
             
-        except json.JSONDecodeError as e:
-            # JSON 解析失败，使用静态提示词作为备用
+        except (json.JSONDecodeError, TypeError, ValueError) as e:
+            # JSON 解析或结构校验失败，使用静态提示词作为备用
             fallback_prompt = build_prompt_v2(style, room_type, custom_prompt=custom_prompt)
+            fallback_reason = (
+                "json_parse_error"
+                if isinstance(e, json.JSONDecodeError)
+                else "invalid_analysis_structure"
+            )
+            print(f"[LLM] analysis_valid=false fallback_reason={fallback_reason}")
             
             return {
                 "code": 0,
-                "message": "LLM 分析成功（JSON解析失败，使用静态提示词）",
+                "message": "LLM 响应不可用，已使用静态提示词",
                 "data": {
                     "analysis": {"raw_response": content[:500]},
+                    "analysis_valid": False,
+                    "fallback_reason": fallback_reason,
                     "enhanced_prompt": fallback_prompt,
                     "original_style": style,
                     "room_type": room_type,

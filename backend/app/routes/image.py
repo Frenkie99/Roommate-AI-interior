@@ -18,7 +18,15 @@ from app.services.getgoapi_client import getgoapi_client, GetGoModel, AspectRati
 from app.services.inpaint_service import _aspect_ratio_for_size
 from app.services.llm_client import llm_client, LLMModel
 from app.services.image_processor import image_processor
-from app.utils.prompt_builder import build_prompt, build_prompt_v2, STYLE_PROMPTS, ROOM_TYPE_PROMPTS, resolve_style_id
+from app.utils.prompt_builder import (
+    build_prompt,
+    build_prompt_v2,
+    llm_analysis_has_prompt_context,
+    normalize_llm_analysis,
+    STYLE_PROMPTS,
+    ROOM_TYPE_PROMPTS,
+    resolve_style_id,
+)
 from app.utils.trace_logger import write_trace, new_trace_id, image_hash, write_feedback, FEEDBACK_ACTIONS
 
 router = APIRouter()
@@ -97,6 +105,9 @@ async def generate_renovation_image(
     vision_analysis_ok = None  # trace 埋点：None=未走LLM / True=视觉成功 / False=静默降级到盲DeepSeek
     vision_analysis = {}       # trace 埋点：AI 对房间的原始理解（白盒中间产物，出问题先看这里）
     prompt_source = "static"   # trace 埋点：enhanced_prompt 走了哪条路径
+    analysis_valid = None      # None=未走 LLM / True=结构有效 / False=解析或结构无效
+    prompt_context_applied = False
+    llm_fallback_reason = ""
     _vision_ms = None          # trace 埋点：视觉分析阶段耗时
 
     if use_llm:
@@ -111,21 +122,66 @@ async def generate_renovation_image(
             )
 
             if llm_result.get("code") == 0:
-                llm_analysis = llm_result.get("data", {})
-                prompt = build_prompt_v2(style, room_type, llm_analysis, custom_prompt)
-                vision_analysis_ok = llm_analysis.get("vision_used")
-                vision_analysis = llm_analysis.get("analysis") or {}
-                prompt_source = "llm_vision" if vision_analysis_ok else "blind_deepseek"
-                print(f"[LLM] 智能提示词生成成功")
+                llm_analysis = llm_result.get("data")
+                if not isinstance(llm_analysis, dict):
+                    llm_analysis = {}
+
+                normalized_analysis, inferred_valid = normalize_llm_analysis(
+                    llm_analysis.get("analysis")
+                )
+                declared_valid = llm_analysis.get("analysis_valid")
+                analysis_valid = inferred_valid and (
+                    declared_valid is None or declared_valid is True
+                )
+                llm_fallback_reason = str(
+                    llm_analysis.get("fallback_reason") or ""
+                )
+
+                if analysis_valid:
+                    prompt = build_prompt_v2(
+                        style,
+                        room_type,
+                        normalized_analysis,
+                        custom_prompt,
+                    )
+                    vision_analysis = normalized_analysis
+                    prompt_context_applied = llm_analysis_has_prompt_context(
+                        normalized_analysis
+                    )
+                    vision_used = bool(llm_analysis.get("vision_used"))
+                    vision_analysis_ok = vision_used
+                    prompt_source = (
+                        "llm_vision" if vision_used else "blind_deepseek"
+                    )
+                    print(
+                        "[LLM] 智能提示词生成成功 "
+                        f"context_applied={prompt_context_applied}"
+                    )
+                else:
+                    prompt = build_prompt_v2(
+                        style,
+                        room_type,
+                        custom_prompt=custom_prompt,
+                    )
+                    vision_analysis_ok = False
+                    prompt_source = "static_on_error"
+                    print(
+                        "[LLM] 分析结果无效，使用静态提示词 "
+                        f"fallback_reason={llm_fallback_reason or 'invalid_analysis'}"
+                    )
             else:
                 print(f"[LLM] 分析失败: {llm_result.get('message')}, 使用静态提示词")
                 prompt = build_prompt_v2(style, room_type, custom_prompt=custom_prompt)
                 vision_analysis_ok = False
+                analysis_valid = False
+                llm_fallback_reason = "llm_request_error"
                 prompt_source = "static_on_error"
         except Exception as e:
             print(f"[LLM] 异常: {str(e)}, 使用静态提示词")
             prompt = build_prompt_v2(style, room_type, custom_prompt=custom_prompt)
             vision_analysis_ok = False
+            analysis_valid = False
+            llm_fallback_reason = "route_exception"
             prompt_source = "static_on_error"
         finally:
             _vision_ms = int((time.perf_counter() - _t_vision) * 1000)
@@ -234,7 +290,12 @@ async def generate_renovation_image(
         "success": True,
         "error": "",
         # P0 修复留痕：auto 实际映射到的画幅（验证自适应是否生效）
-        "metadata": {"aspect_ratio_mapped": mapped_ratio},
+        "metadata": {
+            "aspect_ratio_mapped": mapped_ratio,
+            "analysis_valid": analysis_valid,
+            "prompt_context_applied": prompt_context_applied,
+            "llm_fallback_reason": llm_fallback_reason,
+        },
     })
 
     return JSONResponse({

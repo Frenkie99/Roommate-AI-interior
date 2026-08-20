@@ -48,6 +48,7 @@ frontend/just for reference/
 # 项目根目录临时脚本和测试文件
 check_*.py
 test_*.py
+!backend/tests/test_prompt_pipeline.py
 test_*.png
 test_*.jpg
 fix_*.py

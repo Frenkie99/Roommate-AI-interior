@@ -9,7 +9,7 @@ Prompt 构建工具 - 提示词工程核心模块 v4.0 (API易平台 Gemini 专�
 4. 无需负向提示词 - Gemini 原生不支持 negative prompt
 """
 
-from typing import Optional, Dict, List
+from typing import Any, Optional, Dict, List
 from dataclasses import dataclass
 import json
 from pathlib import Path
@@ -507,6 +507,50 @@ def build_prompt_v2(
         prompt_parts.append(f"## QUALITY: {QUALITY_PROMPTS['realism']}, {QUALITY_PROMPTS['camera']}, {QUALITY_PROMPTS['lighting']}")
     
     return "\n\n".join(prompt_parts)
+
+
+def normalize_llm_analysis(llm_analysis: Any) -> tuple[Dict, bool]:
+    """规范化 LLM 空间分析，避免异常类型进入提示词构建器。
+
+    返回 ``(normalized, is_valid)``。允许 room_analysis 或
+    design_recommendations 只返回其中一部分，但至少需要一个非空字典。
+    未识别的顶层字段会保留，便于兼容后续扩展。
+    """
+    if not isinstance(llm_analysis, dict):
+        return {}, False
+
+    normalized = dict(llm_analysis)
+    has_valid_section = False
+    for key in ("room_analysis", "design_recommendations"):
+        section = llm_analysis.get(key)
+        if isinstance(section, dict):
+            normalized[key] = section
+            has_valid_section = has_valid_section or bool(section)
+        else:
+            normalized[key] = {}
+
+    return normalized, has_valid_section
+
+
+def llm_analysis_has_prompt_context(llm_analysis: Dict) -> bool:
+    """判断 v2 是否会把分析内容真正写入最终提示词。"""
+    room_analysis = llm_analysis.get("room_analysis", {})
+    design_rec = llm_analysis.get("design_recommendations", {})
+
+    room_context = (
+        room_analysis.get("space_description")
+        or room_analysis.get("physical_features")
+    )
+    design_context = any(
+        design_rec.get(key)
+        for key in (
+            "layout_suggestion",
+            "furniture_placement",
+            "color_scheme",
+            "lighting_design",
+        )
+    )
+    return bool(room_context or design_context)
 
 
 def build_prompt_result(
