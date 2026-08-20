@@ -8,6 +8,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { getWelcomeMessage } from './quickPrompts';
 import { parseAgentResponse } from './agentResponse';
 import { addDesignHistory } from '../services/historyService';
+import { useAuth } from '../context/AuthContext';
 
 const API_BASE = '';
 
@@ -59,6 +60,7 @@ export function useChatEngine({
   setSelectedMask,
   setViewMode,
 }) {
+  const { setQuota, openAuth } = useAuth();
   const [chatMessages, setChatMessages] = useState([
     { type: 'ai', text: getWelcomeMessage(false) }
   ]);
@@ -159,6 +161,7 @@ export function useChatEngine({
       const result = await parseAgentResponse(response);
 
       const data = result.data || {};
+      if (data.tool_result?.quota) setQuota(data.tool_result.quota);
       applyAgentStatePatch(data.state_patch);
 
       const generatedImageUrl = data.state_patch?.generated_image;
@@ -185,6 +188,7 @@ export function useChatEngine({
       updateLastAssistantMessage(data.assistant_message || '已处理完成。');
     } catch (error) {
       console.error('Agent chat error:', error);
+      if (/登录|401/.test(error.message)) openAuth();
       updateLastAssistantMessage(`抱歉，处理失败：${error.message}。请重试。`);
       setProgress(0);
       setStatusText('');
@@ -209,6 +213,8 @@ export function useChatEngine({
     setViewMode,
     selectedStyle,
     selectedRoom,
+    setQuota,
+    openAuth,
   ]);
 
   return {

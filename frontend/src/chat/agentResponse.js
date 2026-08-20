@@ -13,7 +13,12 @@ export async function parseAgentResponse(response) {
   }
 
   if (!response.ok || payload.code !== 0) {
-    throw new Error(payload.message || `服务器错误 ${response.status}`);
+    const detail = payload.detail;
+    throw new Error(
+      (typeof detail === 'string' ? detail : detail?.message) ||
+      payload.message ||
+      `服务器错误 ${response.status}`
+    );
   }
 
   return payload;

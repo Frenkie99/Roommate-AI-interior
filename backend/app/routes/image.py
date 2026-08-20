@@ -9,7 +9,7 @@ import time
 import uuid
 import aiofiles
 from datetime import datetime
-from fastapi import APIRouter, File, UploadFile, Form, HTTPException
+from fastapi import APIRouter, Depends, File, UploadFile, Form, HTTPException
 from fastapi.responses import JSONResponse
 from PIL import Image
 from pydantic import BaseModel
@@ -28,6 +28,8 @@ from app.utils.prompt_builder import (
     resolve_style_id,
 )
 from app.utils.trace_logger import write_trace, new_trace_id, image_hash, write_feedback, FEEDBACK_ACTIONS
+from app.routes.auth import require_user, reserve_generation_or_raise
+from app.services.auth_service import AuthUser
 
 router = APIRouter()
 
@@ -48,7 +50,8 @@ async def generate_renovation_image(
     custom_prompt: str = Form(None, description="自定义提示词"),
     aspect_ratio: str = Form("auto", description="输出比例"),
     image_size: str = Form("1K", description="输出大小"),
-    session_id: str = Form(None, description="前端匿名会话id（点评埋点串联用，可选）")
+    session_id: str = Form(None, description="前端匿名会话id（点评埋点串联用，可选）"),
+    current_user: AuthUser = Depends(require_user),
 ):
     """
     生成装修效果图
@@ -74,6 +77,8 @@ async def generate_renovation_image(
             status_code=400,
             detail=f"未知房间类型: {room_type}，可选值: {', '.join(available_room_types)}"
         )
+    if image_size != "1K":
+        raise HTTPException(status_code=400, detail="免费体验仅支持 1K 图片")
 
     # 1. 读取并验证图片
     image_data = await image.read()
@@ -98,6 +103,17 @@ async def generate_renovation_image(
     except Exception as e:
         print(f"[ERROR] 保存输入图片失败: {e}")
         raise HTTPException(status_code=500, detail="保存输入图片失败")
+
+    # 图片已完成本地校验；从这里开始将进入可能计费的 AI 调用链。
+    try:
+        quota = reserve_generation_or_raise(current_user, "/api/v1/generate")
+    except HTTPException:
+        if input_saved:
+            try:
+                os.remove(input_path)
+            except OSError:
+                pass
+        raise
     
     # 3. 使用 LLM 智能分析并生成提示词
     use_llm = os.getenv("USE_LLM_PROMPT", "true").lower() == "true"
@@ -232,7 +248,7 @@ async def generate_renovation_image(
         return JSONResponse({
             "code": -1,
             "message": result.get("msg", "生成失败"),
-            "data": None
+            "data": {"quota": quota}
         }, status_code=500)
     
     data = result.get("data", {})
@@ -249,7 +265,7 @@ async def generate_renovation_image(
         return JSONResponse({
             "code": -1,
             "message": "未获取到生成结果",
-            "data": None
+            "data": {"quota": quota}
         }, status_code=500)
     
     # 7. 保存生成的图片并返回 URL
@@ -311,7 +327,8 @@ async def generate_renovation_image(
             "prompt": prompt,
             "used_model": data.get("used_model", "unknown"),
             "llm_analysis": llm_analysis.get("analysis") if llm_analysis else None,
-            "llm_enabled": use_llm
+            "llm_enabled": use_llm,
+            "quota": quota,
         }
     })
 

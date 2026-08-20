@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
-import { Upload, Zap, Download, Send, MessageSquare, Eye, Wand2 } from 'lucide-react';
+import { Upload, Zap, Download, Send, MessageSquare, Eye, Wand2, Lock } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import Navbar from '../components/Navbar';
 import { useChatEngine } from '../chat/useChatEngine';
 import { IMAGE_PROMPTS, KNOWLEDGE_PROMPTS, REFINE_PROMPTS } from '../chat/quickPrompts';
 import { addDesignHistory } from '../services/historyService';
+import { useAuth } from '../context/AuthContext';
 
 // 房间类型映射 v3.0：精简至7个（2026-07-22）
 const roomTypes = [
@@ -30,6 +31,7 @@ const styles = [
 
 // 后端API地址（生产环境使用相对路径，由Nginx代理）
 const API_BASE = '';
+const API_TIMEOUT_MS = 300000;
 
 // 匿名会话id：持久化在 localStorage，串联同一人多次操作（无任何身份信息）
 const getSessionId = () => {
@@ -52,6 +54,7 @@ const sendFeedback = (traceId, action) => {
 };
 
 export default function PlaygroundPage() {
+  const { user, quota, setQuota, loading: authLoading, openAuth } = useAuth();
   const [selectedRoom, setSelectedRoom] = useState('living_room');
   const [selectedStyle, setSelectedStyle] = useState('aman_style');
   const [progress, setProgress] = useState(0);
@@ -276,6 +279,14 @@ export default function PlaygroundPage() {
   };
 
   const handleGenerate = async () => {
+    if (!user) {
+      openAuth();
+      return;
+    }
+    if (!quota?.remaining || !quota?.global_remaining) {
+      toast.error(quota?.global_remaining === 0 ? '本轮免费体验名额已结束' : '你的免费生图机会已用完');
+      return;
+    }
     if (!uploadedFile) return;
     // 隐式反馈：拿到过结果又重新生成 = 对上一张不满意的信号
     if (lastTraceId && generatedImage) sendFeedback(lastTraceId, 'regenerate');
@@ -307,11 +318,14 @@ export default function PlaygroundPage() {
       const response = await fetch(`${API_BASE}/api/v1/generate`, {
         method: 'POST',
         body: formData,
+        signal: AbortSignal.timeout(API_TIMEOUT_MS),
       });
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || errorData.msg || `服务器错误 ${response.status}`);
+        if (errorData.data?.quota) setQuota(errorData.data.quota);
+        const detail = errorData.detail;
+        throw new Error((typeof detail === 'string' ? detail : detail?.message) || errorData.message || errorData.msg || `服务器错误 ${response.status}`);
       }
       
       const result = await response.json();
@@ -319,6 +333,7 @@ export default function PlaygroundPage() {
       if (result.code !== 0) {
         throw new Error(result.message || result.msg || '生成失败');
       }
+      if (result.data?.quota) setQuota(result.data.quota);
       
       // 后端使用generate_and_wait，直接返回结果
       setProgress(90);
@@ -354,6 +369,26 @@ export default function PlaygroundPage() {
       setIsGenerating(false);
     }
   };
+
+  if (authLoading) {
+    return <div className="min-h-screen bg-ivory"><Navbar /><div className="pt-40 text-center text-charcoal/50">正在确认登录状态…</div></div>;
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-ivory">
+        <Navbar />
+        <main className="flex min-h-screen items-center justify-center px-4 pt-[84px]">
+          <div className="luxury-card max-w-md rounded-2xl p-9 text-center">
+            <Lock className="mx-auto mb-5 h-10 w-10 text-warm-gold" />
+            <h1 className="text-2xl font-semibold text-charcoal">登录后开始设计</h1>
+            <p className="mt-3 text-sm leading-6 text-charcoal/60">免费注册即可获得 3 次生图机会，无需手机号或邮箱。</p>
+            <button onClick={openAuth} className="gold-gradient mt-7 w-full rounded-lg py-3.5 font-medium text-white">注册 / 登录</button>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-ivory">
@@ -462,11 +497,11 @@ export default function PlaygroundPage() {
               {/* Generate Button */}
               <button 
                 onClick={handleGenerate}
-                disabled={!uploadedFile || isGenerating}
+                disabled={!uploadedFile || isGenerating || !quota?.remaining || !quota?.global_remaining}
                 className="w-full gold-gradient text-white py-3 rounded-lg text-sm font-medium tracking-wide hover:opacity-90 transition-opacity shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <Zap className="w-4 h-4" />
-                <span>{isGenerating ? '生成中...' : '生成设计方案'}</span>
+                <span>{isGenerating ? '生成中...' : quota?.remaining ? `生成设计方案 · 剩余 ${quota.remaining} 次` : '体验次数已用完'}</span>
               </button>
             </div>
 

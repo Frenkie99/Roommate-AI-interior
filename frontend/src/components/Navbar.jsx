@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Globe } from 'lucide-react';
-import AuthModal from './AuthModal';
+import { useAuth } from '../context/AuthContext';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [lang, setLang] = useState('zh');
-  const [showAuthModal, setShowAuthModal] = useState(false);
+  const { user, quota, openAuth, logout } = useAuth();
   const location = useLocation();
 
   const toggleLang = () => {
@@ -56,12 +56,16 @@ export default function Navbar() {
 
         {/* Right Actions */}
         <div className="hidden md:flex items-center justify-end gap-5 pr-4 flex-1">
-          <button 
-            onClick={() => setShowAuthModal(true)}
-            className="gold-gradient text-white px-6 py-2.5 rounded-sm text-sm font-medium hover:opacity-90 transition-opacity"
-          >
-            {t.loginSignup}
-          </button>
+          {user ? (
+            <div className="flex items-center gap-3 text-sm">
+              <span className="text-charcoal/70">{user.username} · 剩余 {quota?.remaining ?? 0} 次</span>
+              <button onClick={logout} className="border border-warm-gold/30 px-4 py-2 text-charcoal/70 hover:text-warm-gold">退出</button>
+            </div>
+          ) : (
+            <button onClick={openAuth} className="gold-gradient text-white px-6 py-2.5 rounded-sm text-sm font-medium hover:opacity-90 transition-opacity">
+              {t.loginSignup}
+            </button>
+          )}
           <button 
             onClick={toggleLang}
             className="text-sm font-medium text-charcoal/80 hover:text-warm-gold transition-colors flex items-center gap-1.5 border border-warm-gold/30 px-3 py-2 rounded-sm"
@@ -88,12 +92,16 @@ export default function Navbar() {
             <Link to="/playground" className="block text-charcoal/80 hover:text-warm-gold py-2" onClick={() => setIsOpen(false)}>{t.newDesign}</Link>
             <Link to="/history" className="block text-charcoal/80 hover:text-warm-gold py-2" onClick={() => setIsOpen(false)}>{t.history}</Link>
             <div className="pt-4 border-t border-warm-gold/10 space-y-3">
-              <button
-                onClick={() => setShowAuthModal(true)}
-                className="block w-full gold-gradient text-white text-center py-3 rounded-sm"
-              >
-                {t.loginSignup}
-              </button>
+              {user ? (
+                <div className="space-y-3 text-center text-sm text-charcoal/70">
+                  <p>{user.username} · 剩余 {quota?.remaining ?? 0} 次</p>
+                  <button onClick={logout} className="w-full border border-warm-gold/30 py-3">退出登录</button>
+                </div>
+              ) : (
+                <button onClick={openAuth} className="block w-full gold-gradient text-white text-center py-3 rounded-sm">
+                  {t.loginSignup}
+                </button>
+              )}
               <button
                 onClick={toggleLang}
                 className="w-full flex items-center justify-center gap-1.5 border border-warm-gold/30 text-charcoal/80 py-3 rounded-sm text-sm font-medium"
@@ -106,11 +114,6 @@ export default function Navbar() {
         </div>
       )}
       
-      {/* Auth Modal */}
-      <AuthModal 
-        isOpen={showAuthModal} 
-        onClose={() => setShowAuthModal(false)} 
-      />
     </nav>
   );
 }

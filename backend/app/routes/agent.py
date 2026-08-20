@@ -7,13 +7,15 @@ import json
 import traceback
 from typing import Optional
 
-from fastapi import APIRouter, File, Form, UploadFile
+from fastapi import APIRouter, Depends, File, Form, UploadFile
 from fastapi.responses import JSONResponse
 
 from app.routes.image import generate_renovation_image
 from app.routes.knowledge import KnowledgeQueryRequest, query_knowledge
 from app.routes.segment import inpaint_region
 from app.services.design_agent import DesignAgent
+from app.routes.auth import require_user
+from app.services.auth_service import AuthUser
 
 
 router = APIRouter(prefix="/api/v1/agent", tags=["agent"])
@@ -40,6 +42,7 @@ async def agent_chat(
     upload_image: Optional[UploadFile] = File(None),
     current_image: Optional[UploadFile] = File(None),
     mask_base64: Optional[str] = Form(None),
+    current_user: AuthUser = Depends(require_user),
 ):
     """
     Agent 对话入口。
@@ -74,6 +77,7 @@ async def agent_chat(
                 aspect_ratio="auto",
                 image_size="1K",
                 session_id=None,
+                current_user=current_user,
             )
             body = _json_response_data(response)
             if body.get("code") != 0:
@@ -95,6 +99,7 @@ async def agent_chat(
                 prompt=prompt,
                 negative_prompt=None,
                 strength=0.85,
+                current_user=current_user,
             )
             body = _json_response_data(response)
             if body.get("code") != 0:

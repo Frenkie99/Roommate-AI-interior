@@ -11,13 +11,16 @@ import base64
 import logging
 import httpx
 from typing import List, Optional
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from PIL import Image, ImageFilter, ImageDraw
 import numpy as np
 from scipy import ndimage
 
+from app.routes.auth import require_user, reserve_generation_or_raise
+from app.services.auth_service import AuthUser
+from app.services.inpaint_service import inpaint_service
 from app.services.sam_service import sam3_service, create_rgba_mask, extract_masked_region
 
 logger = logging.getLogger(__name__)
@@ -64,14 +67,17 @@ def create_outline_image(mask: np.ndarray, color=(255, 200, 50), thickness=3) ->
                     pixels[x, y] = (*color, 255)
     
     return outline_img
-from app.services.inpaint_service import inpaint_service
 
 # 图片保存目录
 OUTPUT_DIR = os.getenv("OUTPUT_DIR", "/var/www/roommate/output")
 BASE_URL = os.getenv("BASE_URL", "https://roommate-ai.cn")
 
 
-router = APIRouter(prefix="/api/v1/segment", tags=["Segmentation"])
+router = APIRouter(
+    prefix="/api/v1/segment",
+    tags=["Segmentation"],
+    dependencies=[Depends(require_user)],
+)
 
 
 class PointInput(BaseModel):
@@ -345,7 +351,8 @@ async def inpaint_region(
     mask_base64: str = Form(...),
     prompt: str = Form(...),
     negative_prompt: Optional[str] = Form(None),
-    strength: float = Form(0.85)
+    strength: float = Form(0.85),
+    current_user: AuthUser = Depends(require_user),
 ):
     """
     局部替换 (Inpainting)
@@ -364,6 +371,8 @@ async def inpaint_region(
         mask_data = base64.b64decode(mask_base64)
         mask_image = Image.open(io.BytesIO(mask_data)).convert("L")
         mask_array = np.array(mask_image)
+
+        quota = reserve_generation_or_raise(current_user, "/api/v1/segment/inpaint")
         
         result_image = await inpaint_service.inpaint(
             image=pil_image,
@@ -379,10 +388,13 @@ async def inpaint_region(
             "code": 0,
             "message": "替换成功",
             "data": {
-                "result_image": f"data:image/png;base64,{result_b64}"
+                "result_image": f"data:image/png;base64,{result_b64}",
+                "quota": quota,
             }
         })
         
+    except HTTPException:
+        raise
     except Exception:
         logger.exception("替换失败")
         return JSONResponse({
@@ -397,7 +409,8 @@ async def replace_furniture(
     image: UploadFile = File(...),
     mask_base64: str = Form(...),
     furniture_type: str = Form(...),
-    style: str = Form("modern")
+    style: str = Form("modern"),
+    current_user: AuthUser = Depends(require_user),
 ):
     """
     替换家具
@@ -414,6 +427,8 @@ async def replace_furniture(
         mask_data = base64.b64decode(mask_base64)
         mask_image = Image.open(io.BytesIO(mask_data)).convert("L")
         mask_array = np.array(mask_image)
+
+        quota = reserve_generation_or_raise(current_user, "/api/v1/segment/replace-furniture")
         
         result_image = await inpaint_service.replace_furniture(
             image=pil_image,
@@ -428,10 +443,13 @@ async def replace_furniture(
             "code": 0,
             "message": "家具替换成功",
             "data": {
-                "result_image": f"data:image/png;base64,{result_b64}"
+                "result_image": f"data:image/png;base64,{result_b64}",
+                "quota": quota,
             }
         })
         
+    except HTTPException:
+        raise
     except Exception:
         logger.exception("替换失败")
         return JSONResponse({
@@ -446,7 +464,8 @@ async def replace_decoration(
     image: UploadFile = File(...),
     mask_base64: str = Form(...),
     decoration_type: str = Form(...),
-    description: Optional[str] = Form(None)
+    description: Optional[str] = Form(None),
+    current_user: AuthUser = Depends(require_user),
 ):
     """
     替换装饰物
@@ -463,6 +482,8 @@ async def replace_decoration(
         mask_data = base64.b64decode(mask_base64)
         mask_image = Image.open(io.BytesIO(mask_data)).convert("L")
         mask_array = np.array(mask_image)
+
+        quota = reserve_generation_or_raise(current_user, "/api/v1/segment/replace-decoration")
         
         result_image = await inpaint_service.replace_decoration(
             image=pil_image,
@@ -477,10 +498,13 @@ async def replace_decoration(
             "code": 0,
             "message": "装饰物替换成功",
             "data": {
-                "result_image": f"data:image/png;base64,{result_b64}"
+                "result_image": f"data:image/png;base64,{result_b64}",
+                "quota": quota,
             }
         })
         
+    except HTTPException:
+        raise
     except Exception:
         logger.exception("替换失败")
         return JSONResponse({
