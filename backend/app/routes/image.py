@@ -33,6 +33,9 @@ from app.services.auth_service import AuthUser
 
 router = APIRouter()
 
+# 外部生图供应商的错误可能包含余额、密钥状态或供应商名称，只保留在服务端日志中。
+GENERATION_UNAVAILABLE_MESSAGE = "当前时段的体验额度暂时已用完，请稍后再试"
+
 # 输入输出目录
 INPUT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), "input")
 OUTPUT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), "output")
@@ -239,6 +242,8 @@ async def generate_renovation_image(
     # 6. 处理结果
     # 6. 处理结果
     if result.get("code") != 0:
+        provider_error = result.get("msg", "生成失败")
+        print(f"[GENERATION] provider failure: {provider_error}", flush=True)
         # 生成失败，清理 input 文件
         if input_saved:
             try:
@@ -247,7 +252,7 @@ async def generate_renovation_image(
                 pass
         return JSONResponse({
             "code": -1,
-            "message": result.get("msg", "生成失败"),
+            "message": GENERATION_UNAVAILABLE_MESSAGE,
             "data": {"quota": quota}
         }, status_code=500)
     
@@ -264,7 +269,7 @@ async def generate_renovation_image(
                 pass
         return JSONResponse({
             "code": -1,
-            "message": "未获取到生成结果",
+            "message": GENERATION_UNAVAILABLE_MESSAGE,
             "data": {"quota": quota}
         }, status_code=500)
     
