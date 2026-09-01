@@ -39,14 +39,18 @@ def _candidate_rows(conn: sqlite3.Connection) -> list[sqlite3.Row]:
 
 def run(apply: bool) -> tuple[int, int, bool]:
     db_path = _database_path()
-    conn = sqlite3.connect(db_path, timeout=10)
+    if apply:
+        conn = sqlite3.connect(db_path, timeout=10)
+    else:
+        uri = f"file:{db_path}?mode=ro&immutable=1"
+        conn = sqlite3.connect(uri, uri=True, timeout=10)
     conn.row_factory = sqlite3.Row
     try:
         marker = conn.execute(
             "SELECT value FROM app_counters WHERE name = ?", (MARKER,)
         ).fetchone()
         if marker:
-            return 0, 0, True
+            return 0, int(marker["value"]), True
 
         candidates = _candidate_rows(conn)
         attempt_count = sum(row["incident_attempts"] for row in candidates)
