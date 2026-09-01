@@ -18,6 +18,10 @@ logging.basicConfig(level=logging.INFO)
 
 
 TRANSIENT_STATUS_CODES = {408, 409, 425, 429, 500, 502, 503, 504}
+PROVIDER_QUOTA_ERROR_CODES = {
+    "insufficient_quota",
+    "insufficient_user_quota",
+}
 MAX_RETRY_DELAY_SECONDS = 8.0
 PROVIDER_READ_TIMEOUT_SECONDS = float(
     os.getenv("IMAGE_PROVIDER_READ_TIMEOUT_SECONDS", "60")
@@ -116,6 +120,20 @@ def _build_gemini_payload(
             }
         }
     }
+
+
+def _provider_failure_reason(response: httpx.Response) -> Optional[str]:
+    """Map provider errors to safe, user-facing failure categories."""
+    try:
+        payload = response.json()
+    except ValueError:
+        return None
+
+    error = payload.get("error", {}) if isinstance(payload, dict) else {}
+    error_code = error.get("code", "") if isinstance(error, dict) else ""
+    if str(error_code).lower() in PROVIDER_QUOTA_ERROR_CODES:
+        return "provider_quota"
+    return None
 
 
 def _parse_gemini_response(result: dict) -> dict:
@@ -326,6 +344,7 @@ class GetGoAPIClient:
 
                 error_text = response.text
                 logger.warning(f"[APIYI] HTTP {response.status_code}: {error_text[:300]}")
+                failure_reason = _provider_failure_reason(response)
 
                 if response.status_code in TRANSIENT_STATUS_CODES:
                     last_error = f"HTTP {response.status_code}: {error_text[:200]}"
@@ -339,6 +358,7 @@ class GetGoAPIClient:
                     "data": None,
                     "status_code": response.status_code,
                     "retryable": False,
+                    "failure_reason": failure_reason,
                 }
 
             except httpx.TimeoutException as e:
@@ -593,9 +613,15 @@ async def generate_design_image(
                 "provider": "apiyi",
                 "model": str(model),
                 "status_code": result.get("status_code"),
+                "failure_reason": result.get("failure_reason"),
                 "error": error_msg[:300],
             })
             logger.warning(f"[Fallback] ❌ APIYI FAILED: {error_msg[:100]}")
+            if result.get("failure_reason") == "provider_quota":
+                logger.warning(
+                    "[Fallback] APIYI quota unavailable; skipping its remaining models"
+                )
+                break
             logger.info("[Fallback] ↪ trying APIYI's next model...")
 
     # --- Tier 2: Custom Gemini-compatible providers ---
@@ -620,6 +646,7 @@ async def generate_design_image(
                     "provider": provider.name,
                     "model": str(model),
                     "status_code": result.get("status_code"),
+                    "failure_reason": result.get("failure_reason"),
                     "error": error_msg[:300],
                 })
                 logger.warning(f"[Fallback] ❌ {provider.name} FAILED: {error_msg[:100]}")
@@ -630,11 +657,21 @@ async def generate_design_image(
             return_exceptions=True,
         )
 
+    failure_reasons = {
+        attempt.get("failure_reason")
+        for attempt in attempts
+        if attempt.get("failure_reason")
+    }
     return {
         "code": -1,
         "msg": "All providers and models exhausted",
         "data": None,
         "attempts": attempts,
+        "failure_reason": (
+            "provider_quota"
+            if failure_reasons == {"provider_quota"}
+            else None
+        ),
     }
 
 

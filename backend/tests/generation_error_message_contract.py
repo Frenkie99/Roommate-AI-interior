@@ -19,6 +19,11 @@ class GenerationErrorMessageContractTests(unittest.TestCase):
         self.assertIn("IMAGE_GENERATION_TIMEOUT_SECONDS", route_source)
         self.assertIn("await asyncio.wait_for(", route_source)
         self.assertIn("status_code=504", route_source)
+        self.assertIn(
+            '"图片生成服务额度暂时不足，本次未扣除体验次数，请稍后再试"',
+            route_source,
+        )
+        self.assertIn("status_code=503 if provider_quota_unavailable", route_source)
 
 
 if __name__ == "__main__":

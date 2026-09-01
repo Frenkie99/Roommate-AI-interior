@@ -74,6 +74,44 @@ class ImageProviderRetryContractTests(unittest.TestCase):
         self.assertEqual(provider.generate_image.await_count, 2)
         provider.close.assert_awaited_once()
 
+    def test_apiyi_quota_error_skips_remaining_models(self):
+        apiyi = AsyncMock()
+        apiyi.is_configured = True
+        apiyi.generate_image.return_value = {
+            "code": -1,
+            "msg": "quota unavailable",
+            "status_code": 403,
+            "failure_reason": "provider_quota",
+        }
+
+        with (
+            patch.object(image_client, "_get_apiyi_client", return_value=apiyi),
+            patch.object(image_client, "_load_custom_providers", return_value=[]),
+        ):
+            result = asyncio.run(image_client.generate_design_image("draw a room"))
+
+        self.assertEqual(apiyi.generate_image.await_count, 1)
+        self.assertEqual(result["failure_reason"], "provider_quota")
+
+    def test_apiyi_quota_response_is_safely_classified(self):
+        client = image_client.GetGoAPIClient()
+        client.client.post = AsyncMock(return_value=_response(
+            403,
+            {
+                "error": {
+                    "code": "insufficient_user_quota",
+                    "message": "user quota is not enough",
+                }
+            },
+        ))
+
+        with patch.dict(os.environ, {"APIYI_KEY": "test-key"}):
+            result = asyncio.run(client.generate_image("draw a room"))
+
+        self.assertEqual(result["failure_reason"], "provider_quota")
+        self.assertFalse(result["retryable"])
+        asyncio.run(client.close())
+
     def test_apiyi_flash_model_is_the_primary_route(self):
         apiyi = AsyncMock()
         apiyi.is_configured = True

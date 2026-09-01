@@ -38,6 +38,9 @@ router = APIRouter()
 GENERATION_UNAVAILABLE_MESSAGE = (
     "图片生成服务暂时繁忙，本次未扣除体验次数，请稍后重试"
 )
+GENERATION_QUOTA_UNAVAILABLE_MESSAGE = (
+    "图片生成服务额度暂时不足，本次未扣除体验次数，请稍后再试"
+)
 VISION_ANALYSIS_TIMEOUT_SECONDS = float(
     os.getenv("VISION_ANALYSIS_TIMEOUT_SECONDS", "40")
 )
@@ -296,6 +299,9 @@ async def generate_renovation_image(
     if result.get("code") != 0:
         provider_error = result.get("attempts") or result.get("msg", "生成失败")
         print(f"[GENERATION] provider failure: {provider_error}", flush=True)
+        provider_quota_unavailable = (
+            result.get("failure_reason") == "provider_quota"
+        )
         quota = auth_service.refund_generation(
             reservation.id, current_user.id
         )
@@ -307,9 +313,13 @@ async def generate_renovation_image(
                 pass
         return JSONResponse({
             "code": -1,
-            "message": GENERATION_UNAVAILABLE_MESSAGE,
+            "message": (
+                GENERATION_QUOTA_UNAVAILABLE_MESSAGE
+                if provider_quota_unavailable
+                else GENERATION_UNAVAILABLE_MESSAGE
+            ),
             "data": {"quota": quota}
-        }, status_code=500)
+        }, status_code=503 if provider_quota_unavailable else 500)
     
     data = result.get("data", {})
     # API易 返回 images 字段（base64 数据列表）
