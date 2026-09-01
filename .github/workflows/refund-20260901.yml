@@ -1,0 +1,50 @@
+name: Refund 2026-09-01 generation incident
+
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: Apply the bounded incident refund
+        required: true
+        type: boolean
+        default: false
+
+jobs:
+  refund:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure SSH
+        env:
+          ALIYUN_HOST: ${{ secrets.ALIYUN_HOST }}
+          ALIYUN_PORT: ${{ secrets.ALIYUN_PORT }}
+          ALIYUN_SSH_KEY: ${{ secrets.ALIYUN_SSH_KEY }}
+        run: |
+          set -Eeuo pipefail
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$ALIYUN_SSH_KEY" > ~/.ssh/aliyun_deploy_key
+          chmod 600 ~/.ssh/aliyun_deploy_key
+          ssh-keyscan -p "${ALIYUN_PORT:-22}" -H "$ALIYUN_HOST" >> ~/.ssh/known_hosts
+
+      - name: Inspect or apply refund
+        env:
+          ALIYUN_HOST: ${{ secrets.ALIYUN_HOST }}
+          ALIYUN_USER: ${{ secrets.ALIYUN_USER }}
+          ALIYUN_PORT: ${{ secrets.ALIYUN_PORT }}
+          ALIYUN_APP_DIR: ${{ secrets.ALIYUN_APP_DIR }}
+          APPLY_REFUND: ${{ inputs.apply }}
+        run: |
+          set -Eeuo pipefail
+          user="${ALIYUN_USER:-admin}"
+          port="${ALIYUN_PORT:-22}"
+          app_dir="${ALIYUN_APP_DIR:-/var/www/roommate}"
+          apply_flag=""
+          if [ "$APPLY_REFUND" = "true" ]; then
+            apply_flag="--apply"
+          fi
+          ssh -i ~/.ssh/aliyun_deploy_key \
+            -p "$port" \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            "$user@$ALIYUN_HOST" \
+            "cd '$app_dir/backend' && set -a && . ./.env && set +a && venv/bin/python scripts/refund_20260901_incident.py $apply_flag"
