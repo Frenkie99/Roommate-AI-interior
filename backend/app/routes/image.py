@@ -29,12 +29,14 @@ from app.utils.prompt_builder import (
 )
 from app.utils.trace_logger import write_trace, new_trace_id, image_hash, write_feedback, FEEDBACK_ACTIONS
 from app.routes.auth import require_user, reserve_generation_or_raise
-from app.services.auth_service import AuthUser
+from app.services.auth_service import AuthUser, auth_service
 
 router = APIRouter()
 
 # 外部生图供应商的错误可能包含余额、密钥状态或供应商名称，只保留在服务端日志中。
-GENERATION_UNAVAILABLE_MESSAGE = "当前时段的体验额度暂时已用完，请稍后再试"
+GENERATION_UNAVAILABLE_MESSAGE = (
+    "图片生成服务暂时繁忙，本次未扣除体验次数，请稍后重试"
+)
 
 # 输入输出目录
 INPUT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), "input")
@@ -109,7 +111,10 @@ async def generate_renovation_image(
 
     # 图片已完成本地校验；从这里开始将进入可能计费的 AI 调用链。
     try:
-        quota = reserve_generation_or_raise(current_user, "/api/v1/generate")
+        reservation = reserve_generation_or_raise(
+            current_user, "/api/v1/generate"
+        )
+        quota = reservation.quota
     except HTTPException:
         if input_saved:
             try:
@@ -230,20 +235,39 @@ async def generate_renovation_image(
     
     # 5. 调用 Gemini 生成效果图（Google 直连优先 → API易 备选）
     _t_gen = time.perf_counter()  # trace: generation phase timer start
-    result = await generate_design_image(
-        prompt=prompt,
-        reference_image=processed_image,
-        model_priority=DEFAULT_MODEL_PRIORITY,
-        aspect_ratio=mapped_ratio,
-        image_size=image_size
-    )
+    try:
+        result = await generate_design_image(
+            prompt=prompt,
+            reference_image=processed_image,
+            model_priority=DEFAULT_MODEL_PRIORITY,
+            aspect_ratio=mapped_ratio,
+            image_size=image_size
+        )
+    except Exception as exc:
+        print(f"[GENERATION] unexpected failure: {exc}", flush=True)
+        quota = auth_service.refund_generation(
+            reservation.id, current_user.id
+        )
+        if input_saved:
+            try:
+                os.remove(input_path)
+            except OSError:
+                pass
+        return JSONResponse({
+            "code": -1,
+            "message": GENERATION_UNAVAILABLE_MESSAGE,
+            "data": {"quota": quota}
+        }, status_code=500)
     _gen_ms = int((time.perf_counter() - _t_gen) * 1000)  # trace 埋点：生图阶段耗时
     
     # 6. 处理结果
     # 6. 处理结果
     if result.get("code") != 0:
-        provider_error = result.get("msg", "生成失败")
+        provider_error = result.get("attempts") or result.get("msg", "生成失败")
         print(f"[GENERATION] provider failure: {provider_error}", flush=True)
+        quota = auth_service.refund_generation(
+            reservation.id, current_user.id
+        )
         # 生成失败，清理 input 文件
         if input_saved:
             try:
@@ -261,6 +285,9 @@ async def generate_renovation_image(
     images = data.get("images", [])
     
     if not images:
+        quota = auth_service.refund_generation(
+            reservation.id, current_user.id
+        )
         # 生成失败，清理 input 文件
         if input_saved:
             try:
@@ -275,14 +302,39 @@ async def generate_renovation_image(
     
     # 7. 保存生成的图片并返回 URL
     output_urls = []
-    for i, img_data in enumerate(images):
-        mime_type = img_data.get("mime_type", "image/jpeg")
-        ext = ".jpg" if "jpeg" in mime_type or "jpg" in mime_type else ".png"
-        output_filename = f"{timestamp}_{task_id}_output_{i}{ext}"
-        output_path = os.path.join(OUTPUT_DIR, output_filename)
-        async with aiofiles.open(output_path, 'wb') as f:
-            await f.write(img_data["data"])
-        output_urls.append(f"/output/{output_filename}")
+    output_paths = []
+    try:
+        for i, img_data in enumerate(images):
+            mime_type = img_data.get("mime_type", "image/jpeg")
+            ext = ".jpg" if "jpeg" in mime_type or "jpg" in mime_type else ".png"
+            output_filename = f"{timestamp}_{task_id}_output_{i}{ext}"
+            output_path = os.path.join(OUTPUT_DIR, output_filename)
+            async with aiofiles.open(output_path, 'wb') as f:
+                await f.write(img_data["data"])
+            output_paths.append(output_path)
+            output_urls.append(f"/output/{output_filename}")
+    except Exception as exc:
+        print(f"[GENERATION] save output failure: {exc}", flush=True)
+        quota = auth_service.refund_generation(
+            reservation.id, current_user.id
+        )
+        for path in output_paths:
+            try:
+                os.remove(path)
+            except OSError:
+                pass
+        if input_saved:
+            try:
+                os.remove(input_path)
+            except OSError:
+                pass
+        return JSONResponse({
+            "code": -1,
+            "message": GENERATION_UNAVAILABLE_MESSAGE,
+            "data": {"quota": quota}
+        }, status_code=500)
+
+    quota = auth_service.quota_snapshot(current_user.id)
 
     # 8. trace 埋点：真实用户「上传毛坯 → 首次生图成功」的完整记录（评测集头号来源）
     #    只加新代码；write_trace 内部全程 try/except，绝不拖垮生图。

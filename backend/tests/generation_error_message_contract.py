@@ -9,7 +9,7 @@ class GenerationErrorMessageContractTests(unittest.TestCase):
         ).read_text(encoding="utf-8")
 
         self.assertIn(
-            'GENERATION_UNAVAILABLE_MESSAGE = "当前时段的体验额度暂时已用完，请稍后再试"',
+            '"图片生成服务暂时繁忙，本次未扣除体验次数，请稍后重试"',
             route_source,
         )
         self.assertNotIn(

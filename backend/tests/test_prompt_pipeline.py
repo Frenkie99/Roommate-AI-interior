@@ -143,6 +143,7 @@ class GenerateRouteContractTests(unittest.TestCase):
 
     def _run_route(self, llm_result):
         from app.routes import image as image_route
+        from app.services.auth_service import AuthUser, GenerationReservation
 
         class Upload:
             async def read(self):
@@ -187,6 +188,16 @@ class GenerateRouteContractTests(unittest.TestCase):
                     "generate_design_image",
                     AsyncMock(return_value=generated),
                 ) as generate_mock,
+                patch.object(
+                    image_route,
+                    "reserve_generation_or_raise",
+                    return_value=GenerationReservation(
+                        id=1,
+                        user_id=1,
+                        endpoint="/api/v1/generate",
+                        quota={"remaining": 2},
+                    ),
+                ),
                 patch.object(image_route, "write_trace", trace_writer),
             ):
                 response = asyncio.run(image_route.generate_renovation_image(
@@ -197,6 +208,12 @@ class GenerateRouteContractTests(unittest.TestCase):
                     aspect_ratio="4:3",
                     image_size="1K",
                     session_id="test-session",
+                    current_user=AuthUser(
+                        id=1,
+                        username="test-user",
+                        generation_used=0,
+                        generation_limit=3,
+                    ),
                 ))
 
         prompt = generate_mock.await_args.kwargs["prompt"]

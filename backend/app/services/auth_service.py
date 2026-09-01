@@ -43,6 +43,14 @@ class AuthUser:
         return max(0, self.generation_limit - self.generation_used)
 
 
+@dataclass(frozen=True)
+class GenerationReservation:
+    id: int
+    user_id: int
+    endpoint: str
+    quota: dict
+
+
 class AuthService:
     def __init__(self):
         default_path = Path(__file__).resolve().parents[2] / "data" / "roommate.db"
@@ -214,7 +222,9 @@ class AuthService:
             "global_remaining": max(0, self.global_limit - global_used),
         }
 
-    def reserve_generation(self, user_id: int, endpoint: str) -> dict:
+    def reserve_generation(
+        self, user_id: int, endpoint: str
+    ) -> GenerationReservation:
         now = self._now().isoformat()
         with self._connect() as conn:
             conn.execute("BEGIN IMMEDIATE")
@@ -235,10 +245,42 @@ class AuthService:
             conn.execute(
                 "UPDATE app_counters SET value = value + 1 WHERE name = 'global_generation_used'"
             )
-            conn.execute(
+            cursor = conn.execute(
                 "INSERT INTO generation_usage(user_id, endpoint, created_at) VALUES (?, ?, ?)",
                 (user_id, endpoint, now),
             )
+            reservation_id = cursor.lastrowid
+        return GenerationReservation(
+            id=reservation_id,
+            user_id=user_id,
+            endpoint=endpoint,
+            quota=self.quota_snapshot(user_id),
+        )
+
+    def refund_generation(self, reservation_id: int, user_id: int) -> dict:
+        """Idempotently refund one failed provider-side generation attempt."""
+        with self._connect() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            reservation = conn.execute(
+                "SELECT id FROM generation_usage WHERE id = ? AND user_id = ?",
+                (reservation_id, user_id),
+            ).fetchone()
+            if reservation:
+                conn.execute(
+                    "DELETE FROM generation_usage WHERE id = ? AND user_id = ?",
+                    (reservation_id, user_id),
+                )
+                conn.execute(
+                    """UPDATE users
+                    SET generation_used = MAX(0, generation_used - 1)
+                    WHERE id = ?""",
+                    (user_id,),
+                )
+                conn.execute(
+                    """UPDATE app_counters
+                    SET value = MAX(0, value - 1)
+                    WHERE name = 'global_generation_used'"""
+                )
         return self.quota_snapshot(user_id)
 
 

@@ -59,6 +59,18 @@ class AuthQuotaContractTests(unittest.TestCase):
             self.service.reserve_generation(first.id, "/test")
         self.assertEqual(captured.exception.reason, "global_exhausted")
 
+    def test_failed_generation_is_refunded_once(self):
+        user, _ = self.service.register("refund_user", "securepass123")
+        reservation = self.service.reserve_generation(user.id, "/test")
+
+        self.assertEqual(reservation.quota["remaining"], 2)
+        refunded = self.service.refund_generation(reservation.id, user.id)
+        refunded_again = self.service.refund_generation(reservation.id, user.id)
+
+        self.assertEqual(refunded["remaining"], 3)
+        self.assertEqual(refunded["global_used"], 0)
+        self.assertEqual(refunded_again, refunded)
+
 
 if __name__ == "__main__":
     unittest.main()

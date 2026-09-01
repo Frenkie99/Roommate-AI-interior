@@ -5,6 +5,7 @@ Gemini Image Generation 客户端
   - API易 代理（备选，需 APIYI_KEY 或 LLM_APIYI_KEY）
 """
 
+import asyncio
 import os
 import base64
 import httpx
@@ -14,6 +15,29 @@ from enum import Enum
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
+
+
+TRANSIENT_STATUS_CODES = {408, 409, 425, 429, 500, 502, 503, 504}
+MAX_RETRY_DELAY_SECONDS = 8.0
+
+
+def _retry_delay(response: httpx.Response, attempt: int) -> float:
+    """Return a bounded Retry-After/exponential-backoff delay."""
+    retry_after = response.headers.get("Retry-After", "").strip()
+    try:
+        return min(MAX_RETRY_DELAY_SECONDS, max(0.0, float(retry_after)))
+    except ValueError:
+        return min(MAX_RETRY_DELAY_SECONDS, float(2 ** attempt))
+
+
+async def _wait_before_retry(response: httpx.Response, attempt: int) -> None:
+    delay = _retry_delay(response, attempt)
+    logger.info(
+        "[Retry] HTTP %s, waiting %.1fs before retry",
+        response.status_code,
+        delay,
+    )
+    await asyncio.sleep(delay)
 
 
 class GetGoModel(str, Enum):
@@ -179,14 +203,18 @@ class GoogleAIDirectClient:
                 error_text = response.text
                 logger.warning(f"[Google] HTTP {response.status_code}: {error_text[:300]}")
 
-                if response.status_code >= 500:
-                    last_error = f"HTTP {response.status_code}"
+                if response.status_code in TRANSIENT_STATUS_CODES:
+                    last_error = f"HTTP {response.status_code}: {error_text[:200]}"
+                    if attempt < self.MAX_RETRIES - 1:
+                        await _wait_before_retry(response, attempt)
                     continue
 
                 return {
                     "code": -1,
                     "msg": f"Google API error ({response.status_code}): {error_text[:200]}",
-                    "data": None
+                    "data": None,
+                    "status_code": response.status_code,
+                    "retryable": False,
                 }
 
             except httpx.TimeoutException as e:
@@ -206,6 +234,7 @@ class GoogleAIDirectClient:
             "code": -1,
             "msg": f"Google API failed after {self.MAX_RETRIES} retries: {last_error}",
             "data": None,
+            "retryable": True,
         }
 
     async def close(self):
@@ -285,14 +314,18 @@ class GetGoAPIClient:
                 error_text = response.text
                 logger.warning(f"[APIYI] HTTP {response.status_code}: {error_text[:300]}")
 
-                if response.status_code >= 500:
-                    last_error = f"HTTP {response.status_code}"
+                if response.status_code in TRANSIENT_STATUS_CODES:
+                    last_error = f"HTTP {response.status_code}: {error_text[:200]}"
+                    if attempt < self.MAX_RETRIES - 1:
+                        await _wait_before_retry(response, attempt)
                     continue
 
                 return {
                     "code": -1,
                     "msg": f"APIYI error ({response.status_code}): {error_text[:200]}",
-                    "data": None
+                    "data": None,
+                    "status_code": response.status_code,
+                    "retryable": False,
                 }
 
             except httpx.TimeoutException as e:
@@ -312,6 +345,7 @@ class GetGoAPIClient:
             "code": -1,
             "msg": f"APIYI failed after {self.MAX_RETRIES} retries: {last_error}",
             "data": None,
+            "retryable": True,
         }
 
     async def generate_with_fallback(
@@ -423,14 +457,18 @@ class CustomGeminiProvider:
                 error_text = response.text
                 logger.warning(f"[{self.name}] HTTP {response.status_code}: {error_text[:300]}")
 
-                if response.status_code >= 500:
-                    last_error = f"HTTP {response.status_code}"
+                if response.status_code in TRANSIENT_STATUS_CODES:
+                    last_error = f"HTTP {response.status_code}: {error_text[:200]}"
+                    if attempt < self.MAX_RETRIES - 1:
+                        await _wait_before_retry(response, attempt)
                     continue
 
                 return {
                     "code": -1,
                     "msg": f"{self.name} error ({response.status_code}): {error_text[:200]}",
-                    "data": None
+                    "data": None,
+                    "status_code": response.status_code,
+                    "retryable": False,
                 }
 
             except httpx.TimeoutException as e:
@@ -450,6 +488,7 @@ class CustomGeminiProvider:
             "code": -1,
             "msg": f"{self.name} failed after {self.MAX_RETRIES} retries: {last_error}",
             "data": None,
+            "retryable": True,
         }
 
     async def close(self):
@@ -511,26 +550,39 @@ async def generate_design_image(
     if model_priority is None:
         model_priority = [GetGoModel.GEMINI_3_PRO_IMAGE, GetGoModel.GEMINI_25_FLASH_IMAGE]
 
-    # --- Tier 1: Custom Gemini-compatible providers (burn existing balance first) ---
-    for provider in _load_custom_providers():
-        if not provider.is_configured:
-            continue
-        logger.info(f"[Fallback] trying custom provider '{provider.name}'...")
-        for model in provider.models:
-            result = await provider.generate_image(
-                prompt=prompt, reference_image=reference_image,
-                model=model, aspect_ratio=aspect_ratio,
-                image_size=image_size, number_of_images=number_of_images,
-            )
-            if result.get("code") == 0:
-                logger.info(f"[Fallback] ✅ {provider.name} SUCCESS (model: {model})")
-                return result
+    attempts = []
 
-            error_msg = result.get("msg", "")
-            logger.warning(f"[Fallback] ❌ {provider.name} FAILED: {error_msg[:100]}")
-            if "timeout" not in error_msg.lower() and "500" not in error_msg and "503" not in error_msg:
-                break
-            logger.info(f"[Fallback] ↪ {provider.name} temporary error, trying next model...")
+    # --- Tier 1: Custom Gemini-compatible providers (burn existing balance first) ---
+    custom_providers = _load_custom_providers()
+    try:
+        for provider in custom_providers:
+            if not provider.is_configured:
+                continue
+            logger.info(f"[Fallback] trying custom provider '{provider.name}'...")
+            for model in provider.models:
+                result = await provider.generate_image(
+                    prompt=prompt, reference_image=reference_image,
+                    model=model, aspect_ratio=aspect_ratio,
+                    image_size=image_size, number_of_images=number_of_images,
+                )
+                if result.get("code") == 0:
+                    logger.info(f"[Fallback] ✅ {provider.name} SUCCESS (model: {model})")
+                    return result
+
+                error_msg = result.get("msg", "")
+                attempts.append({
+                    "provider": provider.name,
+                    "model": str(model),
+                    "status_code": result.get("status_code"),
+                    "error": error_msg[:300],
+                })
+                logger.warning(f"[Fallback] ❌ {provider.name} FAILED: {error_msg[:100]}")
+                logger.info(f"[Fallback] ↪ trying {provider.name}'s next model...")
+    finally:
+        await asyncio.gather(
+            *(provider.close() for provider in custom_providers),
+            return_exceptions=True,
+        )
 
     # --- Tier 2: APIYI proxy (last resort) ---
     apiyi = _get_apiyi_client()
@@ -547,15 +599,20 @@ async def generate_design_image(
                 return result
 
             error_msg = result.get("msg", "")
+            attempts.append({
+                "provider": "apiyi",
+                "model": str(model),
+                "status_code": result.get("status_code"),
+                "error": error_msg[:300],
+            })
             logger.warning(f"[Fallback] ❌ APIYI FAILED: {error_msg[:100]}")
-            if "timeout" not in error_msg.lower() and "500" not in error_msg and "503" not in error_msg:
-                break
-            logger.info(f"[Fallback] ↪ APIYI temporary error, trying next model...")
+            logger.info("[Fallback] ↪ trying APIYI's next model...")
 
     return {
         "code": -1,
-        "msg": "All providers and models exhausted. Check API key configuration.",
+        "msg": "All providers and models exhausted",
         "data": None,
+        "attempts": attempts,
     }
 
 

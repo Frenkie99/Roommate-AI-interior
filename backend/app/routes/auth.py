@@ -7,6 +7,7 @@ from app.services.auth_service import (
     SESSION_COOKIE,
     AuthError,
     AuthUser,
+    GenerationReservation,
     QuotaError,
     auth_service,
 )
@@ -54,7 +55,9 @@ def require_user(
     return user
 
 
-def reserve_generation_or_raise(user: AuthUser, endpoint: str) -> dict:
+def reserve_generation_or_raise(
+    user: AuthUser, endpoint: str
+) -> GenerationReservation:
     try:
         return auth_service.reserve_generation(user.id, endpoint)
     except QuotaError as exc:

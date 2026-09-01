@@ -19,7 +19,7 @@ import numpy as np
 from scipy import ndimage
 
 from app.routes.auth import require_user, reserve_generation_or_raise
-from app.services.auth_service import AuthUser
+from app.services.auth_service import AuthUser, auth_service
 from app.services.inpaint_service import inpaint_service
 from app.services.sam_service import sam3_service, create_rgba_mask, extract_masked_region
 
@@ -363,6 +363,7 @@ async def inpaint_region(
     - **negative_prompt**: 负向提示词
     - **strength**: 替换强度 (0-1)
     """
+    reservation = None
     try:
         contents = await image.read()
         pil_image = Image.open(io.BytesIO(contents)).convert("RGB")
@@ -372,7 +373,10 @@ async def inpaint_region(
         mask_image = Image.open(io.BytesIO(mask_data)).convert("L")
         mask_array = np.array(mask_image)
 
-        quota = reserve_generation_or_raise(current_user, "/api/v1/segment/inpaint")
+        reservation = reserve_generation_or_raise(
+            current_user, "/api/v1/segment/inpaint"
+        )
+        quota = reservation.quota
         
         result_image = await inpaint_service.inpaint(
             image=pil_image,
@@ -383,6 +387,7 @@ async def inpaint_region(
         )
         
         result_b64 = image_to_base64(result_image, "PNG")
+        quota = auth_service.quota_snapshot(current_user.id)
         
         return JSONResponse({
             "code": 0,
@@ -394,13 +399,19 @@ async def inpaint_region(
         })
         
     except HTTPException:
+        if reservation:
+            auth_service.refund_generation(reservation.id, current_user.id)
         raise
     except Exception:
         logger.exception("替换失败")
+        quota = (
+            auth_service.refund_generation(reservation.id, current_user.id)
+            if reservation else None
+        )
         return JSONResponse({
             "code": -1,
             "message": "服务器内部错误，请稍后重试",
-            "data": None
+            "data": {"quota": quota} if quota else None
         }, status_code=500)
 
 
@@ -420,6 +431,7 @@ async def replace_furniture(
     - **furniture_type**: 家具类型 (sofa, chair, table, lamp, bed, desk, cabinet)
     - **style**: 风格 (modern, scandinavian, chinese, light_luxury, industrial)
     """
+    reservation = None
     try:
         contents = await image.read()
         pil_image = Image.open(io.BytesIO(contents)).convert("RGB")
@@ -428,7 +440,10 @@ async def replace_furniture(
         mask_image = Image.open(io.BytesIO(mask_data)).convert("L")
         mask_array = np.array(mask_image)
 
-        quota = reserve_generation_or_raise(current_user, "/api/v1/segment/replace-furniture")
+        reservation = reserve_generation_or_raise(
+            current_user, "/api/v1/segment/replace-furniture"
+        )
+        quota = reservation.quota
         
         result_image = await inpaint_service.replace_furniture(
             image=pil_image,
@@ -438,6 +453,7 @@ async def replace_furniture(
         )
         
         result_b64 = image_to_base64(result_image, "PNG")
+        quota = auth_service.quota_snapshot(current_user.id)
         
         return JSONResponse({
             "code": 0,
@@ -449,13 +465,19 @@ async def replace_furniture(
         })
         
     except HTTPException:
+        if reservation:
+            auth_service.refund_generation(reservation.id, current_user.id)
         raise
     except Exception:
         logger.exception("替换失败")
+        quota = (
+            auth_service.refund_generation(reservation.id, current_user.id)
+            if reservation else None
+        )
         return JSONResponse({
             "code": -1,
             "message": "服务器内部错误，请稍后重试",
-            "data": None
+            "data": {"quota": quota} if quota else None
         }, status_code=500)
 
 
@@ -475,6 +497,7 @@ async def replace_decoration(
     - **decoration_type**: 装饰物类型 (painting, plant, vase, curtain, rug, lamp)
     - **description**: 额外描述
     """
+    reservation = None
     try:
         contents = await image.read()
         pil_image = Image.open(io.BytesIO(contents)).convert("RGB")
@@ -483,7 +506,10 @@ async def replace_decoration(
         mask_image = Image.open(io.BytesIO(mask_data)).convert("L")
         mask_array = np.array(mask_image)
 
-        quota = reserve_generation_or_raise(current_user, "/api/v1/segment/replace-decoration")
+        reservation = reserve_generation_or_raise(
+            current_user, "/api/v1/segment/replace-decoration"
+        )
+        quota = reservation.quota
         
         result_image = await inpaint_service.replace_decoration(
             image=pil_image,
@@ -493,6 +519,7 @@ async def replace_decoration(
         )
         
         result_b64 = image_to_base64(result_image, "PNG")
+        quota = auth_service.quota_snapshot(current_user.id)
         
         return JSONResponse({
             "code": 0,
@@ -504,13 +531,19 @@ async def replace_decoration(
         })
         
     except HTTPException:
+        if reservation:
+            auth_service.refund_generation(reservation.id, current_user.id)
         raise
     except Exception:
         logger.exception("替换失败")
+        quota = (
+            auth_service.refund_generation(reservation.id, current_user.id)
+            if reservation else None
+        )
         return JSONResponse({
             "code": -1,
             "message": "服务器内部错误，请稍后重试",
-            "data": None
+            "data": {"quota": quota} if quota else None
         }, status_code=500)
 
 
