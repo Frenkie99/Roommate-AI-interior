@@ -101,6 +101,7 @@ jobs:
           async def main():
               image_path = Path("../input/毛坯1.png")
               client = GetGoAPIClient()
+              client.BASE_URL = "https://vip.apiyi.com"
               try:
                   result = await client.generate_image(
                       prompt=(
