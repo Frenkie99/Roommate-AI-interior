@@ -64,4 +64,59 @@ jobs:
           else
             echo 'nginx_error_log=unreadable'
           fi
+          cd "$APP_DIR/backend"
+          set -a
+          . ./.env
+          set +a
+          venv/bin/python - <<'PY'
+          import asyncio
+          import logging
+          from pathlib import Path
+
+          from app.services.getgoapi_client import (
+              GetGoAPIClient,
+              GetGoModel,
+          )
+
+          logging.disable(logging.CRITICAL)
+
+
+          def category(result):
+              if result.get("code") == 0:
+                  return "ok"
+              status_code = result.get("status_code")
+              if status_code:
+                  return f"http_{status_code}"
+              message = str(result.get("msg", "")).lower()
+              for code in (400, 401, 402, 403, 404, 408, 429, 500, 502, 503, 504):
+                  if f"http {code}" in message or f"({code})" in message:
+                      return f"http_{code}"
+              if "timeout" in message:
+                  return "timeout"
+              if "network" in message:
+                  return "network"
+              return "unknown"
+
+
+          async def main():
+              image_path = Path("../input/毛坯1.png")
+              client = GetGoAPIClient()
+              try:
+                  result = await client.generate_image(
+                      prompt=(
+                          "Preserve the exact room structure and perspective. "
+                          "Create a clean warm modern interior rendering."
+                      ),
+                      reference_image=image_path.read_bytes(),
+                      model=GetGoModel.GEMINI_25_FLASH_IMAGE,
+                      aspect_ratio="4:3",
+                      image_size="1K",
+                  )
+                  print(f"direct_apiyi_probe={category(result)}")
+              finally:
+                  await client.close()
+
+
+          asyncio.run(main())
+          PY
           REMOTE
