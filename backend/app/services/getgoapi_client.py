@@ -19,6 +19,9 @@ logging.basicConfig(level=logging.INFO)
 
 TRANSIENT_STATUS_CODES = {408, 409, 425, 429, 500, 502, 503, 504}
 MAX_RETRY_DELAY_SECONDS = 8.0
+PROVIDER_READ_TIMEOUT_SECONDS = float(
+    os.getenv("IMAGE_PROVIDER_READ_TIMEOUT_SECONDS", "60")
+)
 
 
 def _retry_delay(response: httpx.Response, attempt: int) -> float:
@@ -146,11 +149,16 @@ class GoogleAIDirectClient:
     """Google AI Studio direct — bypass middleman, call Gemini API natively"""
 
     BASE_URL = "https://generativelanguage.googleapis.com"
-    MAX_RETRIES = 3
+    MAX_RETRIES = 2
 
     def __init__(self):
         self.client = httpx.AsyncClient(
-            timeout=httpx.Timeout(connect=30.0, read=300.0, write=30.0, pool=30.0)
+            timeout=httpx.Timeout(
+                connect=30.0,
+                read=PROVIDER_READ_TIMEOUT_SECONDS,
+                write=30.0,
+                pool=30.0,
+            )
         )
 
     @property
@@ -248,12 +256,17 @@ class GoogleAIDirectClient:
 class GetGoAPIClient:
     """APIYI proxy client — access Gemini via api.apiyi.com"""
 
-    MAX_RETRIES = 3
+    MAX_RETRIES = 2
     BASE_URL = "https://api.apiyi.com"
 
     def __init__(self):
         self.client = httpx.AsyncClient(
-            timeout=httpx.Timeout(connect=30.0, read=300.0, write=30.0, pool=30.0)
+            timeout=httpx.Timeout(
+                connect=30.0,
+                read=PROVIDER_READ_TIMEOUT_SECONDS,
+                write=30.0,
+                pool=30.0,
+            )
         )
 
     @property
@@ -359,7 +372,10 @@ class GetGoAPIClient:
     ) -> dict:
         """APIYI model-level fallback (kept for backward compatibility)"""
         if model_priority is None:
-            model_priority = [GetGoModel.GEMINI_3_PRO_IMAGE, GetGoModel.GEMINI_25_FLASH_IMAGE]
+            model_priority = [
+                GetGoModel.GEMINI_25_FLASH_IMAGE,
+                GetGoModel.GEMINI_3_PRO_IMAGE,
+            ]
 
         last_error = None
         for model in model_priority:
@@ -373,9 +389,7 @@ class GetGoAPIClient:
 
             error_msg = result.get("msg", "")
             last_error = error_msg
-            if "timeout" in error_msg.lower() or "500" in error_msg or "503" in error_msg:
-                continue
-            return result
+            continue
 
         return {
             "code": -1,
@@ -395,7 +409,7 @@ class GetGoAPIClient:
 class CustomGeminiProvider:
     """Configurable Gemini-native provider (e.g., NEW API / ONE API platforms)"""
 
-    MAX_RETRIES = 3
+    MAX_RETRIES = 1
 
     def __init__(self, name: str, base_url: str, api_key: str, models: List[str]):
         self.name = name
@@ -403,7 +417,12 @@ class CustomGeminiProvider:
         self._api_key = api_key
         self.models = models
         self.client = httpx.AsyncClient(
-            timeout=httpx.Timeout(connect=30.0, read=300.0, write=30.0, pool=30.0)
+            timeout=httpx.Timeout(
+                connect=30.0,
+                read=PROVIDER_READ_TIMEOUT_SECONDS,
+                write=30.0,
+                pool=30.0,
+            )
         )
 
     @property
@@ -544,15 +563,42 @@ async def generate_design_image(
     """
     Generate interior design renderings with multi-provider auto-fallback.
 
-    Priority: Custom providers (CUSTOM_API_*) → APIYI
+    Priority: APIYI stable route → custom providers
     Within each provider, models are tried in order.
     """
     if model_priority is None:
-        model_priority = [GetGoModel.GEMINI_3_PRO_IMAGE, GetGoModel.GEMINI_25_FLASH_IMAGE]
+        model_priority = [
+            GetGoModel.GEMINI_25_FLASH_IMAGE,
+            GetGoModel.GEMINI_3_PRO_IMAGE,
+        ]
 
     attempts = []
 
-    # --- Tier 1: Custom Gemini-compatible providers (burn existing balance first) ---
+    # --- Tier 1: APIYI stable route ---
+    apiyi = _get_apiyi_client()
+    if apiyi.is_configured:
+        logger.info("[Fallback] trying APIYI (primary)...")
+        for model in model_priority:
+            result = await apiyi.generate_image(
+                prompt=prompt, reference_image=reference_image,
+                model=model, aspect_ratio=aspect_ratio,
+                image_size=image_size, number_of_images=number_of_images,
+            )
+            if result.get("code") == 0:
+                logger.info(f"[Fallback] ✅ APIYI SUCCESS (model: {model})")
+                return result
+
+            error_msg = result.get("msg", "")
+            attempts.append({
+                "provider": "apiyi",
+                "model": str(model),
+                "status_code": result.get("status_code"),
+                "error": error_msg[:300],
+            })
+            logger.warning(f"[Fallback] ❌ APIYI FAILED: {error_msg[:100]}")
+            logger.info("[Fallback] ↪ trying APIYI's next model...")
+
+    # --- Tier 2: Custom Gemini-compatible providers ---
     custom_providers = _load_custom_providers()
     try:
         for provider in custom_providers:
@@ -584,30 +630,6 @@ async def generate_design_image(
             return_exceptions=True,
         )
 
-    # --- Tier 2: APIYI proxy (last resort) ---
-    apiyi = _get_apiyi_client()
-    if apiyi.is_configured:
-        logger.info("[Fallback] trying APIYI (last resort)...")
-        for model in model_priority:
-            result = await apiyi.generate_image(
-                prompt=prompt, reference_image=reference_image,
-                model=model, aspect_ratio=aspect_ratio,
-                image_size=image_size, number_of_images=number_of_images,
-            )
-            if result.get("code") == 0:
-                logger.info(f"[Fallback] ✅ APIYI SUCCESS (model: {model})")
-                return result
-
-            error_msg = result.get("msg", "")
-            attempts.append({
-                "provider": "apiyi",
-                "model": str(model),
-                "status_code": result.get("status_code"),
-                "error": error_msg[:300],
-            })
-            logger.warning(f"[Fallback] ❌ APIYI FAILED: {error_msg[:100]}")
-            logger.info("[Fallback] ↪ trying APIYI's next model...")
-
     return {
         "code": -1,
         "msg": "All providers and models exhausted",
@@ -621,8 +643,8 @@ async def generate_design_image(
 # ---------------------------------------------------------------------------
 
 DEFAULT_MODEL_PRIORITY = [
-    GetGoModel.GEMINI_3_PRO_IMAGE,
     GetGoModel.GEMINI_25_FLASH_IMAGE,
+    GetGoModel.GEMINI_3_PRO_IMAGE,
 ]
 
 # Legacy global instance (for callers that haven't migrated to generate_design_image)

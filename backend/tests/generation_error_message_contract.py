@@ -16,6 +16,9 @@ class GenerationErrorMessageContractTests(unittest.TestCase):
             '"message": result.get("msg", "生成失败")',
             route_source,
         )
+        self.assertIn("IMAGE_GENERATION_TIMEOUT_SECONDS", route_source)
+        self.assertIn("await asyncio.wait_for(", route_source)
+        self.assertIn("status_code=504", route_source)
 
 
 if __name__ == "__main__":

@@ -31,7 +31,47 @@ const styles = [
 
 // 后端API地址（生产环境使用相对路径，由Nginx代理）
 const API_BASE = '';
-const API_TIMEOUT_MS = 300000;
+const API_TIMEOUT_MS = 250000;
+const UPLOAD_TARGET_BYTES = 1.5 * 1024 * 1024;
+const UPLOAD_MAX_DIMENSION = 2048;
+
+const canvasToJpeg = (canvas, quality) => new Promise((resolve, reject) => {
+  canvas.toBlob(
+    (blob) => blob ? resolve(blob) : reject(new Error('图片压缩失败')),
+    'image/jpeg',
+    quality,
+  );
+});
+
+const optimizeImageForUpload = async (file) => {
+  const bitmap = await createImageBitmap(file);
+  try {
+    const scale = Math.min(
+      1,
+      UPLOAD_MAX_DIMENSION / Math.max(bitmap.width, bitmap.height),
+    );
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    const context = canvas.getContext('2d', { alpha: false });
+    context.fillStyle = '#ffffff';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+
+    let quality = 0.86;
+    let blob = await canvasToJpeg(canvas, quality);
+    while (blob.size > UPLOAD_TARGET_BYTES && quality > 0.5) {
+      quality -= 0.08;
+      blob = await canvasToJpeg(canvas, quality);
+    }
+    return new File([blob], 'room-upload.jpg', {
+      type: 'image/jpeg',
+      lastModified: Date.now(),
+    });
+  } finally {
+    bitmap.close();
+  }
+};
 
 // 匿名会话id：持久化在 localStorage，串联同一人多次操作（无任何身份信息）
 const getSessionId = () => {
@@ -246,7 +286,7 @@ export default function PlaygroundPage() {
     }
   };
 
-  const handleFileSelect = (file) => {
+  const handleFileSelect = async (file) => {
     if (!file?.type.startsWith('image/')) {
       toast.error('仅支持图片文件（JPG、PNG）');
       return;
@@ -256,11 +296,17 @@ export default function PlaygroundPage() {
       toast.error(`图片大小 ${(file.size / 1024 / 1024).toFixed(1)}MB，超过 10MB 限制，请压缩后重新上传`, { duration: 6000 });
       return;
     }
+    let uploadFile = file;
+    try {
+      uploadFile = await optimizeImageForUpload(file);
+    } catch (error) {
+      console.warn('Image optimization skipped:', error);
+    }
     // 清理旧的 preview URL
     if (previewUrl) URL.revokeObjectURL(previewUrl);
-    setUploadedFile(file);
-    setPreviewUrl(URL.createObjectURL(file));
-    setUploadedImage(file); // 存储 File 对象而非 data URL
+    setUploadedFile(uploadFile);
+    setPreviewUrl(URL.createObjectURL(uploadFile));
+    setUploadedImage(uploadFile); // 存储优化后的 File 对象
   };
 
   // 组件卸载时清理 preview URL
@@ -361,9 +407,14 @@ export default function PlaygroundPage() {
       
     } catch (error) {
       console.error('Generate error:', error);
+      const errorMessage = error?.name === 'TimeoutError'
+        ? '请求超时，已自动取消且不会扣除次数，请重试'
+        : error?.message === 'Failed to fetch'
+          ? '上传连接中断，请检查网络后重试；未到服务器不会扣除次数'
+          : error.message;
       // statusText 随 isGenerating=false 一起消失，必须用 toast 让用户看到失败原因
-      toast.error(`生成失败：${error.message}`, { duration: 6000 });
-      setStatusText(`错误: ${error.message}`);
+      toast.error(`生成失败：${errorMessage}`, { duration: 6000 });
+      setStatusText(`错误: ${errorMessage}`);
       setProgress(0);
     } finally {
       setIsGenerating(false);

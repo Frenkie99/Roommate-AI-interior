@@ -74,6 +74,28 @@ class ImageProviderRetryContractTests(unittest.TestCase):
         self.assertEqual(provider.generate_image.await_count, 2)
         provider.close.assert_awaited_once()
 
+    def test_apiyi_flash_model_is_the_primary_route(self):
+        apiyi = AsyncMock()
+        apiyi.is_configured = True
+        apiyi.generate_image.return_value = {
+            "code": 0,
+            "msg": "success",
+            "data": {"images": [{"data": b"image"}]},
+        }
+
+        with (
+            patch.object(image_client, "_get_apiyi_client", return_value=apiyi),
+            patch.object(image_client, "_load_custom_providers") as custom_loader,
+        ):
+            result = asyncio.run(image_client.generate_design_image("draw a room"))
+
+        self.assertEqual(result["code"], 0)
+        self.assertEqual(
+            apiyi.generate_image.await_args.kwargs["model"],
+            image_client.GetGoModel.GEMINI_25_FLASH_IMAGE,
+        )
+        custom_loader.assert_not_called()
+
 
 if __name__ == "__main__":
     unittest.main()

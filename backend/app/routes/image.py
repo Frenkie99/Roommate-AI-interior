@@ -3,6 +3,7 @@
 处理图片上传、效果图生成等请求
 """
 
+import asyncio
 import io
 import os
 import time
@@ -36,6 +37,12 @@ router = APIRouter()
 # 外部生图供应商的错误可能包含余额、密钥状态或供应商名称，只保留在服务端日志中。
 GENERATION_UNAVAILABLE_MESSAGE = (
     "图片生成服务暂时繁忙，本次未扣除体验次数，请稍后重试"
+)
+VISION_ANALYSIS_TIMEOUT_SECONDS = float(
+    os.getenv("VISION_ANALYSIS_TIMEOUT_SECONDS", "40")
+)
+IMAGE_GENERATION_TIMEOUT_SECONDS = float(
+    os.getenv("IMAGE_GENERATION_TIMEOUT_SECONDS", "180")
 )
 
 # 输入输出目录
@@ -138,11 +145,14 @@ async def generate_renovation_image(
         _t_vision = time.perf_counter()
         try:
             print(f"[LLM] 开始分析毛坯房图片...")
-            llm_result = await llm_client.analyze_room_and_generate_prompt(
-                image_data=processed_image,
-                style=style,
-                room_type=room_type,
-                custom_prompt=custom_prompt,
+            llm_result = await asyncio.wait_for(
+                llm_client.analyze_room_and_generate_prompt(
+                    image_data=processed_image,
+                    style=style,
+                    room_type=room_type,
+                    custom_prompt=custom_prompt,
+                ),
+                timeout=VISION_ANALYSIS_TIMEOUT_SECONDS,
             )
 
             if llm_result.get("code") == 0:
@@ -236,13 +246,34 @@ async def generate_renovation_image(
     # 5. 调用 Gemini 生成效果图（Google 直连优先 → API易 备选）
     _t_gen = time.perf_counter()  # trace: generation phase timer start
     try:
-        result = await generate_design_image(
-            prompt=prompt,
-            reference_image=processed_image,
-            model_priority=DEFAULT_MODEL_PRIORITY,
-            aspect_ratio=mapped_ratio,
-            image_size=image_size
+        result = await asyncio.wait_for(
+            generate_design_image(
+                prompt=prompt,
+                reference_image=processed_image,
+                model_priority=DEFAULT_MODEL_PRIORITY,
+                aspect_ratio=mapped_ratio,
+                image_size=image_size
+            ),
+            timeout=IMAGE_GENERATION_TIMEOUT_SECONDS,
         )
+    except asyncio.TimeoutError:
+        print(
+            "[GENERATION] overall timeout; refunding reservation",
+            flush=True,
+        )
+        quota = auth_service.refund_generation(
+            reservation.id, current_user.id
+        )
+        if input_saved:
+            try:
+                os.remove(input_path)
+            except OSError:
+                pass
+        return JSONResponse({
+            "code": -1,
+            "message": GENERATION_UNAVAILABLE_MESSAGE,
+            "data": {"quota": quota}
+        }, status_code=504)
     except Exception as exc:
         print(f"[GENERATION] unexpected failure: {exc}", flush=True)
         quota = auth_service.refund_generation(
