@@ -71,6 +71,33 @@ class AuthQuotaContractTests(unittest.TestCase):
         self.assertEqual(refunded["global_used"], 0)
         self.assertEqual(refunded_again, refunded)
 
+    def test_incident_migration_refunds_exactly_three_exhausted_attempts(self):
+        user, _ = self.service.register("incident_user", "securepass123")
+        for _ in range(3):
+            self.service.reserve_generation(user.id, "/api/v1/generate")
+
+        with self.service._connect() as conn:
+            conn.execute(
+                """
+                UPDATE generation_usage
+                SET created_at = '2026-09-01T03:00:00+00:00'
+                WHERE user_id = ?
+                """,
+                (user.id,),
+            )
+
+        restarted_service = AuthService()
+        snapshot = restarted_service.quota_snapshot(user.id)
+        with restarted_service._connect() as conn:
+            marker = conn.execute(
+                """SELECT value FROM app_counters
+                WHERE name = 'incident_refund_20260901'"""
+            ).fetchone()
+
+        self.assertEqual(snapshot["remaining"], 3)
+        self.assertEqual(snapshot["global_used"], 0)
+        self.assertEqual(marker["value"], 3)
+
 
 if __name__ == "__main__":
     unittest.main()

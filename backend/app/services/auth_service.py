@@ -15,6 +15,9 @@ from typing import Optional
 USERNAME_RE = re.compile(r"^[A-Za-z0-9_\u4e00-\u9fff]{3,24}$")
 SESSION_COOKIE = "roommate_session"
 PBKDF2_ITERATIONS = 310_000
+INCIDENT_REFUND_MARKER = "incident_refund_20260901"
+INCIDENT_REFUND_START = "2026-08-31T16:00:00+00:00"
+INCIDENT_REFUND_END = "2026-09-01T07:50:15+00:00"
 
 
 class AuthError(Exception):
@@ -68,6 +71,7 @@ class AuthService:
         return conn
 
     def _initialize(self) -> None:
+        database_existed = self.db_path.exists()
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         with self._connect() as conn:
             conn.executescript(
@@ -101,6 +105,71 @@ class AuthService:
                 VALUES ('global_generation_used', 0);
                 """
             )
+            if database_existed:
+                self._refund_20260901_incident(conn)
+
+    @staticmethod
+    def _refund_20260901_incident(conn: sqlite3.Connection) -> None:
+        """One-time refund for accounts exhausted by the provider outage."""
+        marker = conn.execute(
+            "SELECT value FROM app_counters WHERE name = ?",
+            (INCIDENT_REFUND_MARKER,),
+        ).fetchone()
+        if marker:
+            return
+
+        candidates = conn.execute(
+            """
+            SELECT
+                u.id AS user_id,
+                GROUP_CONCAT(g.id) AS usage_ids,
+                COUNT(g.id) AS incident_attempts
+            FROM users u
+            JOIN generation_usage g ON g.user_id = u.id
+            WHERE g.endpoint = '/api/v1/generate'
+              AND g.created_at >= ?
+              AND g.created_at < ?
+              AND u.generation_used >= u.generation_limit
+            GROUP BY u.id
+            HAVING COUNT(g.id) = 3
+            """,
+            (INCIDENT_REFUND_START, INCIDENT_REFUND_END),
+        ).fetchall()
+        attempt_count = 0
+        for row in candidates:
+            usage_ids = [int(value) for value in row["usage_ids"].split(",")]
+            placeholders = ",".join("?" for _ in usage_ids)
+            conn.execute(
+                f"DELETE FROM generation_usage WHERE id IN ({placeholders})",
+                usage_ids,
+            )
+            conn.execute(
+                """
+                UPDATE users
+                SET generation_used = MAX(0, generation_used - ?)
+                WHERE id = ?
+                """,
+                (len(usage_ids), row["user_id"]),
+            )
+            attempt_count += len(usage_ids)
+
+        conn.execute(
+            """
+            UPDATE app_counters
+            SET value = MAX(0, value - ?)
+            WHERE name = 'global_generation_used'
+            """,
+            (attempt_count,),
+        )
+        conn.execute(
+            "INSERT INTO app_counters(name, value) VALUES (?, ?)",
+            (INCIDENT_REFUND_MARKER, attempt_count),
+        )
+        print(
+            "[AUTH] incident refund applied: "
+            f"users={len(candidates)} attempts={attempt_count}",
+            flush=True,
+        )
 
     @staticmethod
     def _now() -> datetime:
