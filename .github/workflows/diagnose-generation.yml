@@ -1,0 +1,67 @@
+name: Diagnose generation failures
+
+on:
+  workflow_dispatch:
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure SSH
+        env:
+          ALIYUN_HOST: ${{ secrets.ALIYUN_HOST }}
+          ALIYUN_PORT: ${{ secrets.ALIYUN_PORT }}
+          ALIYUN_SSH_KEY: ${{ secrets.ALIYUN_SSH_KEY }}
+        run: |
+          set -Eeuo pipefail
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$ALIYUN_SSH_KEY" > ~/.ssh/aliyun_deploy_key
+          chmod 600 ~/.ssh/aliyun_deploy_key
+          ssh-keyscan -p "${ALIYUN_PORT:-22}" -H "$ALIYUN_HOST" >> ~/.ssh/known_hosts
+
+      - name: Collect sanitized counters
+        env:
+          ALIYUN_HOST: ${{ secrets.ALIYUN_HOST }}
+          ALIYUN_USER: ${{ secrets.ALIYUN_USER }}
+          ALIYUN_PORT: ${{ secrets.ALIYUN_PORT }}
+          ALIYUN_APP_DIR: ${{ secrets.ALIYUN_APP_DIR }}
+          ALIYUN_BACKEND_SERVICE: ${{ secrets.ALIYUN_BACKEND_SERVICE }}
+        run: |
+          set -Eeuo pipefail
+          user="${ALIYUN_USER:-admin}"
+          port="${ALIYUN_PORT:-22}"
+          app_dir="${ALIYUN_APP_DIR:-/var/www/roommate}"
+          service="${ALIYUN_BACKEND_SERVICE:-roommate-backend.service}"
+          ssh -i ~/.ssh/aliyun_deploy_key \
+            -p "$port" \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            "$user@$ALIYUN_HOST" \
+            "APP_DIR='$app_dir' SERVICE='$service' bash -s" <<'REMOTE'
+          set -Eeuo pipefail
+          since='2026-09-01 22:45:00'
+          echo "deployed_commit=$(cat "$APP_DIR/.deployed-commit" 2>/dev/null || echo unknown)"
+          echo "recent_inputs=$(find "$APP_DIR/input" -type f -newermt "$since" 2>/dev/null | wc -l)"
+          echo "recent_outputs=$(find "$APP_DIR/output" -type f -newermt "$since" 2>/dev/null | wc -l)"
+          journalctl -u "$SERVICE" --since "$since" --no-pager -o cat 2>/dev/null | awk '
+            /\[Fallback\].*SUCCESS/ { provider_success++ }
+            /\[Fallback\].*FAILED/ { provider_failed++ }
+            /HTTP 429/ { http_429++ }
+            /HTTP 5[0-9][0-9]/ { http_5xx++ }
+            /timeout/ { timeout++ }
+            /network error/ { network_error++ }
+            /\[GENERATION\] provider failure/ { generation_failure++ }
+            /\[GENERATION\] unexpected failure/ { unexpected_failure++ }
+            END {
+              printf "provider_success=%d\nprovider_failed=%d\nhttp_429=%d\nhttp_5xx=%d\ntimeout=%d\nnetwork_error=%d\ngeneration_failure=%d\nunexpected_failure=%d\n", provider_success, provider_failed, http_429, http_5xx, timeout, network_error, generation_failure, unexpected_failure
+            }'
+          if [ -r /var/log/nginx/error.log ]; then
+            grep '2026/09/01 23:' /var/log/nginx/error.log 2>/dev/null | awk '
+              /upstream timed out/ { upstream_timeout++ }
+              /prematurely closed/ { premature_close++ }
+              END { printf "nginx_upstream_timeout=%d\nnginx_premature_close=%d\n", upstream_timeout, premature_close }'
+          else
+            echo 'nginx_error_log=unreadable'
+          fi
+          REMOTE
